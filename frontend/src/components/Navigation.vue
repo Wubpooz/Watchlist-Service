@@ -16,7 +16,8 @@ const isActive = (name: string) => route.name === name;
 <template>
   <nav class="navigation">
     <div class="nav-brand">
-      <h1>📺 Media Collections</h1>
+      <span class="logo">📚</span>
+      <span class="logo-text">Watchlist</span>
     </div>
 
     <div class="nav-links">
@@ -25,7 +26,7 @@ const isActive = (name: string) => route.name === name;
         class="nav-link"
         :class="{ active: isActive('Home') }"
       >
-        🏠 Home
+        Dashboard
       </RouterLink>
 
       <RouterLink
@@ -33,7 +34,7 @@ const isActive = (name: string) => route.name === name;
         class="nav-link"
         :class="{ active: isActive('Collections') }"
       >
-        📚 My Collections
+        My Collections
       </RouterLink>
 
       <RouterLink
@@ -41,16 +42,16 @@ const isActive = (name: string) => route.name === name;
         class="nav-link"
         :class="{ active: isActive('Statistics') }"
       >
-        📊 Statistics
+        Statistics
       </RouterLink>
     </div>
 
-    <div class="nav-user">
-      <span v-if="authStore.user" class="user-info">
-        👤 {{ authStore.user.name || authStore.user.email }}
-      </span>
+    <div class="nav-actions">
+      <div v-if="authStore.user" class="user-display">
+        {{ authStore.user.name || authStore.user.email }}
+      </div>
       <button class="logout-btn" @click="$emit('logout')">
-        Logout
+        Log out
       </button>
     </div>
   </nav>
@@ -61,64 +62,81 @@ const isActive = (name: string) => route.name === name;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #333333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 12px 20px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.nav-brand h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #42b883;
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+}
+
+.logo {
+  font-size: 20px;
+}
+
+.logo-text {
+  font-size: 18px;
+  color: #161616;
 }
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 20px;
+  margin-left: 40px;
   flex: 1;
-  margin-left: 3rem;
 }
 
 .nav-link {
-  color: #ffffff;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #525252;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
 .nav-link:hover {
-  background-color: #333333;
+  color: #161616;
 }
 
 .nav-link.active {
-  background-color: #42b883;
-  color: #121212;
+  color: #0f62fe;
+  border-bottom-color: #0f62fe;
 }
 
-.nav-user {
+.nav-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
-.user-info {
-  color: #cccccc;
-  font-size: 0.9rem;
+.user-display {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #525252;
 }
 
 .logout-btn {
-  padding: 0.5rem 1rem;
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  color: #161616;
+  border: 1px solid #161616;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 0;
+  transition: all 0.2s;
 }
 
 .logout-btn:hover {
-  background-color: #ee5a52;
+  background-color: #f4f4f4;
 }
 </style>
+

@@ -26,13 +26,13 @@ const handleLogout = () => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #121212;
-  color: #ffffff;
+  background-color: #ffffff;
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 32px 20px;
   overflow-y: auto;
 }
 </style>
+

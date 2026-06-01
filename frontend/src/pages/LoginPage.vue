@@ -11,6 +11,7 @@ const isLogin = ref(true);
 const email = ref('');
 const password = ref('');
 const name = ref('');
+const rememberDevice = ref(false);
 const isLoading = ref(false);
 const error = ref('');
 
@@ -30,7 +31,6 @@ const handleSubmit = async () => {
       await authStore.register(email.value, password.value, name.value);
     }
 
-    // Redirect to the original page or home
     const redirect = route.query.redirect as string || '/';
     router.push(redirect);
   } catch (err) {
@@ -42,29 +42,29 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h1>{{ isLogin ? 'Login' : 'Register' }}</h1>
+  <div class="login-page">
+    <div class="login-container">
+      <h1 class="login-title">{{ isLogin ? 'Log in to your library' : 'Build your media database' }}</h1>
 
-      <form @submit.prevent="handleSubmit" class="form">
+      <form @submit.prevent="handleSubmit" class="login-form">
         <div v-if="!isLogin" class="form-group">
-          <label for="name">Name</label>
+          <label for="name">Username</label>
           <input
             id="name"
             v-model="name"
             type="text"
-            placeholder="Your name"
+            placeholder="Enter username"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="email">Email</label>
+          <label for="email">Email address</label>
           <input
             id="email"
             v-model="email"
             type="email"
-            placeholder="your@email.com"
+            placeholder="Enter email"
             required
           />
         </div>
@@ -75,9 +75,19 @@ const handleSubmit = async () => {
             id="password"
             v-model="password"
             type="password"
-            placeholder="••••••••"
+            placeholder="Enter password"
             required
           />
+        </div>
+
+        <div v-if="isLogin" class="checkbox-row">
+          <input
+            id="remember"
+            v-model="rememberDevice"
+            type="checkbox"
+          />
+          <label for="remember" class="checkbox-label">Remember this device</label>
+          <a href="#" class="forgot-link">Forgot password?</a>
         </div>
 
         <div v-if="error" class="error-message">
@@ -86,138 +96,182 @@ const handleSubmit = async () => {
 
         <button
           type="submit"
-          class="submit-btn"
+          class="primary-button"
           :disabled="isLoading"
         >
-          {{ isLoading ? 'Loading...' : (isLogin ? 'Login' : 'Register') }}
+          {{ isLoading ? 'Loading...' : (isLogin ? 'Log in' : 'Create account') }}
         </button>
       </form>
 
-      <div class="toggle-mode">
-        <p>
+      <div class="auth-toggle">
+        <span>
           {{ isLogin ? "Don't have an account?" : 'Already have an account?' }}
-          <button type="button" @click="toggleMode" class="toggle-btn">
-            {{ isLogin ? 'Register' : 'Login' }}
-          </button>
-        </p>
+        </span>
+        <button type="button" @click="toggleMode" class="toggle-link">
+          {{ isLogin ? 'Sign up' : 'Log in' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login-container {
+.login-page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #121212;
-  background-image: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background-color: #ffffff;
+  padding: 20px;
 }
 
-.login-card {
-  background-color: #1a1a1a;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+.login-container {
   width: 100%;
-  max-width: 400px;
-  border: 1px solid #333333;
+  max-width: 360px;
+  border: 1px solid #e0e0e0;
+  padding: 32px;
+  background-color: #ffffff;
 }
 
-.login-card h1 {
-  margin: 0 0 1.5rem 0;
-  font-size: 2rem;
-  color: #42b883;
-  text-align: center;
+.login-title {
+  margin: 0 0 32px 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: #161616;
 }
 
-.form {
+.login-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .form-group label {
-  color: #cccccc;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #161616;
 }
 
-.form-group input {
-  padding: 0.75rem;
-  background-color: #2a2a2a;
-  border: 1px solid #333333;
-  border-radius: 4px;
-  color: #ffffff;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.form-group input:focus {
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+  padding: 10px 12px;
+  background-color: #f4f4f4;
+  border: none;
+  border-bottom: 1px solid #0f62fe;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #161616;
   outline: none;
-  border-color: #42b883;
-  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+  border-radius: 0;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+  background-color: #f4f4f4;
+  border-bottom-color: #0f62fe;
+  box-shadow: none;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #0f62fe;
+}
+
+.checkbox-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #161616;
+  cursor: pointer;
+  flex: 1;
+}
+
+.forgot-link {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #0f62fe;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
 }
 
 .error-message {
-  padding: 0.75rem;
-  background-color: #ff6b6b;
-  color: white;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  text-align: center;
+  padding: 12px;
+  background-color: #ffd7d8;
+  color: #8b0000;
+  border-left: 3px solid #da1e28;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  border-radius: 0;
 }
 
-.submit-btn {
-  padding: 0.75rem;
-  background-color: #42b883;
-  color: #121212;
+.primary-button {
+  padding: 12px 16px;
+  background-color: #0f62fe;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 0;
+  width: 100%;
+  transition: background-color 0.2s;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background-color: #35a572;
+.primary-button:hover:not(:disabled) {
+  background-color: #0050d8;
 }
 
-.submit-btn:disabled {
-  opacity: 0.6;
+.primary-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.toggle-mode {
-  margin-top: 1.5rem;
+.auth-toggle {
+  margin-top: 16px;
   text-align: center;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #525252;
 }
 
-.toggle-mode p {
-  margin: 0;
-  color: #cccccc;
-  font-size: 0.9rem;
-}
-
-.toggle-btn {
+.toggle-link {
   background: none;
   border: none;
-  color: #42b883;
+  color: #0f62fe;
   cursor: pointer;
-  font-weight: 600;
-  text-decoration: underline;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-left: 4px;
   padding: 0;
 }
 
-.toggle-btn:hover {
-  color: #35a572;
+.toggle-link:hover {
+  text-decoration: underline;
 }
 </style>
+
