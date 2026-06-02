@@ -1,3 +1,6 @@
+// Disables strict self-signed TLS verification for the Node.js process
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
@@ -8,10 +11,7 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
   // Limit connection pool size in serverless environments to prevent exhaustion
   max: isProd ? 2 : 10, 
-  idleTimeoutMillis: 10000,
-  ssl: {
-    rejectUnauthorized: false // Tells Node.js to accept Supabase's proxy certificate OR download SUPABASE_DB_CA
-  }
+  idleTimeoutMillis: 10000
 });
 
 const adapter = new PrismaPg(pool);
