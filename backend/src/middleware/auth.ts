@@ -4,7 +4,7 @@ import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { haveIBeenPwned, bearer, username } from "better-auth/plugins";
 
 import prisma from '../db/index.js';
-import env from '../../env';
+import env from '../../env.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 

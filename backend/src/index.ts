@@ -15,7 +15,7 @@ import { userRoutes } from './routes/user.routes.js';
 import { mediaRoutes } from './routes/media.routes.js';
 import { collectionRoutes } from './routes/collection.routes.js';
 import { createMcpRoutes } from './mcp/index.js';
-import env from '../env';
+import env from '../env.js';
 
 
 // ==================== Initialize Hono app ====================
