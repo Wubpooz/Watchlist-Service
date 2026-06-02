@@ -1,6 +1,6 @@
 import prisma from "@/db/index.js";
-import { CollectionRole, Visibility } from "@/generated/prisma/browser";
-import type { Prisma, Media } from "@/generated/prisma/browser";
+import { CollectionRole, Visibility } from "@prisma/client";
+import type { Prisma, Media } from "@prisma/client";
 import { AppError } from "@/middleware/errorHandler";
 import type { ListQuery, MediaWhereClause, PaginatedData } from "@/types/types";
 import { queryUtils } from "@/services/query.utils";

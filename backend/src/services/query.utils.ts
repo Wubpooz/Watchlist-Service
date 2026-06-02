@@ -1,5 +1,5 @@
-import type { Prisma } from "@/generated/prisma/browser.js";
-import { Visibility } from "@/generated/prisma/browser.js";
+import type { Prisma } from "@prisma/client";
+import { Visibility } from "@prisma/client";
 import type { ListQuery, PaginationLinks } from "@/types/types.js";
 
 /**

@@ -1,5 +1,5 @@
 import prisma from "../db/index.js";
-import type { User, Prisma, Collection } from "@/generated/prisma/client.js";
+import type { User, Prisma, Collection } from "@prisma/client";
 import type { PublicUser } from "@/types/types.js";
 
 /**

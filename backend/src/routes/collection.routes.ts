@@ -21,7 +21,7 @@ import {
   invitationResponseSchema,
 } from '@/schemas/collection.schema.js';
 import { AppError } from '@/middleware/errorHandler.js';
-import { CollectionRole } from '@/generated/prisma/client.js';
+import { CollectionRole } from '@prisma/client';
 
 export const collectionRoutes = new Hono<{ Variables: AuthType }>();
 
