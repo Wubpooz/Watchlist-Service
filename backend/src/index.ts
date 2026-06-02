@@ -228,8 +228,9 @@ app.onError(errorHandler);
 
 
 // ==================== Start server ====================
-if (import.meta.main) {
-  const server = Bun.serve({
+const globalBun = (globalThis as any).Bun; // for Node & Bun inter-compatibility
+if (import.meta.main && globalBun) {
+  const server = globalBun.serve({
     port: Number(PORT),
     fetch: app.fetch,
   });
