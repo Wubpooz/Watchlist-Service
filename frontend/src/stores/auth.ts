@@ -34,10 +34,12 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Get auth token from response headers
       const token = response.headers.get('set-auth-token');
-      if (token) {
-        authToken.value = token;
-        localStorage.setItem('authToken', token);
+      if (!token) {
+        throw new Error('Authentication token missing from login response');
       }
+
+      authToken.value = token;
+      localStorage.setItem('authToken', token);
 
       // Fetch user info
       await fetchUserInfo();
@@ -93,6 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred';
       logout();
+      throw err;
     }
   }
 
