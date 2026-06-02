@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { describeRoute, resolver, validator } from 'hono-openapi';
-import { mediaService } from '@/services/media.service.js';
-import type { AuthType } from '@/middleware/auth.js';
+import { mediaService } from '../services/media.service.js';
+import type { AuthType } from '../middleware/auth.js';
 import { 
   createMediaSchema, 
   createMediaResponseSchema,
@@ -9,8 +9,8 @@ import {
   mediaIdParamSchema,
   getMediaQuerySchema,
   mediaListResponseSchema
-} from '@/schemas/media.schema.js';
-import { AppError } from '@/middleware/errorHandler.js';
+} from '../schemas/media.schema.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 export const mediaRoutes = new Hono<{ Variables: AuthType }>();
 

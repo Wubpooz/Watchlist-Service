@@ -7,7 +7,7 @@ const userService: any = {
   getPublicCollections: async () => [fixtures.collection],
 };
 
-mock.module('@/services/user.service', () => ({ userService }));
+mock.module('../services/user.service', () => ({ userService }));
 
 const { userRoutes } = await import('./user.routes.js');
 

@@ -12,7 +12,7 @@ const authApi: any = {
   resetPassword: async () => undefined,
 };
 
-mock.module('@/middleware/auth', () => ({
+mock.module('../middleware/auth', () => ({
   auth: {
     api: authApi,
   },

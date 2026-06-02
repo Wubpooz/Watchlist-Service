@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { type Prisma, type Collection, Visibility } from '@prisma/client';
-import type { PublicUser } from '@/types/types.js';
+import type { PublicUser } from '../types/types.js';
 
 export const updateUserSchema = z.object({
   name: z.string().min(1).max(200).optional().meta( {example: 'User Example'} ),

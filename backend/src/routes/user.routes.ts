@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { describeRoute, resolver, validator } from 'hono-openapi';
-import type { AuthType } from '@/middleware/auth.js';
-import { userService } from '@/services/user.service.js';
-import { AppError } from '@/middleware/errorHandler.js';
-import { collectionsResponseSchema, updateUserSchema, userIdParamSchema, userResponseSchema,  } from '@/schemas/user.schema.js';
+import type { AuthType } from '../middleware/auth.js';
+import { userService } from '../services/user.service.js';
+import { AppError } from '../middleware/errorHandler.js';
+import { collectionsResponseSchema, updateUserSchema, userIdParamSchema, userResponseSchema,  } from '../schemas/user.schema.js';
 
 export const userRoutes = new Hono<{ Variables: AuthType }>();
 

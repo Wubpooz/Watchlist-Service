@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { errorHandler } from '@/middleware/errorHandler.js';
+import { errorHandler } from '../middleware/errorHandler.js';
 
 export type AuthState = {
   user: Record<string, unknown> | null;

@@ -1,9 +1,11 @@
-import prisma from "@/db/index.js";
 import { CollectionRole } from "@prisma/client";
 import type { Prisma, Collection, CollectionMedia, CollectionUser } from "@prisma/client";
-import { AppError } from "@/middleware/errorHandler.js";
-import type { ListQuery, PaginatedData } from "@/types/types.js";
-import { queryUtils } from "@/services/query.utils.js";
+
+import prisma from "../db/index.js";
+import { queryUtils } from "../services/query.utils.js";
+
+import { AppError } from "../middleware/errorHandler.js";
+import type { ListQuery, PaginatedData } from "../types/types.js";
 
 type CollectionWhereClause = Omit<ListQuery, 'page' | 'pageSize' | 'sort' | 'order' | 'cursor'>;
 

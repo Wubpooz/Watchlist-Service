@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { AppError } from '@/middleware/errorHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const COLLECTION_SERVICE_MODULE = './collection.service?unit';
 
@@ -9,7 +9,7 @@ const prismaMock = {
   },
 };
 
-mock.module('@/db', () => ({
+mock.module('../db', () => ({
   default: prismaMock,
 }));
 

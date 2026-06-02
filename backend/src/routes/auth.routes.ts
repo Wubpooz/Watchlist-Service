@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { describeRoute, resolver, validator } from 'hono-openapi';
 import { APIError } from 'better-auth/api';
-import { auth } from '@/middleware/auth.js';
-import type { AuthType } from '@/middleware/auth.js';
-import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema } from '@/schemas/auth.schema.js';
-import { createAuthError, resolveApiErrorStatus, AppError } from '@/middleware/errorHandler.js';
+import { auth } from '../middleware/auth.js';
+import type { AuthType } from '../middleware/auth.js';
+import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema } from '../schemas/auth.schema.js';
+import { createAuthError, resolveApiErrorStatus, AppError } from '../middleware/errorHandler.js';
 
 export const authRoutes = new Hono<{ Variables: AuthType }>();
 

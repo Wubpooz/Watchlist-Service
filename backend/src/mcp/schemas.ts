@@ -8,13 +8,13 @@ import {
   updateCollectionMemberSchema,
   updateCollectionSchema,
   getCollectionQuerySchema,
-} from '@/schemas/collection.schema.js';
+} from '../schemas/collection.schema.js';
 import {
   createMediaSchema,
   getMediaQuerySchema,
   updateMediaSchema,
-} from '@/schemas/media.schema.js';
-import { updateUserSchema } from '@/schemas/user.schema.js';
+} from '../schemas/media.schema.js';
+import { updateUserSchema } from '../schemas/user.schema.js';
 
 const boundedId = z.string().min(1).max(128);
 const boundedTag = z.string().max(64);

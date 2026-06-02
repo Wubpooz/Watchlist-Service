@@ -9,7 +9,7 @@ const mediaService: any = {
   deleteById: async () => true,
 };
 
-mock.module('@/services/media.service', () => ({ mediaService }));
+mock.module('../services/media.service', () => ({ mediaService }));
 
 const { mediaRoutes } = await import('./media.routes.js');
 
