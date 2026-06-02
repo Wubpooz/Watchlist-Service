@@ -24,6 +24,7 @@ class LocalStorageMock {
 }
 
 (globalThis as any).localStorage = new LocalStorageMock();
+(globalThis as any).sessionStorage = new LocalStorageMock();
 
 describe('Auth Store - Authentication Validation', () => {
   beforeEach(() => {

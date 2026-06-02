@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw, createMemoryHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 // Lazy load pages
@@ -50,7 +50,9 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: typeof window !== 'undefined'
+    ? createWebHistory(import.meta.env.BASE_URL) // for prod
+    : createMemoryHistory(import.meta.env.BASE_URL), // for tests
   routes
 });
 
