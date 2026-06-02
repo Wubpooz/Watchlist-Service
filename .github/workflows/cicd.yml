@@ -17,7 +17,7 @@ env:
   DATABASE_URL: "postgresql://user:password@localhost:5432/dummy?schema=public"
   BETTER_AUTH_SECRET: "ci-secret-key-not-for-production"
   BETTER_AUTH_URL: "http://localhost:3000"
-  MCP_ENABLED: "false"
+  MCP_ENABLED: "true"
 
 jobs:
   validate-backend:
