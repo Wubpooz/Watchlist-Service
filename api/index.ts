@@ -1,4 +1,5 @@
-import { handle } from '@hono/node-server/vercel';
 import app from '../backend/src/index';
 
-export default handle(app);
+// Export the fetch handler natively for Vercel's Node environment
+export const RequestHandler = app.fetch;
+export default RequestHandler;
