@@ -2,10 +2,10 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { csrf } from 'hono/csrf';
 import { requestId } from 'hono/request-id';
-import { requestLogger } from './middleware/requestLogger';
 import { openAPIRouteHandler } from 'hono-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 
+import { requestLogger } from './middleware/requestLogger.js';
 import { auth, type AuthType } from "./middleware/auth.js";
 import { errorHandler } from './middleware/errorHandler.js';
 import prisma from './db/index.js';
