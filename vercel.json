@@ -1,12 +1,18 @@
 {
   "version": 2,
-  "outputDirectory": "frontend/dist",
   "builds": [
     {
       "src": "api/index.ts",
       "use": "@vercel/node",
       "config": {
         "bundle": true
+      }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
       }
     }
   ],
@@ -17,7 +23,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/frontend/$1"
     }
   ]
 }
