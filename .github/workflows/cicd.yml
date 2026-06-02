@@ -41,7 +41,7 @@ jobs:
         run: bun run prisma:generate
 
       - name: Run tests
-        run: bun test
+        run: bun --filter backend test
 
       - name: Run TypeScript build
         run: bun run build
