@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 const isProd = process.env.NODE_ENV === 'production';
 
 const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.POSTGRES_URL,
   // Limit connection pool size in serverless environments to prevent exhaustion
   max: isProd ? 2 : 10, 
   idleTimeoutMillis: 10000,
