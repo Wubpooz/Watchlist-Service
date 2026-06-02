@@ -8,6 +8,22 @@ import { createAuthError, resolveApiErrorStatus, AppError } from '../middleware/
 
 export const authRoutes = new Hono<{ Variables: AuthType }>();
 
+// Strips sensitive data from validation error responses
+const secureValidationHook = (result: any, c: any) => {
+  if (!result.success) {
+    const safeData = result.data ? { ...result.data } : {};
+    // Delete cleartext passwords before returning to the client
+    delete safeData.password;
+    delete safeData.newPassword;
+
+    return c.json({
+      success: false,
+      error: result.error.issues || result.error,
+      // data: safeData
+    }, 400);
+  }
+};
+
 // POST /register - Register a new user account
 authRoutes.post(
   '/register',
@@ -38,7 +54,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', registerBodySchema),
+  validator('json', registerBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -118,7 +134,7 @@ authRoutes.post(
       401: { description: 'Invalid credentials' },
     },
   }),
-  validator('json', loginBodySchema),
+  validator('json', loginBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -246,7 +262,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', forgotPasswordBodySchema),
+  validator('json', forgotPasswordBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -301,7 +317,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', resetPasswordBodySchema),
+  validator('json', resetPasswordBodySchema, secureValidationHook),
   async (c: any) => {
     if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
       return c.json({ error: 'Content-Type must be application/json' }, 400);

@@ -21,17 +21,17 @@ export const auth = betterAuth({
   },
   emailAndPassword: { 
     enabled: true, 
-  }, 
-  socialProviders: { 
-    github: { 
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    },
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
   },
+  // socialProviders: { 
+  //   github: { 
+  //     clientId: env.GITHUB_CLIENT_ID,
+  //     clientSecret: env.GITHUB_CLIENT_SECRET,
+  //   },
+  //   google: {
+  //     clientId: env.GOOGLE_CLIENT_ID,
+  //     clientSecret: env.GOOGLE_CLIENT_SECRET,
+  //   },
+  // },
   advanced: {
     defaultCookieAttributes: {
       sameSite: isDev ? "lax" : "none",
@@ -40,9 +40,9 @@ export const auth = betterAuth({
     }
   },
     plugins: [ 
-        username(),
-        bearer(),
-        haveIBeenPwned()
+      username(),
+      bearer(),
+      haveIBeenPwned()
     ],
   logger: {
     level: "debug"

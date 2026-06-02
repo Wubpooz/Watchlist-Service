@@ -29,10 +29,15 @@ export const useAuthStore = defineStore('auth', () => {
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        // Parse the error response here as well
+        const errData = await response.json().catch(() => null);
+        
+        if (errData?.error && Array.isArray(errData.error)) {
+          throw new Error(errData.error[0].message);
+        }
+        throw new Error(errData?.error || errData?.message || 'Login failed');
       }
 
-      // Get auth token from response headers
       const token = response.headers.get('set-auth-token');
       if (!token) {
         throw new Error('Authentication token missing from login response');
@@ -45,7 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
         sessionStorage.setItem('authToken', token);
       }
 
-      // Fetch user info
       await fetchUserInfo();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred';
@@ -69,7 +73,15 @@ export const useAuthStore = defineStore('auth', () => {
       });
 
       if (!response.ok) {
-        throw new Error('Registration failed');
+        // Parse the error response from the backend
+        const errData = await response.json().catch(() => null);
+        
+        // Handle Zod validation arrays
+        if (errData?.error && Array.isArray(errData.error)) {
+          throw new Error(errData.error[0].message); // e.g., "Too small: expected string to have >=8 characters"
+        }
+        // Handle standard string errors
+        throw new Error(errData?.error || errData?.message || 'Registration failed');
       }
 
       // Auto-login after registration
