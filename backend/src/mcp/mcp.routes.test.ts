@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { Hono } from 'hono';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { createMcpRoutes } from '//mcp/index.js';
+import { createMcpRoutes } from './index.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils.js';
 import { clone } from '../test/common-test-utils.js';
