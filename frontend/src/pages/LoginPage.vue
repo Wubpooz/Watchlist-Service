@@ -26,7 +26,7 @@ const handleSubmit = async () => {
 
   try {
     if (isLogin.value) {
-      await authStore.login(email.value, password.value);
+      await authStore.login(email.value, password.value, rememberDevice.value);
     } else {
       await authStore.register(email.value, password.value, name.value);
     }

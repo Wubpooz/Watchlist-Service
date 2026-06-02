@@ -9,13 +9,13 @@ export interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
-  const authToken = ref<string | null>(localStorage.getItem('authToken'));
+  const authToken = ref<string | null>(localStorage.getItem('authToken') || sessionStorage.getItem('authToken'));
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   const isAuthenticated = computed(() => !!authToken.value && !!user.value);
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string, rememberDevice: boolean = false) {
     isLoading.value = true;
     error.value = null;
 
@@ -39,7 +39,11 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       authToken.value = token;
-      localStorage.setItem('authToken', token);
+      if(rememberDevice) {
+        localStorage.setItem('authToken', token);
+      } else {
+        sessionStorage.setItem('authToken', token);
+      }
 
       // Fetch user info
       await fetchUserInfo();
@@ -103,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
     authToken.value = null;
     user.value = null;
     localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
   }
 
   // Check if user is still authenticated on app load
