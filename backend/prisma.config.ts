@@ -8,6 +8,6 @@ export default defineConfig({
   },
   datasource: {
     url: process.env.POSTGRES_URL || "postgresql://johndoe:randompassword@localhost:5432/mydb",
-    directUrl = env("POSTGRES_URL_NON_POOLING")
+    directUrl: process.env.POSTGRES_URL_NON_POOLING
   },
 });
