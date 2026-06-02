@@ -187,6 +187,9 @@ describe('Router Navigation Guards', () => {
   describe('Login Page Access', () => {
     it('should allow unauthenticated users to access Login route', async () => {
       const authStore = useAuthStore();
+
+      await router.push('/');
+
       await router.push('/login');
       
       // Login route does not require auth
