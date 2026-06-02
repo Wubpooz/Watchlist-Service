@@ -153,7 +153,7 @@ describe('Router Navigation Guards', () => {
 
     it('should block unauthenticated users from accessing Home route', async () => {
       const authStore = useAuthStore();
-      await router.push('/home');
+      await router.push('/');
       
       // Home route requires auth
       expect(authStore.isAuthenticated).toBe(false);
@@ -206,7 +206,7 @@ describe('Router Navigation Guards', () => {
 
       // Authenticated users should be redirected from login
       expect(authStore.isAuthenticated).toBe(true);
-      expect(router.currentRoute.value.path).toBe('/home');
+      expect(router.currentRoute.value.path).toBe('/');
     });
   });
 
@@ -267,11 +267,13 @@ describe('Router Navigation Guards', () => {
         email: 'test@example.com'
       };
       authStore.authToken = 'test-token';
-      await router.push('/home');
+      await router.push('/'); // home is the / path
 
       // Simulate logout
-      authStore.user = null;
-      authStore.authToken = null;
+      authStore.logout();
+
+      // After logout, should be unauthenticated and redirected to login
+      await router.push('/collections');
 
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
