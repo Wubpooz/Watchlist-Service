@@ -13,7 +13,7 @@ jobs:
   openapi:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "postgresql://user:password@localhost:5432/dummy"
+      POSTGRES_URL: "postgresql://user:password@localhost:5432/dummy"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
