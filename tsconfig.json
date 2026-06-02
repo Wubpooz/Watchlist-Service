@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false, // for importing .ts files without extension
-    "rewriteRelativeImportExtensions": false, // for importing .ts files without extension
+    "target": "ES2022",
+    "module": "CommonJS",            // Forces Vercel to output Node-safe require() syntax
+    "ignoreDeprecations": "6.0",
+    "moduleResolution": "node",       // Allows extensionless path resolution at production runtime
     "strict": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,          // Ensures safe interop between ESM packages and CommonJS output
+    "allowSyntheticDefaultImports": true,
     "types": ["@types/bun"],
     "paths": {
       "@/*": ["./backend/src/*"]
