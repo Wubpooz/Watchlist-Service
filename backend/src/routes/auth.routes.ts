@@ -85,10 +85,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    if (error instanceof Error) {
-      throw new AppError(error.message, 500);
-    }
-    throw createAuthError('Registration failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during registration. Please try again later.', error);
   }
   }
 );
@@ -185,7 +183,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Login failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during login. Please try', error);
   }
   }
 );
@@ -227,7 +226,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Logout failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during logout. Please try again.', error);
   }
   }
 );
@@ -282,7 +282,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Password reset failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during password reset. Please try again.', error);
   }
   }
 );
@@ -337,7 +338,8 @@ authRoutes.post(
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }
-      throw createAuthError('Password reset failed', error);
+      console.error('[Auth Route Error]:', error);
+      throw createAuthError('An unexpected server error occurred during password reset. Please try again.', error);
     }
   }
 );
@@ -385,6 +387,7 @@ authRoutes.get(
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }
+      console.error('[Auth Route Error]:', error);
       throw createAuthError('Failed to get authenticated user profile and session info', error);
     }
   }
