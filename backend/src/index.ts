@@ -10,7 +10,7 @@ import { auth, type AuthType } from "./middleware/auth";
 import { errorHandler } from './middleware/errorHandler';
 import prisma from './db/index';
 
-import { authRoutes } from './routes/auth.routes.ts';
+import { authRoutes } from './routes/auth.routes';
 import { userRoutes } from './routes/user.routes';
 import { mediaRoutes } from './routes/media.routes';
 import { collectionRoutes } from './routes/collection.routes';
@@ -26,7 +26,7 @@ const app = new Hono<{ Variables: AuthType }>();
 export default app;
 
 
-app.use("*", async (c, next) => {
+app.use("*", async (c: any, next: any) => {
   // When both Authorization and Cookie are present, better-auth fails to parse correctly
   // Prefer Authorization header (bearer token) over cookie when both are present
   const authorizationHeader = c.req.header('authorization');
@@ -63,7 +63,7 @@ app.use("*", async (c, next) => {
 app.use(
 	"*", // CORS enabled for all routes (required for Swagger UI)
 	cors({
-		origin: (origin) => {
+		origin: (origin: any) => {
 			// CORS origin function expects the allowed origin string, or null/undefined to deny
 			if (process.env.NODE_ENV === 'production') {
 				return origin === env.FRONTEND_URL || origin === env.BETTER_AUTH_URL ? origin : env.FRONTEND_URL;
@@ -82,7 +82,7 @@ app.use(
 if (process.env.NODE_ENV === 'production') {
   app.use(csrf({
     // Trust requests coming from the same host or frontend in production
-    origin: (origin) => {
+    origin: (origin: any) => {
       return origin === env.FRONTEND_URL || origin === env.BETTER_AUTH_URL; 
     },
     secFetchSite: ['same-origin', 'same-site']
@@ -172,7 +172,7 @@ app.get(
   })
 );
 
-app.get('/health', async (c) => {
+app.get('/health', async (c: any) => {
   const timestamp = new Date().toISOString();
   let dbConnection = 'disconnected';
 
@@ -207,13 +207,13 @@ app.route('/mcp', createMcpRoutes());
 
 // Better-Auth handler for built-in endpoints (OAuth, etc.)
 // Mounted after custom routes - use catch-all for anything not matched above
-app.all("/api/auth/*", (c) => {
+app.all("/api/auth/*", (c: any) => {
 	return auth.handler(c.req.raw);
 });
 
 
 // 404 handler
-app.notFound((c) => {
+app.notFound((c: any) => {
   return c.json({
     error: 'Not Found',
     message: `Route ${c.req.method} ${c.req.path} not found`,
