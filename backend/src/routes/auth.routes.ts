@@ -39,7 +39,7 @@ authRoutes.post(
     },
   }),
   validator('json', registerBodySchema),
-  async (c) => {
+  async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
   }
@@ -65,9 +65,12 @@ authRoutes.post(
       message: 'Registration successful',
       user: result.user,
     });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
+    }
+    if (error instanceof Error) {
+      throw new AppError(error.message, 500);
     }
     throw createAuthError('Registration failed', error);
   }
@@ -116,7 +119,7 @@ authRoutes.post(
     },
   }),
   validator('json', loginBodySchema),
-  async (c) => {
+  async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
   }
@@ -162,7 +165,7 @@ authRoutes.post(
       user: result.user,
       sessionToken: result.token,  // token for Bearer auth (Authorization: Bearer <token>)
     });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
@@ -192,7 +195,7 @@ authRoutes.post(
       401: { description: 'Unauthorized' },
     },
   }),
-  async (c) => {
+  async (c: any) => {
   const user = c.get('user');
   if (!user) {
     return c.json({ error: 'Unauthorized' }, 401);
@@ -204,7 +207,7 @@ authRoutes.post(
     });
 
     return c.json({ message: 'Logout successful' });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
@@ -244,7 +247,7 @@ authRoutes.post(
     },
   }),
   validator('json', forgotPasswordBodySchema),
-  async (c) => {
+  async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
   }
@@ -259,7 +262,7 @@ authRoutes.post(
       },
     });
     return c.json({ message: 'Password reset email sent' });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
@@ -299,7 +302,7 @@ authRoutes.post(
     },
   }),
   validator('json', resetPasswordBodySchema),
-  async (c) => {
+  async (c: any) => {
     if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
       return c.json({ error: 'Content-Type must be application/json' }, 400);
     }
@@ -314,7 +317,7 @@ authRoutes.post(
         },
       });
       return c.json({ message: 'Password reset successful' });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }
@@ -348,7 +351,7 @@ authRoutes.get(
       401: { description: 'Unauthorized' },
     },
   }),
-  async (c) => {
+  async (c: any) => {
     const user = c.get('user');
     if (!user) {
       return c.json({ error: 'Unauthorized' }, 401);
@@ -362,7 +365,7 @@ authRoutes.get(
         user,
         session,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }

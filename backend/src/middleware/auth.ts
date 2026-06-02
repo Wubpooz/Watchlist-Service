@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from 'better-auth/adapters/prisma';
+// import { prismaAdapter } from 'better-auth/adapters/prisma'; Older legacy
+import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { haveIBeenPwned, bearer, username } from "better-auth/plugins";
 
 import prisma from '../db/index';
