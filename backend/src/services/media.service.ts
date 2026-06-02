@@ -3,7 +3,7 @@ import prisma from "../db/index.js";
 import type { Prisma, Media } from "@prisma/client";
 import { AppError } from "../middleware/errorHandler.js";
 import type { ListQuery, MediaWhereClause, PaginatedData } from "../types/types.js";
-import { queryUtils } from "../services/query.util.js";
+import { queryUtils } from "../services/query.utils.js";
 
 export const mediaService = {
   /**
