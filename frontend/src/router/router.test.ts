@@ -133,43 +133,43 @@ describe('Router Navigation Guards', () => {
   });
   
   describe('Protected Route Access', () => {
-    it('should block unauthenticated users from accessing Collections route', () => {
+    it('should block unauthenticated users from accessing Collections route', async () => {
       const authStore = useAuthStore();
-      router.push('/collections');
+      await router.push('/collections'); // async
       
       // Collections route requires auth
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
-    it('should block unauthenticated users from accessing Statistics route', () => {
+    it('should block unauthenticated users from accessing Statistics route', async () => {
       const authStore = useAuthStore();
-      router.push('/statistics');
+      await router.push('/statistics');
       
       // Statistics route requires auth
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
-    it('should block unauthenticated users from accessing Home route', () => {
+    it('should block unauthenticated users from accessing Home route', async () => {
       const authStore = useAuthStore();
-      router.push('/home');
+      await router.push('/home');
       
       // Home route requires auth
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
-    it('should block unauthenticated users from accessing MediaDetail route', () => {
+    it('should block unauthenticated users from accessing MediaDetail route', async () => {
       const authStore = useAuthStore();
-      router.push('/media/1');
+      await router.push('/media/1');
       
       // Media detail route requires auth
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
-    it('should allow authenticated users to access protected routes', () => {
+    it('should allow authenticated users to access protected routes', async () => {
       const authStore = useAuthStore();
       authStore.user = {
         id: '1',
@@ -177,7 +177,7 @@ describe('Router Navigation Guards', () => {
         name: 'Test User'
       };
       authStore.authToken = 'test-token';
-      router.push('/collections');
+      await router.push('/collections');
       
       expect(authStore.isAuthenticated).toBe(true);
       expect(router.currentRoute.value.path).toBe('/collections');
@@ -185,16 +185,16 @@ describe('Router Navigation Guards', () => {
   });
 
   describe('Login Page Access', () => {
-    it('should allow unauthenticated users to access Login route', () => {
+    it('should allow unauthenticated users to access Login route', async () => {
       const authStore = useAuthStore();
-      router.push('/login');
+      await router.push('/login');
       
       // Login route does not require auth
       expect(authStore.isAuthenticated).toBe(false);
       expect(router.currentRoute.value.path).toBe('/login');
     });
 
-    it('should redirect authenticated users away from Login route', () => {
+    it('should redirect authenticated users away from Login route', async () => {
       const authStore = useAuthStore();
       authStore.user = {
         id: '1',
@@ -202,7 +202,7 @@ describe('Router Navigation Guards', () => {
         name: 'Test User'
       };
       authStore.authToken = 'test-token';
-      router.push('/login');
+      await router.push('/login');
 
       // Authenticated users should be redirected from login
       expect(authStore.isAuthenticated).toBe(true);
@@ -260,14 +260,14 @@ describe('Router Navigation Guards', () => {
       expect(authStore.isAuthenticated).toBe(false);
     });
 
-    it('should redirect to login and clear authentication after logout', () => {
+    it('should redirect to login and clear authentication after logout', async () => {
       const authStore = useAuthStore();
       authStore.user = {
         id: '1',
         email: 'test@example.com'
       };
       authStore.authToken = 'test-token';
-      router.push('/home');
+      await router.push('/home');
 
       // Simulate logout
       authStore.user = null;
