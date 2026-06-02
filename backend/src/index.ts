@@ -18,12 +18,8 @@ import { createMcpRoutes } from './mcp';
 import env from '../env';
 
 
-
-export const PORT = process.env.PORT || 3000;
-
 // ==================== Initialize Hono app ====================
 const app = new Hono<{ Variables: AuthType }>();
-export default app;
 
 
 app.use("*", async (c: any, next: any) => {
@@ -224,24 +220,5 @@ app.notFound((c: any) => {
 // Error handling middleware
 app.onError(errorHandler);
 
-
-
-
-// ==================== Start server ====================
-const globalBun = (globalThis as any).Bun; // for Node & Bun inter-compatibility
-if (import.meta.main && globalBun) {
-  const server = globalBun.serve({
-    port: Number(PORT),
-    fetch: app.fetch,
-  });
-  console.log(`🚀 Backend server running on port ${server.port}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    server.stop();
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-}
+export const PORT = process.env.PORT || 3000;
+export default app;
