@@ -13,11 +13,11 @@ permissions:
   contents: read
 
 env:
-  BUN_VERSION: "1.3.10"
+  BUN_VERSION: "1.3.14"
   DATABASE_URL: "postgresql://user:password@localhost:5432/dummy?schema=public"
   BETTER_AUTH_SECRET: "ci-secret-key-not-for-production"
   BETTER_AUTH_URL: "http://localhost:3000"
-  MCP_ENABLED: "true"
+  MCP_ENABLED: "false"
 
 jobs:
   validate-backend:
@@ -27,10 +27,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
@@ -53,10 +53,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
@@ -75,10 +75,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
@@ -104,7 +104,7 @@ jobs:
         run: bun run build
 
       - name: Upload delivery bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-delivery-bundle
           path: delivery
@@ -122,12 +122,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
 
       - name: Analyze code
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
