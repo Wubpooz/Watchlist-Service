@@ -14,7 +14,7 @@ permissions:
 
 env:
   BUN_VERSION: "1.3.14"
-  DATABASE_URL: "postgresql://user:password@localhost:5432/dummy?schema=public"
+  POSTGRES_URL: "postgres://postgres:postgres@localhost:5432/postgres"
   BETTER_AUTH_SECRET: "ci-secret-key-not-for-production"
   BETTER_AUTH_URL: "http://localhost:3000"
   MCP_ENABLED: "true"
