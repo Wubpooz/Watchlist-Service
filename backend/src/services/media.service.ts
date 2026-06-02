@@ -1,4 +1,4 @@
-import prisma from "@/db";
+import prisma from "@/db/index.js";
 import { CollectionRole, Visibility } from "@/generated/prisma/browser";
 import type { Prisma, Media } from "@/generated/prisma/browser";
 import { AppError } from "@/middleware/errorHandler";

@@ -1,6 +1,6 @@
-import prisma from "../db";
-import type { User, Prisma, Collection } from "@/generated/prisma/client";
-import type { PublicUser } from "@/types/types";
+import prisma from "../db/index.js";
+import type { User, Prisma, Collection } from "@/generated/prisma/client.js";
+import type { PublicUser } from "@/types/types.js";
 
 /**
  * Converts a database user record to a public user object

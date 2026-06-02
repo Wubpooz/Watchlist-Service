@@ -1,6 +1,7 @@
 {
   "name": "projet-aos-app5",
   "private": true,
+  "type": "module",
   "workspaces": [
     "backend",
     "frontend"

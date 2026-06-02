@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises';
-import app from '../src/index';
+import app from '../src/index.js';
 
 type OpenApiDocument = {
   paths?: Record<string, Record<string, { responses?: Record<string, { description?: string }> }>>;

@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test';
-import { createRouteTestApp, fixtures, jsonHeaders } from '../test/route-test-utils';
+import { createRouteTestApp, fixtures, jsonHeaders } from '../test/route-test-utils.js';
 
 const registerPassword = ['StrongPass', '123!'].join('');
 const newPassword = ['EvenStronger', '123!'].join('');
@@ -18,7 +18,7 @@ mock.module('@/middleware/auth', () => ({
   },
 }));
 
-const { authRoutes } = await import('./auth.routes');
+const { authRoutes } = await import('./auth.routes.js');
 
 describe('authRoutes', () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type Prisma, type Collection, type CollectionMedia, type CollectionUser, Visibility, CollectionRole } from '@/generated/prisma/client';
+import { type Prisma, type Collection, type CollectionMedia, type CollectionUser, Visibility, CollectionRole } from '@/generated/prisma/client.js';
 
 // Collection CRUD schemas
 export const createCollectionSchema = z.object({

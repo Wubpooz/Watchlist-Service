@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import env from '../../env';
-import { createAosMcpServer, type McpDependencies } from './server';
+import { createAosMcpServer, type McpDependencies } from './server.js';
 
 export const createMcpRoutes = (dependencies: Partial<McpDependencies> = {}) => {
   const router = new Hono();

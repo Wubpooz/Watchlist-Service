@@ -1,9 +1,9 @@
-import prisma from "@/db";
-import { CollectionRole } from "@/generated/prisma/browser";
-import type { Prisma, Collection, CollectionMedia, CollectionUser } from "@/generated/prisma/browser";
-import { AppError } from "@/middleware/errorHandler";
-import type { ListQuery, PaginatedData } from "@/types/types";
-import { queryUtils } from "@/services/query.utils";
+import prisma from "@/db/index.js";
+import { CollectionRole } from "@/generated/prisma/browser.js";
+import type { Prisma, Collection, CollectionMedia, CollectionUser } from "@/generated/prisma/browser.js";
+import { AppError } from "@/middleware/errorHandler.js";
+import type { ListQuery, PaginatedData } from "@/types/types.js";
+import { queryUtils } from "@/services/query.utils.js";
 
 type CollectionWhereClause = Omit<ListQuery, 'page' | 'pageSize' | 'sort' | 'order' | 'cursor'>;
 

@@ -1,4 +1,4 @@
-import prisma from './index';
+import prisma from './index.js';
 
 async function main() {
   // Clear existing data

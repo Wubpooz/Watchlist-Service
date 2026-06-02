@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { haveIBeenPwned, bearer, username } from "better-auth/plugins";
 
-import prisma from '../db/index';
+import prisma from '../db/index.js';
 import env from '../../env';
 
 const isDev = process.env.NODE_ENV !== 'production';

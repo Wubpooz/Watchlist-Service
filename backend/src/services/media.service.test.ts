@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { AppError } from '@/middleware/errorHandler';
+import { AppError } from '@/middleware/errorHandler.js';
 
 const MEDIA_SERVICE_MODULE = './media.service?unit';
 

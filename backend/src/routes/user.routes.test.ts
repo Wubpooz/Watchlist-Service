@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils';
+import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils.js';
 
 const userService: any = {
   getById: async () => fixtures.ownerUser,
@@ -9,7 +9,7 @@ const userService: any = {
 
 mock.module('@/services/user.service', () => ({ userService }));
 
-const { userRoutes } = await import('./user.routes');
+const { userRoutes } = await import('./user.routes.js');
 
 describe('userRoutes', () => {
   beforeEach(() => {

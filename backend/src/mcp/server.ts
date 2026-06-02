@@ -1,12 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { z } from 'zod';
-import { collectionService as defaultCollectionService } from '@/services/collection.service';
-import { mediaService as defaultMediaService } from '@/services/media.service';
-import { userService as defaultUserService } from '@/services/user.service';
-import { AppError, resolveApiErrorStatus } from '@/middleware/errorHandler';
-import { customLogger } from '@/middleware/requestLogger';
-import { resolveMcpSessionFromHeaders, type McpResolvedSession } from './auth';
+import { collectionService as defaultCollectionService } from '@/services/collection.service.js';
+import { mediaService as defaultMediaService } from '@/services/media.service.js';
+import { userService as defaultUserService } from '@/services/user.service.js';
+import { AppError, resolveApiErrorStatus } from '@/middleware/errorHandler.js';
+import { customLogger } from '@/middleware/requestLogger.js';
+import { resolveMcpSessionFromHeaders, type McpResolvedSession } from './auth.js';
 import {
   mcpAddCollectionMediaSchema,
   mcpAddCollectionMemberSchema,
@@ -26,7 +26,7 @@ import {
   mcpUpdateMediaSchema,
   mcpUpdateOwnProfileSchema,
   mcpUserIdSchema,
-} from './schemas';
+} from './schemas.js';
 
 export type McpDependencies = {
   collectionService: typeof defaultCollectionService;

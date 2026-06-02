@@ -6,15 +6,15 @@ import { requestLogger } from './middleware/requestLogger';
 import { openAPIRouteHandler } from 'hono-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 
-import { auth, type AuthType } from "./middleware/auth";
-import { errorHandler } from './middleware/errorHandler';
-import prisma from './db/index';
+import { auth, type AuthType } from "./middleware/auth.js";
+import { errorHandler } from './middleware/errorHandler.js';
+import prisma from './db/index.js';
 
-import { authRoutes } from './routes/auth.routes';
-import { userRoutes } from './routes/user.routes';
-import { mediaRoutes } from './routes/media.routes';
-import { collectionRoutes } from './routes/collection.routes';
-import { createMcpRoutes } from './mcp';
+import { authRoutes } from './routes/auth.routes.js';
+import { userRoutes } from './routes/user.routes.js';
+import { mediaRoutes } from './routes/media.routes.js';
+import { collectionRoutes } from './routes/collection.routes.js';
+import { createMcpRoutes } from './mcp/index.js';
 import env from '../env';
 
 

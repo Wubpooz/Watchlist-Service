@@ -1,4 +1,4 @@
-import app from './index';
+import app from './index.js';
 
 export const PORT = process.env.PORT || 3000;
 

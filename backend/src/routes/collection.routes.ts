@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { describeRoute, resolver, validator } from 'hono-openapi';
-import { collectionService } from '@/services/collection.service';
-import type { AuthType } from '@/middleware/auth';
+import { collectionService } from '@/services/collection.service.js';
+import type { AuthType } from '@/middleware/auth.js';
 import { 
   createCollectionSchema, 
   collectionResponseSchema,
@@ -19,9 +19,9 @@ import {
   updateCollectionMemberSchema,
   respondToInvitationSchema,
   invitationResponseSchema,
-} from '@/schemas/collection.schema';
-import { AppError } from '@/middleware/errorHandler';
-import { CollectionRole } from '@/generated/prisma/client';
+} from '@/schemas/collection.schema.js';
+import { AppError } from '@/middleware/errorHandler.js';
+import { CollectionRole } from '@/generated/prisma/client.js';
 
 export const collectionRoutes = new Hono<{ Variables: AuthType }>();
 
