@@ -188,8 +188,6 @@ describe('Router Navigation Guards', () => {
     it('should allow unauthenticated users to access Login route', async () => {
       const authStore = useAuthStore();
 
-      await router.push('/');
-
       await router.push('/login');
       
       // Login route does not require auth
@@ -205,6 +203,9 @@ describe('Router Navigation Guards', () => {
         name: 'Test User'
       };
       authStore.authToken = 'test-token';
+
+      await router.push('/'); // avoids singleton state leakage
+
       await router.push('/login');
 
       // Authenticated users should be redirected from login
