@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { createPinia, setActivePinia } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
+import router from '@/router';
 
 // Mock localStorage for tests
 class LocalStorageMock {
@@ -24,11 +25,13 @@ class LocalStorageMock {
 }
 
 (globalThis as any).localStorage = new LocalStorageMock();
+(globalThis as any).sessionStorage = new LocalStorageMock();
 
 describe('Authentication Validation', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe('Authentication State', () => {
@@ -125,35 +128,45 @@ describe('Authentication Validation', () => {
 describe('Router Navigation Guards', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    localStorage.clear();
+    sessionStorage.clear();
   });
-
+  
   describe('Protected Route Access', () => {
     it('should block unauthenticated users from accessing Collections route', () => {
       const authStore = useAuthStore();
+      router.push('/collections');
       
       // Collections route requires auth
       expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
 
     it('should block unauthenticated users from accessing Statistics route', () => {
       const authStore = useAuthStore();
+      router.push('/statistics');
       
       // Statistics route requires auth
       expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
 
     it('should block unauthenticated users from accessing Home route', () => {
       const authStore = useAuthStore();
+      router.push('/home');
       
       // Home route requires auth
       expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
 
     it('should block unauthenticated users from accessing MediaDetail route', () => {
       const authStore = useAuthStore();
+      router.push('/media/1');
       
       // Media detail route requires auth
       expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
 
     it('should allow authenticated users to access protected routes', () => {
@@ -164,17 +177,21 @@ describe('Router Navigation Guards', () => {
         name: 'Test User'
       };
       authStore.authToken = 'test-token';
+      router.push('/collections');
       
       expect(authStore.isAuthenticated).toBe(true);
+      expect(router.currentRoute.value.path).toBe('/collections');
     });
   });
 
   describe('Login Page Access', () => {
     it('should allow unauthenticated users to access Login route', () => {
       const authStore = useAuthStore();
+      router.push('/login');
       
       // Login route does not require auth
       expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
 
     it('should redirect authenticated users away from Login route', () => {
@@ -185,9 +202,11 @@ describe('Router Navigation Guards', () => {
         name: 'Test User'
       };
       authStore.authToken = 'test-token';
-      
+      router.push('/login');
+
       // Authenticated users should be redirected from login
       expect(authStore.isAuthenticated).toBe(true);
+      expect(router.currentRoute.value.path).toBe('/home');
     });
   });
 
@@ -239,6 +258,23 @@ describe('Router Navigation Guards', () => {
       authStore.authToken = null;
       
       expect(authStore.isAuthenticated).toBe(false);
+    });
+
+    it('should redirect to login and clear authentication after logout', () => {
+      const authStore = useAuthStore();
+      authStore.user = {
+        id: '1',
+        email: 'test@example.com'
+      };
+      authStore.authToken = 'test-token';
+      router.push('/home');
+
+      // Simulate logout
+      authStore.user = null;
+      authStore.authToken = null;
+
+      expect(authStore.isAuthenticated).toBe(false);
+      expect(router.currentRoute.value.path).toBe('/login');
     });
   });
 });
