@@ -1,4 +1,4 @@
-import { auth, type AuthType } from '@/middleware/auth';
+import { auth, type AuthType } from '../middleware/auth.js';
 
 export type HeaderSource = Pick<Headers, 'get'> & Partial<Pick<Headers, 'entries' | 'forEach'>>;
 

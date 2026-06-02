@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { queryUtils } from './query.utils';
+import { queryUtils } from './query.utils.js';
 
 describe('queryUtils', () => {
   it('parses comma-separated strings and trims empty entries', () => {

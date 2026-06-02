@@ -1,3 +1,3 @@
-export { createMcpRoutes } from './http';
-export { createAosMcpServer, type McpDependencies } from './server';
-export { resolveMcpSessionFromHeaders, type McpResolvedSession } from './auth';
+export { createMcpRoutes } from './http.js';
+export { createAosMcpServer, type McpDependencies } from './server.js';
+export { resolveMcpSessionFromHeaders, type McpResolvedSession } from './auth.js';

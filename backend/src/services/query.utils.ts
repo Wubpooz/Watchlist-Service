@@ -1,6 +1,5 @@
-import type { Prisma } from "@/generated/prisma/browser";
-import { Visibility } from "@/generated/prisma/browser";
-import type { ListQuery, PaginationLinks } from "@/types/types";
+import { Visibility, type Prisma } from "@prisma/client";
+import type { ListQuery, PaginationLinks } from "../types/types.js";
 
 /**
  * Utility functions for query building, pagination, and data transformation

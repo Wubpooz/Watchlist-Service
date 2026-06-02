@@ -1,12 +1,28 @@
 import { Hono } from 'hono';
 import { describeRoute, resolver, validator } from 'hono-openapi';
 import { APIError } from 'better-auth/api';
-import { auth } from '@/middleware/auth';
-import type { AuthType } from '@/middleware/auth';
-import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema } from '@/schemas/auth.schema';
-import { createAuthError, resolveApiErrorStatus, AppError } from '@/middleware/errorHandler';
+import { auth } from '../middleware/auth.js';
+import type { AuthType } from '../middleware/auth.js';
+import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema } from '../schemas/auth.schema.js';
+import { createAuthError, resolveApiErrorStatus, AppError } from '../middleware/errorHandler.js';
 
 export const authRoutes = new Hono<{ Variables: AuthType }>();
+
+// Strips sensitive data from validation error responses
+const secureValidationHook = (result: any, c: any) => {
+  if (!result.success) {
+    const safeData = result.data ? { ...result.data } : {};
+    // Delete cleartext passwords before returning to the client
+    delete safeData.password;
+    delete safeData.newPassword;
+
+    return c.json({
+      success: false,
+      error: result.error.issues || result.error,
+      // data: safeData
+    }, 400);
+  }
+};
 
 // POST /register - Register a new user account
 authRoutes.post(
@@ -38,7 +54,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', registerBodySchema),
+  validator('json', registerBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -69,10 +85,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    if (error instanceof Error) {
-      throw new AppError(error.message, 500);
-    }
-    throw createAuthError('Registration failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during registration. Please try again later.', error);
   }
   }
 );
@@ -118,7 +132,7 @@ authRoutes.post(
       401: { description: 'Invalid credentials' },
     },
   }),
-  validator('json', loginBodySchema),
+  validator('json', loginBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -169,7 +183,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Login failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during login. Please try', error);
   }
   }
 );
@@ -211,7 +226,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Logout failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during logout. Please try again.', error);
   }
   }
 );
@@ -246,7 +262,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', forgotPasswordBodySchema),
+  validator('json', forgotPasswordBodySchema, secureValidationHook),
   async (c: any) => {
   if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
     return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -266,7 +282,8 @@ authRoutes.post(
     if (error instanceof APIError) {
       throw new AppError(error.message, resolveApiErrorStatus(error));
     }
-    throw createAuthError('Password reset failed', error);
+    console.error('[Auth Route Error]:', error);
+    throw createAuthError('An unexpected server error occurred during password reset. Please try again.', error);
   }
   }
 );
@@ -301,7 +318,7 @@ authRoutes.post(
       400: { description: 'Invalid payload or content type' },
     },
   }),
-  validator('json', resetPasswordBodySchema),
+  validator('json', resetPasswordBodySchema, secureValidationHook),
   async (c: any) => {
     if (!c.req.raw.headers.get('Content-Type')?.includes('application/json')) {
       return c.json({ error: 'Content-Type must be application/json' }, 400);
@@ -321,7 +338,8 @@ authRoutes.post(
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }
-      throw createAuthError('Password reset failed', error);
+      console.error('[Auth Route Error]:', error);
+      throw createAuthError('An unexpected server error occurred during password reset. Please try again.', error);
     }
   }
 );
@@ -369,6 +387,7 @@ authRoutes.get(
       if (error instanceof APIError) {
         throw new AppError(error.message, resolveApiErrorStatus(error));
       }
+      console.error('[Auth Route Error]:', error);
       throw createAuthError('Failed to get authenticated user profile and session info', error);
     }
   }

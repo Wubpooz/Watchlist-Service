@@ -1,6 +1,6 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import env from '../../env';
-import { createAosMcpServer } from './server';
+import { createAosMcpServer } from './server.js';
+import env from '../../env.js';
 
 async function main() {
   if (!env.MCP_ENABLED) {

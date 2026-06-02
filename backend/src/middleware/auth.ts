@@ -3,8 +3,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { haveIBeenPwned, bearer, username } from "better-auth/plugins";
 
-import prisma from '../db/index';
-import env from '../../env';
+import prisma from '../db/index.js';
+import env from '../../env.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -21,17 +21,17 @@ export const auth = betterAuth({
   },
   emailAndPassword: { 
     enabled: true, 
-  }, 
-  socialProviders: { 
-    github: { 
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    },
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
   },
+  // socialProviders: { 
+  //   github: { 
+  //     clientId: env.GITHUB_CLIENT_ID,
+  //     clientSecret: env.GITHUB_CLIENT_SECRET,
+  //   },
+  //   google: {
+  //     clientId: env.GOOGLE_CLIENT_ID,
+  //     clientSecret: env.GOOGLE_CLIENT_SECRET,
+  //   },
+  // },
   advanced: {
     defaultCookieAttributes: {
       sameSite: isDev ? "lax" : "none",
@@ -40,9 +40,9 @@ export const auth = betterAuth({
     }
   },
     plugins: [ 
-        username(),
-        bearer(),
-        haveIBeenPwned()
+      username(),
+      bearer(),
+      haveIBeenPwned()
     ],
   logger: {
     level: "debug"

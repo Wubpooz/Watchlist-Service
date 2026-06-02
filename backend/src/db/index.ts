@@ -1,14 +1,17 @@
-import { PrismaClient } from '../generated/prisma/client';
+// Disables strict self-signed TLS verification for the Node.js process
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
 const isProd = process.env.NODE_ENV === 'production';
 
 const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.POSTGRES_URL,
   // Limit connection pool size in serverless environments to prevent exhaustion
   max: isProd ? 2 : 10, 
-  idleTimeoutMillis: 10000,
+  idleTimeoutMillis: 10000
 });
 
 const adapter = new PrismaPg(pool);

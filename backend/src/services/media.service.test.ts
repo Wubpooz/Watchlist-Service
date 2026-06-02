@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { AppError } from '@/middleware/errorHandler';
+import { AppError } from '../middleware/errorHandler.js';
 
 const MEDIA_SERVICE_MODULE = './media.service?unit';
 
@@ -15,7 +15,7 @@ const prismaMock = {
   $transaction: mock(async (cb: (tx: any) => Promise<any>) => cb(prismaMock)),
 };
 
-mock.module('@/db', () => ({
+mock.module('../db', () => ({
   default: prismaMock,
 }));
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils';
+import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils.js';
 
 const mediaService: any = {
   createMedia: async () => fixtures.media,
@@ -9,9 +9,9 @@ const mediaService: any = {
   deleteById: async () => true,
 };
 
-mock.module('@/services/media.service', () => ({ mediaService }));
+mock.module('../services/media.service', () => ({ mediaService }));
 
-const { mediaRoutes } = await import('./media.routes');
+const { mediaRoutes } = await import('./media.routes.js');
 
 describe('mediaRoutes', () => {
   beforeEach(() => {

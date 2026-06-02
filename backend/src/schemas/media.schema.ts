@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type Prisma, type Media, MediaType } from '@/generated/prisma/client';
+import { type Prisma, type Media, MediaType } from '@prisma/client';
 
 export const createMediaSchema = z.object({
   collectionId: z.uuid().optional().meta( {example: 'col_123'} ),

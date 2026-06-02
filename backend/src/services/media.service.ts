@@ -1,9 +1,9 @@
-import prisma from "@/db";
-import { CollectionRole, Visibility } from "@/generated/prisma/browser";
-import type { Prisma, Media } from "@/generated/prisma/browser";
-import { AppError } from "@/middleware/errorHandler";
-import type { ListQuery, MediaWhereClause, PaginatedData } from "@/types/types";
-import { queryUtils } from "@/services/query.utils";
+import { CollectionRole, Visibility } from "@prisma/client";
+import prisma from "../db/index.js";
+import type { Prisma, Media } from "@prisma/client";
+import { AppError } from "../middleware/errorHandler.js";
+import type { ListQuery, MediaWhereClause, PaginatedData } from "../types/types.js";
+import { queryUtils } from "../services/query.utils.js";
 
 export const mediaService = {
   /**

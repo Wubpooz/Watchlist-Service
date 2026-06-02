@@ -2,28 +2,24 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { csrf } from 'hono/csrf';
 import { requestId } from 'hono/request-id';
-import { requestLogger } from './middleware/requestLogger';
 import { openAPIRouteHandler } from 'hono-openapi';
 import { swaggerUI } from '@hono/swagger-ui';
 
-import { auth, type AuthType } from "./middleware/auth";
-import { errorHandler } from './middleware/errorHandler';
-import prisma from './db/index';
+import { requestLogger } from './middleware/requestLogger.js';
+import { auth, type AuthType } from "./middleware/auth.js";
+import { errorHandler } from './middleware/errorHandler.js';
+import prisma from './db/index.js';
 
-import { authRoutes } from './routes/auth.routes';
-import { userRoutes } from './routes/user.routes';
-import { mediaRoutes } from './routes/media.routes';
-import { collectionRoutes } from './routes/collection.routes';
-import { createMcpRoutes } from './mcp';
-import env from '../env';
+import { authRoutes } from './routes/auth.routes.js';
+import { userRoutes } from './routes/user.routes.js';
+import { mediaRoutes } from './routes/media.routes.js';
+import { collectionRoutes } from './routes/collection.routes.js';
+import { createMcpRoutes } from './mcp/index.js';
+import env from '../env.js';
 
-
-
-export const PORT = process.env.PORT || 3000;
 
 // ==================== Initialize Hono app ====================
 const app = new Hono<{ Variables: AuthType }>();
-export default app;
 
 
 app.use("*", async (c: any, next: any) => {
@@ -224,24 +220,5 @@ app.notFound((c: any) => {
 // Error handling middleware
 app.onError(errorHandler);
 
-
-
-
-// ==================== Start server ====================
-const globalBun = (globalThis as any).Bun; // for Node & Bun inter-compatibility
-if (import.meta.main && globalBun) {
-  const server = globalBun.serve({
-    port: Number(PORT),
-    fetch: app.fetch,
-  });
-  console.log(`🚀 Backend server running on port ${server.port}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    server.stop();
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-}
+export const PORT = process.env.PORT || 3000;
+export default app;

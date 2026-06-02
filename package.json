@@ -1,6 +1,7 @@
 {
   "name": "projet-aos-app5",
   "private": true,
+  "type": "module",
   "workspaces": [
     "backend",
     "frontend"
@@ -27,7 +28,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.3",
     "typescript": "^6.0.3"
   }
 }

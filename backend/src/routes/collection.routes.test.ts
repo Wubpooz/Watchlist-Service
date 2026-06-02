@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils';
-import { clone } from '../test/common-test-utils';
-import { AppError } from '@/middleware/errorHandler';
+import { createRouteTestApp, fixtures, ids, jsonHeaders } from '../test/route-test-utils.js';
+import { clone } from '../test/common-test-utils.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const collectionService: any = {
   createCollection: async () => fixtures.collection,
@@ -21,9 +21,9 @@ const collectionService: any = {
   respondToInvitation: async (_collectionId: string, _userId: string, accept: boolean) => (accept ? { ...fixtures.collectionMember, accepted: true } : null),
 };
 
-mock.module('@/services/collection.service', () => ({ collectionService }));
+mock.module('../services/collection.service', () => ({ collectionService }));
 
-const { collectionRoutes } = await import('./collection.routes');
+const { collectionRoutes } = await import('./collection.routes.js');
 
 function installStatefulScenarioService() {
   const state = {
