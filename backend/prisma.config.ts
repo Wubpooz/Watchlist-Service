@@ -7,6 +7,7 @@ export default defineConfig({
     seed: "src/db/seed.ts",
   },
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://johndoe:randompassword@localhost:5432/mydb",
+    url: process.env.POSTGRES_URL || "postgresql://johndoe:randompassword@localhost:5432/mydb",
+    directUrl = env("POSTGRES_URL_NON_POOLING")
   },
 });

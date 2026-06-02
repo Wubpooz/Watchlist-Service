@@ -29,13 +29,8 @@ export const useAuthStore = defineStore('auth', () => {
       });
 
       if (!response.ok) {
-        // Parse the error response here as well
         const errData = await response.json().catch(() => null);
-        
-        if (errData?.error && Array.isArray(errData.error)) {
-          throw new Error(errData.error[0].message);
-        }
-        throw new Error(errData?.error || errData?.message || 'Login failed');
+        throw new Error(extractErrorMessage(errData, 'Registration failed'));
       }
 
       const token = response.headers.get('set-auth-token');
@@ -73,15 +68,8 @@ export const useAuthStore = defineStore('auth', () => {
       });
 
       if (!response.ok) {
-        // Parse the error response from the backend
         const errData = await response.json().catch(() => null);
-        
-        // Handle Zod validation arrays
-        if (errData?.error && Array.isArray(errData.error)) {
-          throw new Error(errData.error[0].message); // e.g., "Too small: expected string to have >=8 characters"
-        }
-        // Handle standard string errors
-        throw new Error(errData?.error || errData?.message || 'Registration failed');
+        throw new Error(extractErrorMessage(errData, 'Registration failed'));
       }
 
       // Auto-login after registration
@@ -146,3 +134,21 @@ export const useAuthStore = defineStore('auth', () => {
     fetchUserInfo,
   };
 });
+
+
+const extractErrorMessage = (errData: any, defaultMsg: string): string => {
+  if (!errData) return defaultMsg;
+  
+  if (errData.error) {
+    if (Array.isArray(errData.error)) {
+      return errData.error[0].message; // Zod validation errors
+    }
+    if (typeof errData.error === 'object' && errData.error.message) {
+      return String(errData.error.message); // Prisma/System errors like your DB crash
+    }
+    if (typeof errData.error === 'string') {
+      return errData.error; // Custom string errors
+    }
+  }
+  return errData.message || defaultMsg;
+};

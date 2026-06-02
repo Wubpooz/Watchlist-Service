@@ -1,6 +1,7 @@
 const env = {
   PORT: process.env.PORT || 3000,
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/mydb',
+  POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL || "postgresql://user:password@localhost:5432/mydb",
+  POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING || "postgresql://user:password@localhost:5432/mydb",
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:4200',
   MCP_ENABLED: (process.env.MCP_ENABLED ?? (process.env.NODE_ENV !== 'production' ? 'true' : 'false')) === 'true',
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
