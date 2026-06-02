@@ -9,6 +9,9 @@ const pool = new Pool({
   // Limit connection pool size in serverless environments to prevent exhaustion
   max: isProd ? 2 : 10, 
   idleTimeoutMillis: 10000,
+  ssl: {
+    rejectUnauthorized: false // Tells Node.js to accept Supabase's proxy certificate OR download SUPABASE_DB_CA
+  }
 });
 
 const adapter = new PrismaPg(pool);
