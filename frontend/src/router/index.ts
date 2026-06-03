@@ -9,6 +9,7 @@ const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
 const LayoutPage = () => import('@/pages/LayoutPage.vue');
 const LandingPage = () => import('@/views/LandingView.vue');
+const NotFoundPage = () => import('@/pages/NotFoundPage.vue');
 
 const routes: RouteRecordRaw[] = [
   {
@@ -53,6 +54,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       }
     ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFoundPage,
+    meta: { requiresAuth: false }
   }
 ];
 
