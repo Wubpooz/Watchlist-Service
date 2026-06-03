@@ -7,7 +7,7 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-const isLogin = ref(true);
+const isLogin = ref(route.query.signup !== 'true');
 const email = ref('');
 const password = ref('');
 const name = ref('');

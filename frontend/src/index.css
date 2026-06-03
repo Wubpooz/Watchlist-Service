@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-surface: #161616;
+  --color-error: #da1e28;
+  --color-secondary: #525252;
+  --color-on-tertiary: #ffffff;
+  --color-surface-bright: #ffffff;
+  --color-on-background: #161616;
+  --color-surface-container: #f4f4f4;
+  --color-primary-container: #0f62fe;
+  --color-inverse-on-surface: #f4f4f4;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest: #e0e0e0;
+  --color-surface-dim: #8d8d8d;
+  --color-on-secondary: #ffffff;
+  --color-primary: #0f62fe;
+  --color-on-primary-container: #ffffff;
+  --color-outline-variant: #e0e0e0;
+  --color-primary-fixed: #0f62fe;
+  --color-on-error: #ffffff;
+  --color-inverse-surface: #161616;
+  --color-surface: #ffffff;
+  --color-on-surface-variant: #525252;
+  --color-surface-container-high: #e0e0e0;
+  --color-surface-tint: #0f62fe;
+  --color-on-primary: #ffffff;
+  --color-surface-container-low: #f4f4f4;
+  --color-surface-variant: #e0e0e0;
+  --color-outline: #8d8d8d;
+  --color-background: #ffffff;
+
+  --radius-default: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-full: 0px;
+
+  --font-headline: "IBM Plex Sans", sans-serif;
+  --font-display: "IBM Plex Sans", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-label: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+@utility material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility body-text {
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  line-height: 1.5;
+}
+
+@utility cta-text {
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  font-size: 14px;
+}
+
+@utility carbon-border {
+  border: 1px solid #e0e0e0;
+}
+
+@utility carbon-border-b {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+@utility carbon-border-t {
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Enforce flat geometry everywhere */
+* {
+  border-radius: 0px !important;
+}
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background-color: #ffffff;
+  color: #161616;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-weight: 300;
+}

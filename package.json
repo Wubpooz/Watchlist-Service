@@ -10,6 +10,8 @@
     "dev": "bun --filter backend dev",
     "dev:frontend": "bun --filter frontend dev",
     "dev:all": "concurrently \"bun --filter backend dev\" \"bun --filter frontend dev\"",
+    "front": "bun run dev:frontend",
+    "back": "bun run dev",
     "test": "bun --filter backend test",
     "mcp:stdio": "bun --filter backend mcp:stdio",
     "mcp:test": "bun --filter backend mcp:test",
@@ -22,8 +24,8 @@
     "prisma:studio": "bun --filter backend prisma:studio",
     "openapi:generate": "bun --filter backend openapi:generate",
     "setup:db": "docker run --name aos-postgres -e POSTGRES_USER=johndoe -e POSTGRES_PASSWORD=randompassword -e POSTGRES_DB=mydb -p 5432:5432 -d postgres:16 || docker start aos-postgres",
-    "setup:env": "powershell -Command \"(Get-Content backend\\.env) -replace '^DATABASE_URL=.*', 'DATABASE_URL=postgresql://johndoe:randompassword@localhost:5432/mydb' | Set-Content backend\\.env\"",
-    "dev:stack": "bun run setup:db && timeout /t 2 /nobreak && bun run setup:env && bun install && bun run prisma:generate && bun run prisma:seed && bun run dev",
+    "setup:env": "bun run scripts/setup-env.ts",
+    "dev:stack": "bun run setup:env && bun install && bun run prisma:generate && bun run prisma:seed && bun run dev:all",
     "postinstall": "bun --filter backend prisma:generate"
   },
   "devDependencies": {

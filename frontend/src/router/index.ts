@@ -8,8 +8,15 @@ const CollectionsPage = () => import('@/pages/CollectionsPage.vue');
 const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
 const LayoutPage = () => import('@/pages/LayoutPage.vue');
+const LandingPage = () => import('@/views/LandingView.vue');
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/landing',
+    name: 'Landing',
+    component: LandingPage,
+    meta: { requiresAuth: false }
+  },
   {
     path: '/login',
     name: 'Login',
@@ -62,10 +69,10 @@ router.beforeEach((to, _from, next) => {
   const requiresAuth = to.meta.requiresAuth;
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Redirect to login if route requires auth and user is not authenticated
-    next({ name: 'Login', query: { redirect: to.fullPath } });
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
-    // Redirect to home if user is already logged in and tries to visit login
+    // Redirect to landing if route requires auth and user is not authenticated
+    next({ name: 'Landing', query: { redirect: to.fullPath } });
+  } else if ((to.path === '/landing' || to.path === '/login') && authStore.isAuthenticated) {
+    // Redirect to home if user is already logged in and tries to visit landing or login
     next({ name: 'Home' });
   } else {
     next();
