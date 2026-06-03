@@ -81,24 +81,6 @@ onUnmounted(() => {
           <img src="/assets/images/logo.png" alt="Watchlist Service Logo" class="h-6 w-6 object-contain group-hover:rotate-12 transition-transform duration-300" />
           <span class="text-lg font-headline font-light tracking-tight text-on-surface">Watchlist Service</span>
         </a>
-        <div class="hidden md:flex items-center gap-6 h-full">
-          <a class="relative text-on-surface-variant hover:text-on-surface transition-colors duration-150 py-3 text-sm flex items-center h-full group" href="#">
-            Solutions
-            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-200"></span>
-          </a>
-          <a class="relative text-primary font-medium py-3 text-sm flex items-center h-full group" href="#">
-            Platform
-            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-primary"></span>
-          </a>
-          <a class="relative text-on-surface-variant hover:text-on-surface transition-colors duration-150 py-3 text-sm flex items-center h-full group" href="#">
-            Analytics
-            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-200"></span>
-          </a>
-          <a class="relative text-on-surface-variant hover:text-on-surface transition-colors duration-150 py-3 text-sm flex items-center h-full group" href="#">
-            Pricing
-            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-200"></span>
-          </a>
-        </div>
       </div>
       <div class="flex items-center gap-4">
         <button @click="router.push('/login')" class="text-on-surface-variant hover:text-on-surface transition-colors duration-150 cursor-pointer text-sm font-medium px-2 py-1">Log In</button>
@@ -135,15 +117,15 @@ onUnmounted(() => {
       <!-- Stats Bar -->
       <section class="w-full bg-inverse-surface text-on-secondary py-12 px-6 md:px-12 lg:px-24 select-none">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-outline">
-          <div class="flex flex-col md:pr-8 pt-4 md:pt-0 hover:translate-x-1 transition-transform duration-200">
+          <div class="flex flex-col md:pr-8 pt-4 md:pt-0">
             <span class="text-4xl md:text-5xl font-light text-surface-bright mb-2">1.2M+</span>
             <span class="text-xs text-surface-dim font-bold tracking-wider uppercase">Items Tracked</span>
           </div>
-          <div class="flex flex-col md:px-8 pt-4 md:pt-0 hover:translate-x-1 transition-transform duration-200">
+          <div class="flex flex-col md:px-8 pt-4 md:pt-0">
             <span class="text-4xl md:text-5xl font-light text-surface-bright mb-2">700K+</span>
             <span class="text-xs text-surface-dim font-bold tracking-wider uppercase">Active Curators</span>
           </div>
-          <div class="flex flex-col md:pl-8 pt-4 md:pt-0 hover:translate-x-1 transition-transform duration-200">
+          <div class="flex flex-col md:pl-8 pt-4 md:pt-0">
             <span class="text-4xl md:text-5xl font-light text-surface-bright mb-2">99.9%</span>
             <span class="text-xs text-surface-dim font-bold tracking-wider uppercase">Uptime SLA</span>
           </div>
@@ -235,15 +217,16 @@ onUnmounted(() => {
               Curate together in real-time. Share watchlists with granular role-based access control and monitor updates via the live activity feed.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-              <div class="border-l-2 border-primary pl-4 hover:translate-x-1 transition-transform duration-200">
+              <div class="border-l-2 border-primary pl-4">
                 <h4 class="font-medium text-on-surface">Granular RBAC</h4>
                 <p class="text-sm text-on-surface-variant mt-1">Assign Owner, Collaborator, or Reader permissions.</p>
               </div>
-              <div class="border-l-2 border-outline pl-4 hover:translate-x-1 transition-transform duration-200">
+              <div class="border-l-2 border-primary pl-4">
                 <h4 class="font-medium text-on-surface">Live Activity</h4>
                 <p class="text-sm text-on-surface-variant mt-1">Real-time WebSocket updates for all list changes.</p>
               </div>
             </div>
+
           </div>
 
           <!-- Right Column: UI Card Mockup -->
@@ -312,6 +295,8 @@ onUnmounted(() => {
                 </TransitionGroup>
               </div>
             </div>
+
+
           </div>
         </div>
       </section>
@@ -334,8 +319,9 @@ onUnmounted(() => {
               </p>
             </div>
             <div class="relative w-full h-72 overflow-hidden border border-outline-variant bg-surface-container-high">
-              <img src="/assets/images/server_racks.jpg" alt="Enterprise server racks representing self-hosted control" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700">
+              <img src="/assets/images/server_racks.jpg" alt="Enterprise server racks representing self-hosted control" class="w-full h-full object-cover">
             </div>
+
           </div>
 
           <div class="grid grid-cols-1 gap-4">
