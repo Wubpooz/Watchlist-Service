@@ -45,7 +45,7 @@
         ]
       }
       ```
-    - [ ] Update CORS and CSRF in `backend/src/index.ts`:  
+    - [x] Update CORS and CSRF in `backend/src/index.ts`:  
       ```typescript
       // Restruc the pool size in production to prevent exhausting database connections in serverless environments
       import { PrismaClient } from '@prisma/client';
@@ -98,4 +98,4 @@
       ```
     
 - [x] Gestion des secrets et variables d'environnement
-- [ ] Tests d'intégration dans le pipeline CI/CD pour valider les fonctionnalités avant le déploiement.
+- [x] Tests d'intégration dans le pipeline CI/CD pour valider les fonctionnalités avant le déploiement.

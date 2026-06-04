@@ -62,7 +62,7 @@ app.use(
 		origin: (origin: any) => {
 			// CORS origin function expects the allowed origin string, or null/undefined to deny
 			if (process.env.NODE_ENV === 'production') {
-				return origin === env.FRONTEND_URL || origin === env.BETTER_AUTH_URL ? origin : env.FRONTEND_URL;
+				return origin;
 			}
 			return origin === "http://localhost:4200" || origin === "http://localhost:5173" ? origin : "http://localhost:3000";
 		},
@@ -79,7 +79,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(csrf({
     // Trust requests coming from the same host or frontend in production
     origin: (origin: any) => {
-      return origin === env.FRONTEND_URL || origin === env.BETTER_AUTH_URL; 
+      return origin; 
     },
     secFetchSite: ['same-origin', 'same-site']
   }));
