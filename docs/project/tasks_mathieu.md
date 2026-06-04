@@ -1,25 +1,25 @@
 # Tâches Mathieu
 
 ## Page Statistiques
-- Présentation des statistiques de l'utilisateur
-- Tests du bon calcul des statistiques et de leur affichage dans l'interface avant le déploiement.
+- [ ] Présentation des statistiques de l'utilisateur
+- [ ] Tests du bon calcul des statistiques et de leur affichage dans l'interface avant le déploiement.
 
 
 ## UI
-- **Logique spécifique 1 (Données dérivées) :** Création de variables calculées (`computed`) basées sur le store Pinia pour alimenter les graphiques ou compteurs (totaux, moyennes, répartition par type).
-- **Logique spécifique 2 (Teleport & Slots) :** Développement d'un composant de modale réutilisable rendu en dehors de l'arbre DOM principal, incluant l'injection de contenu dynamique.
+- [ ] **Logique spécifique 1 (Données dérivées) :** Création de variables calculées (`computed`) basées sur le store Pinia pour alimenter les graphiques ou compteurs (totaux, moyennes, répartition par type).
+- [ ] **Logique spécifique 2 (Teleport & Slots) :** Développement d'un composant de modale réutilisable rendu en dehors de l'arbre DOM principal, incluant l'injection de contenu dynamique.
 
 
 
 ## CI/CD
-- Déploiement Vercel (will use the same domain, avoids CORS issues and better-auth session cookie problems  and cleaner).
-  - On Vercel:
+- [x] Déploiement Vercel (will use the same domain, avoids CORS issues and better-auth session cookie problems  and cleaner).
+  - [x] On Vercel:
     - Keep root directory as `.`
     - Build command: `cd frontend && bun install && bun run build`
     - Output directory: `frontend/dist`
     - Configure environment variables for production (DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL, FRONTEND_URL, NODE_ENV).
-  - Hosted cloud DB (Neon or Supabase) and use the connection URI (for Neon, use the -pooler one) & migrate the data before deployment with `bunx prisma migrate deploy --schema=backend/prisma/schema.prisma` in Vercel or locally.
-  - Update the code:
+  - [x] Hosted cloud DB (Neon or Supabase) and use the connection URI (for Neon, use the -pooler one) & migrate the data before deployment with `bunx prisma migrate deploy --schema=backend/prisma/schema.prisma` in Vercel or locally.
+  - [x] Update the code:
     - Create `api/index.ts` in the root of the repository to export the Hono app using Hono's Vercel adapter: 
       ```typescript
       // api/index.ts (create in the repository root)
@@ -34,7 +34,7 @@
       export const OPTIONS = handle(app);
       ```
 
-    - Create `vercel.json` at the root of your repository to route all `/api/*` traffic to our serverless function:
+    - [x] Create `vercel.json` at the root of your repository to route all `/api/*` traffic to our serverless function:
       ```json
       {
         "rewrites": [
@@ -45,7 +45,7 @@
         ]
       }
       ```
-    - Update CORS and CSRF in `backend/src/index.ts`:  
+    - [ ] Update CORS and CSRF in `backend/src/index.ts`:  
       ```typescript
       // Restruc the pool size in production to prevent exhausting database connections in serverless environments
       import { PrismaClient } from '@prisma/client';
@@ -97,5 +97,5 @@
       }
       ```
     
-- Gestion des secrets et variables d'environnement
-- Tests d'intégration dans le pipeline CI/CD pour valider les fonctionnalités avant le déploiement.
+- [x] Gestion des secrets et variables d'environnement
+- [ ] Tests d'intégration dans le pipeline CI/CD pour valider les fonctionnalités avant le déploiement.
