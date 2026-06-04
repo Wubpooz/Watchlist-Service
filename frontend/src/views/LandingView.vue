@@ -75,7 +75,7 @@ onUnmounted(() => {
 <template>
   <div class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body selection:bg-primary selection:text-white">
     <!-- TopNavBar -->
-    <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-12 bg-surface/90 backdrop-blur border-b border-outline-variant">
+    <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-14 bg-surface/90 backdrop-blur border-b border-outline-variant">
       <div class="flex items-center gap-8 h-full">
         <a href="#" class="flex items-center gap-2 group">
           <img src="/assets/images/logo.png" alt="Watchlist Service Logo" class="h-6 w-6 object-contain" />
@@ -89,7 +89,7 @@ onUnmounted(() => {
     </nav>
 
     <!-- Main Content Canvas -->
-    <main class="flex-1 mt-12">
+    <main class="flex-1 mt-14">
       <!-- Hero Section -->
       <section class="relative w-full min-h-[85vh] flex flex-col justify-center items-start px-6 md:px-12 lg:px-24 bg-surface-container-low overflow-hidden">
         <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 75% 50%, #0f62fe 0%, transparent 60%);"></div>
@@ -135,9 +135,12 @@ onUnmounted(() => {
       <!-- Productivity Section (Bento Grid) -->
       <section ref="demoSection" class="w-full py-24 px-6 md:px-12 lg:px-24 bg-surface">
         <div class="mb-16 max-w-3xl">
-          <span class="text-xs font-bold uppercase tracking-wider text-primary mb-3 block">Feature Catalog</span>
-          <h2 class="text-4xl font-light text-on-surface mb-6">Productivity Hub</h2>
-          <p class="text-lg text-on-surface-variant body-text">
+          <div class="flex items-center gap-2 text-primary font-medium uppercase tracking-wider text-xs mb-3">
+            <span class="material-symbols-outlined text-base">dashboard</span>
+            Feature Catalog
+          </div>
+          <h2 class="text-4xl md:text-5xl font-light text-on-surface mb-6 leading-tight tracking-tight">Productivity Hub</h2>
+          <p class="text-lg text-on-surface-variant body-text max-w-2xl leading-relaxed">
             A unified architecture for media management. Connect disparate sources into a single, high-performance catalog.
           </p>
         </div>
@@ -164,6 +167,9 @@ onUnmounted(() => {
           <div class="col-span-1 lg:col-span-2 bg-surface-container-low flex flex-col md:flex-row group overflow-hidden border border-outline-variant hover:border-outline hover:bg-surface-container-high transition-all duration-300">
             <div class="p-8 flex flex-col justify-between md:w-1/2">
               <div>
+                <div class="w-12 h-12 mb-8 transform group-hover:scale-105 transition-transform">
+                  <img alt="Cross-Platform Icon" class="w-full h-full object-contain" src="/assets/images/logo.png" />
+                </div>
                 <h3 class="text-2xl font-light text-on-surface mb-4">Cross-Platform Media Discovery</h3>
                 <p class="text-on-surface-variant body-text mb-8">
                   Unified sync across devices. Intelligent algorithms surface relevant content based on deep behavioral analysis.
@@ -205,15 +211,15 @@ onUnmounted(() => {
 
       <!-- Collaboration Section -->
       <section class="w-full py-24 px-6 md:px-12 lg:px-24 bg-surface border-t border-outline-variant">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
           <!-- Left Column: Content -->
           <div class="space-y-8">
-            <div class="flex items-center gap-2 text-primary font-medium uppercase tracking-wider text-xs">
+            <div class="flex items-center gap-2 text-primary font-medium uppercase tracking-wider text-xs mb-3">
               <span class="material-symbols-outlined text-base">groups</span>
               Collaborative Intelligence
             </div>
-            <h2 class="text-4xl md:text-5xl font-light text-on-surface leading-tight">Social Library Sync.</h2>
-            <p class="text-lg text-on-surface-variant body-text max-w-xl">
+            <h2 class="text-4xl md:text-5xl font-light text-on-surface leading-tight tracking-tight">Social Library Sync</h2>
+            <p class="text-lg text-on-surface-variant body-text max-w-2xl leading-relaxed">
               Curate together in real-time. Share watchlists with granular role-based access control and monitor updates via the live activity feed.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
@@ -226,7 +232,6 @@ onUnmounted(() => {
                 <p class="text-sm text-on-surface-variant mt-1">Real-time WebSocket updates for all list changes.</p>
               </div>
             </div>
-
           </div>
 
           <!-- Right Column: UI Card Mockup -->
@@ -295,20 +300,24 @@ onUnmounted(() => {
                 </TransitionGroup>
               </div>
             </div>
-
-
           </div>
         </div>
       </section>
 
       <!-- Enterprise / Deploy Section -->
-      <section class="w-full py-24 px-6 md:px-12 lg:px-24 bg-surface-container-low flex flex-col items-center text-center">
-        <h2 class="text-3xl md:text-4xl font-light text-on-surface mb-6 max-w-2xl text-balance">
-          Deploy Anywhere with Enterprise Reliability
-        </h2>
-        <p class="text-base text-on-surface-variant max-w-3xl mb-16 body-text">
-          Enterprise-grade infrastructure support for modern development workflows. Scale your media management with precision and control.
-        </p>
+      <section class="w-full py-24 px-6 md:px-12 lg:px-24 bg-surface-container-low">
+        <div class="mb-16 max-w-3xl">
+          <div class="flex items-center gap-2 text-primary font-medium uppercase tracking-wider text-xs mb-3">
+            <span class="material-symbols-outlined text-base">dns</span>
+            Enterprise Infrastructure
+          </div>
+          <h2 class="text-4xl md:text-5xl font-light text-on-surface mb-6 leading-tight tracking-tight">
+            Deploy Anywhere with Enterprise Reliability
+          </h2>
+          <p class="text-lg text-on-surface-variant body-text max-w-2xl leading-relaxed">
+            Enterprise-grade infrastructure support for modern development workflows. Scale your media management with precision and control.
+          </p>
+        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full text-left mb-16">
           <div class="bg-surface border border-outline-variant p-8 flex flex-col justify-between group hover:border-outline transition-all duration-300">
@@ -321,11 +330,10 @@ onUnmounted(() => {
             <div class="relative w-full h-72 overflow-hidden border border-outline-variant bg-surface-container-high">
               <img src="/assets/images/server_racks.jpg" alt="Enterprise server racks representing self-hosted control" class="w-full h-full object-cover">
             </div>
-
           </div>
 
           <div class="grid grid-cols-1 gap-4">
-            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-200">
+            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-300">
               <div class="flex items-center gap-3 mb-4">
                 <span class="material-symbols-outlined text-primary text-xl">hub</span>
                 <h3 class="text-lg font-medium text-on-surface">Model Context Protocol (MCP)</h3>
@@ -335,7 +343,7 @@ onUnmounted(() => {
               </p>
             </div>
             
-            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-200">
+            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-300">
               <div class="flex items-center gap-3 mb-4">
                 <span class="material-symbols-outlined text-primary text-xl">api</span>
                 <h3 class="text-lg font-medium text-on-surface">OpenAPI Standards</h3>
@@ -345,7 +353,7 @@ onUnmounted(() => {
               </p>
             </div>
 
-            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-200">
+            <div class="bg-surface border border-outline-variant p-8 flex flex-col hover:border-outline transition-all duration-300">
               <div class="flex items-center gap-3 mb-4">
                 <span class="material-symbols-outlined text-primary text-xl">verified_user</span>
                 <h3 class="text-lg font-medium text-on-surface">Docker Ready</h3>
@@ -356,35 +364,27 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-
-        <button @click="router.push({ path: '/login', query: { signup: 'true' } })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all px-8 py-4 cursor-pointer text-base font-semibold hover:shadow-md active:translate-y-px">
-          Create Free Account
-        </button>
       </section>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full py-12 px-6 md:px-12 bg-inverse-surface border-t border-outline text-surface-dim font-body font-normal text-sm tracking-[0.16px]">
-      <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div class="col-span-1 md:col-span-4 mb-4">
-          <div class="flex items-center gap-2 select-none">
-            <img src="/assets/images/logo.png" alt="Watchlist Service Logo" class="h-6 w-6 object-contain brightness-0 invert" />
-            <span class="text-lg font-headline font-light text-surface-bright">Watchlist Service</span>
-          </div>
+    <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
+      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
+        <div class="select-none">
+          <span class="font-body font-normal text-[12px] leading-normal text-surface-variant">
+            © 2026 Watchlist Service. All rights reserved.
+          </span>
         </div>
-        <div class="col-span-1 md:col-span-3 flex flex-wrap gap-x-8 gap-y-4">
-          <a class="text-surface-dim hover:text-surface-bright hover:underline transition-all" href="#">Privacy Policy</a>
-          <a class="text-surface-dim hover:text-surface-bright hover:underline transition-all" href="#">Terms of Use</a>
-          <a class="text-surface-dim hover:text-surface-bright hover:underline transition-all" href="#">Accessibility</a>
-          <a class="text-surface-dim hover:text-surface-bright hover:underline transition-all" href="#">Cookie Preferences</a>
-        </div>
-        <div class="col-span-1 md:col-span-4 mt-8 pt-8 border-t border-secondary/30">
-          <p class="text-surface-dim text-xs">© 2026 Watchlist Service.</p>
-        </div>
+        <nav class="flex space-x-6">
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Privacy</a>
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Terms of Use</a>
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Cookie Preferences</a>
+        </nav>
       </div>
     </footer>
   </div>
 </template>
+
 
 <style scoped>
 /* Keyframes for Hero animation */
