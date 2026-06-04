@@ -1,26 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
-const route = useRoute();
 const authStore = useAuthStore();
 
 const email = ref('');
-const password = ref('');
-const rememberDevice = ref(false);
 const isLoading = ref(false);
 const error = ref('');
+const isSubmitted = ref(false);
 
 const handleSubmit = async () => {
   error.value = '';
   isLoading.value = true;
 
   try {
-    await authStore.login(email.value, password.value, rememberDevice.value);
-    const redirect = route.query.redirect as string || '/';
-    router.push(redirect);
+    await authStore.forgotPassword(email.value);
+    isSubmitted.value = true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'An error occurred';
   } finally {
@@ -33,14 +30,14 @@ const handleSubmit = async () => {
   <div class="auth-page-container min-h-screen flex flex-col justify-between bg-white text-[#161616]">
     <!-- Top/Header row with back button -->
     <header class="w-full px-6 flex justify-start items-center select-none h-14 shrink-0">
-      <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/landing">
+      <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/login">
         <span class="material-symbols-outlined text-lg">arrow_back</span>
         Back
       </RouterLink>
     </header>
 
     <!-- Main section: Centered container -->
-    <main class="flex-grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
+    <main class="grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
       <!-- Logo (same size on all pages) -->
       <div class="mb-6 w-20 h-20 select-none flex items-center justify-center shrink-0">
         <img 
@@ -50,85 +47,80 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Login Container -->
+      <!-- Recover Credentials Container -->
       <div class="auth-card w-full max-w-md border border-[#e0e0e0] p-8 bg-white flex flex-col">
-        <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Log in to your library</h1>
-        
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email Input -->
+        <h1 class="text-[32px] font-light leading-tight mb-4 text-[#161616] font-display">Recover credentials</h1>
+
+        <!-- Success Banner -->
+        <div v-if="isSubmitted" class="bg-[#defbe6] border-l-4 border-[#24a148] p-4 mb-8 flex items-start">
+          <span class="material-symbols-outlined text-[#24a148] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
           <div>
-            <label class="carbon-label" for="email">Email address</label>
+            <h3 class="text-[#161616] font-semibold text-sm font-body">Reset link sent!</h3>
+            <p class="text-[#161616] text-sm mt-1 font-body">If the email exists, we have sent instructions to reset your password.</p>
+          </div>
+        </div>
+
+        <p v-else class="text-[#525252] text-[14px] leading-relaxed tracking-[0.16px] mb-8 font-body">
+          Enter your email address below and we'll send you instructions to reset your password.
+        </p>
+
+        <!-- Error Message -->
+        <div v-if="error" class="error-message mb-6">
+          {{ error }}
+        </div>
+
+        <form v-if="!isSubmitted" @submit.prevent="handleSubmit" class="space-y-6">
+          <div>
+            <label class="carbon-label" for="email">
+              Email address
+            </label>
             <input 
               v-model="email"
-              autocomplete="email" 
               class="carbon-input" 
               id="email" 
               name="email" 
+              placeholder="Enter your email" 
               required 
               type="email"
-              placeholder="Enter your email"
             />
           </div>
 
-          <!-- Password Input -->
-          <div>
-            <label class="carbon-label" for="password">Password</label>
-            <input 
-              v-model="password"
-              autocomplete="current-password" 
-              class="carbon-input" 
-              id="password" 
-              name="password" 
-              required 
-              type="password"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <!-- Controls: Checkbox and Forgot Password -->
-          <div class="flex items-center justify-between pt-2">
-            <label class="flex items-center cursor-pointer group">
-              <input 
-                v-model="rememberDevice"
-                class="carbon-checkbox" 
-                name="remember" 
-                type="checkbox"
-              />
-              <span class="text-[14px] text-[#161616]">Remember this device</span>
-            </label>
-            <RouterLink class="carbon-link" to="/forgot-password">Forgot password?</RouterLink>
-          </div>
-
-          <!-- Error message if present -->
-          <div v-if="error" class="error-message">
-            {{ error }}
-          </div>
-
-          <!-- Submit Button -->
-          <div class="pt-4">
+          <div class="pt-4 flex flex-col gap-4">
             <button 
               class="carbon-btn group" 
               type="submit"
               :disabled="isLoading"
             >
-              <span>{{ isLoading ? 'Loading...' : 'Log in' }}</span>
+              <span>{{ isLoading ? 'Sending...' : 'Send reset instructions' }}</span>
               <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </button>
+            
+            <button 
+              @click="router.push('/login')"
+              class="w-full text-center text-[#0f62fe] font-body text-[14px] tracking-[0.16px] hover:underline bg-transparent border-0 py-2 transition-all duration-200 cursor-pointer" 
+              type="button"
+            >
+              Cancel and return to login
             </button>
           </div>
         </form>
 
-        <div class="mt-6 pt-6 border-t border-[#e0e0e0]">
-          <p class="text-[14px] text-[#525252]">
-            Don't have an account? 
-            <RouterLink class="carbon-link ml-1" to="/signup">Sign up</RouterLink>
-          </p>
+        <div v-else class="pt-4 flex justify-center">
+          <button 
+            @click="router.push('/login')"
+            class="carbon-btn w-full"
+            type="button"
+          >
+            <span>Go to login</span>
+            <span class="material-symbols-outlined text-lg">arrow_forward</span>
+          </button>
         </div>
       </div>
     </main>
 
     <!-- Footer -->
     <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
-      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
+      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-360 mx-auto gap-2">
         <div class="select-none">
           <span class="font-body font-normal text-[12px] leading-normal text-surface-variant">
             © 2026 Watchlist Service. All rights reserved.
@@ -208,59 +200,6 @@ const handleSubmit = async () => {
   outline: 2px solid #ffffff;
   outline-offset: -4px;
   box-shadow: 0 0 0 4px #0f62fe;
-}
-
-.carbon-link {
-  color: #0f62fe;
-  text-decoration: none;
-  font-size: 14px;
-  transition: text-decoration 0.15s ease-in-out;
-}
-
-.carbon-link:hover {
-  text-decoration: underline;
-}
-
-.carbon-checkbox {
-  appearance: none;
-  background-color: transparent;
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1rem;
-  height: 1rem;
-  border: 1px solid #161616;
-  border-radius: 0 !important;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.carbon-checkbox::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em #ffffff;
-  background-color: #0f62fe;
-  transform-origin: center;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-
-.carbon-checkbox:checked {
-  background-color: #161616;
-  border-color: #161616;
-}
-
-.carbon-checkbox:checked::before {
-  transform: scale(1);
-}
-
-.carbon-checkbox:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: 2px;
 }
 
 .error-message {

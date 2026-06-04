@@ -7,18 +7,27 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+const username = ref('');
 const email = ref('');
 const password = ref('');
-const rememberDevice = ref(false);
+const confirmPassword = ref('');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 const isLoading = ref(false);
 const error = ref('');
 
 const handleSubmit = async () => {
   error.value = '';
+
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match';
+    return;
+  }
+
   isLoading.value = true;
 
   try {
-    await authStore.login(email.value, password.value, rememberDevice.value);
+    await authStore.register(email.value, password.value, username.value);
     const redirect = route.query.redirect as string || '/';
     router.push(redirect);
   } catch (err) {
@@ -50,53 +59,83 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Login Container -->
+      <!-- Signup Container -->
       <div class="auth-card w-full max-w-md border border-[#e0e0e0] p-8 bg-white flex flex-col">
-        <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Log in to your library</h1>
+        <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Sign up</h1>
         
         <form @submit.prevent="handleSubmit" class="space-y-6">
+          <!-- Username Input -->
+          <div>
+            <label class="carbon-label" for="username">Username</label>
+            <input 
+              v-model="username"
+              class="carbon-input" 
+              id="username" 
+              name="username" 
+              required 
+              type="text"
+              placeholder="Enter your username"
+            />
+          </div>
+
           <!-- Email Input -->
           <div>
             <label class="carbon-label" for="email">Email address</label>
             <input 
               v-model="email"
-              autocomplete="email" 
               class="carbon-input" 
               id="email" 
               name="email" 
               required 
               type="email"
-              placeholder="Enter your email"
+              placeholder="Enter your email address"
             />
           </div>
 
           <!-- Password Input -->
           <div>
             <label class="carbon-label" for="password">Password</label>
-            <input 
-              v-model="password"
-              autocomplete="current-password" 
-              class="carbon-input" 
-              id="password" 
-              name="password" 
-              required 
-              type="password"
-              placeholder="Enter your password"
-            />
+            <div class="relative">
+              <input 
+                v-model="password"
+                class="carbon-input pr-10" 
+                id="password" 
+                name="password" 
+                required 
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Enter your password"
+              />
+              <button 
+                @click="showPassword = !showPassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface focus:outline-none cursor-pointer" 
+                type="button"
+              >
+                <span class="material-symbols-outlined text-lg">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Controls: Checkbox and Forgot Password -->
-          <div class="flex items-center justify-between pt-2">
-            <label class="flex items-center cursor-pointer group">
+          <!-- Confirm Password Input -->
+          <div>
+            <label class="carbon-label" for="confirm_password">Confirm password</label>
+            <div class="relative">
               <input 
-                v-model="rememberDevice"
-                class="carbon-checkbox" 
-                name="remember" 
-                type="checkbox"
+                v-model="confirmPassword"
+                class="carbon-input pr-10" 
+                id="confirm_password" 
+                name="confirm_password" 
+                required 
+                :type="showConfirmPassword ? 'text' : 'password'"
+                placeholder="Confirm your password"
               />
-              <span class="text-[14px] text-[#161616]">Remember this device</span>
-            </label>
-            <RouterLink class="carbon-link" to="/forgot-password">Forgot password?</RouterLink>
+              <button 
+                @click="showConfirmPassword = !showConfirmPassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface focus:outline-none cursor-pointer" 
+                type="button"
+              >
+                <span class="material-symbols-outlined text-lg">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
           </div>
 
           <!-- Error message if present -->
@@ -111,7 +150,7 @@ const handleSubmit = async () => {
               type="submit"
               :disabled="isLoading"
             >
-              <span>{{ isLoading ? 'Loading...' : 'Log in' }}</span>
+              <span>{{ isLoading ? 'Creating account...' : 'Create account' }}</span>
               <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
           </div>
@@ -119,8 +158,8 @@ const handleSubmit = async () => {
 
         <div class="mt-6 pt-6 border-t border-[#e0e0e0]">
           <p class="text-[14px] text-[#525252]">
-            Don't have an account? 
-            <RouterLink class="carbon-link ml-1" to="/signup">Sign up</RouterLink>
+            Already have an account? 
+            <RouterLink class="carbon-link ml-1" to="/login">Log in</RouterLink>
           </p>
         </div>
       </div>
@@ -219,48 +258,6 @@ const handleSubmit = async () => {
 
 .carbon-link:hover {
   text-decoration: underline;
-}
-
-.carbon-checkbox {
-  appearance: none;
-  background-color: transparent;
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1rem;
-  height: 1rem;
-  border: 1px solid #161616;
-  border-radius: 0 !important;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.carbon-checkbox::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em #ffffff;
-  background-color: #0f62fe;
-  transform-origin: center;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-
-.carbon-checkbox:checked {
-  background-color: #161616;
-  border-color: #161616;
-}
-
-.carbon-checkbox:checked::before {
-  transform: scale(1);
-}
-
-.carbon-checkbox:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: 2px;
 }
 
 .error-message {

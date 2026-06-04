@@ -139,7 +139,7 @@ describe('Router Navigation Guards', () => {
       
       // Collections route requires auth
       expect(authStore.isAuthenticated).toBe(false);
-      expect(router.currentRoute.value.path).toBe('/login');
+      expect(router.currentRoute.value.path).toBe('/landing');
     });
 
     it('should block unauthenticated users from accessing Statistics route', async () => {
@@ -148,7 +148,7 @@ describe('Router Navigation Guards', () => {
       
       // Statistics route requires auth
       expect(authStore.isAuthenticated).toBe(false);
-      expect(router.currentRoute.value.path).toBe('/login');
+      expect(router.currentRoute.value.path).toBe('/landing');
     });
 
     it('should block unauthenticated users from accessing Home route', async () => {
@@ -157,7 +157,7 @@ describe('Router Navigation Guards', () => {
       
       // Home route requires auth
       expect(authStore.isAuthenticated).toBe(false);
-      expect(router.currentRoute.value.path).toBe('/login');
+      expect(router.currentRoute.value.path).toBe('/landing');
     });
 
     it('should block unauthenticated users from accessing MediaDetail route', async () => {
@@ -166,7 +166,7 @@ describe('Router Navigation Guards', () => {
       
       // Media detail route requires auth
       expect(authStore.isAuthenticated).toBe(false);
-      expect(router.currentRoute.value.path).toBe('/login');
+      expect(router.currentRoute.value.path).toBe('/landing');
     });
 
     it('should allow authenticated users to access protected routes', async () => {
@@ -280,7 +280,7 @@ describe('Router Navigation Guards', () => {
       await router.push('/collections');
 
       expect(authStore.isAuthenticated).toBe(false);
-      expect(router.currentRoute.value.path).toBe('/login');
+      expect(router.currentRoute.value.path).toBe('/landing');
     });
   });
 });

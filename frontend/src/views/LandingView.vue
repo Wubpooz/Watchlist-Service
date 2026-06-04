@@ -75,16 +75,16 @@ onUnmounted(() => {
 <template>
   <div class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body selection:bg-primary selection:text-white">
     <!-- TopNavBar -->
-    <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-12 bg-surface/90 backdrop-blur border-b border-outline-variant transition-all duration-300">
+    <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-12 bg-surface/90 backdrop-blur border-b border-outline-variant">
       <div class="flex items-center gap-8 h-full">
         <a href="#" class="flex items-center gap-2 group">
-          <img src="/assets/images/logo.png" alt="Watchlist Service Logo" class="h-6 w-6 object-contain group-hover:rotate-12 transition-transform duration-300" />
+          <img src="/assets/images/logo.png" alt="Watchlist Service Logo" class="h-6 w-6 object-contain" />
           <span class="text-lg font-headline font-light tracking-tight text-on-surface">Watchlist Service</span>
         </a>
       </div>
       <div class="flex items-center gap-4">
         <button @click="router.push('/login')" class="text-on-surface-variant hover:text-on-surface transition-colors duration-150 cursor-pointer text-sm font-medium px-2 py-1">Log In</button>
-        <button @click="router.push({ path: '/login', query: { signup: 'true' } })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all duration-150 px-4 py-2 cursor-pointer text-sm font-medium hover:shadow-md active:translate-y-[1px]">Sign Up</button>
+        <button @click="router.push({ path: '/signup' })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all duration-150 px-4 py-2 cursor-pointer text-sm font-medium hover:shadow-md active:translate-y-px">Sign Up</button>
       </div>
     </nav>
 
@@ -103,7 +103,7 @@ onUnmounted(() => {
             The best platform for cataloging, tracking, and discovering media. Engineered for precision, built for scale, and designed to sync across your entire digital shelf.
           </p>
           <div class="flex flex-wrap items-center gap-4 pt-4">
-            <button @click="router.push({ path: '/login', query: { signup: 'true' } })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all px-6 py-3 cursor-pointer cta-text flex items-center gap-2 group hover:shadow-md">
+            <button @click="router.push({ path: '/signup' })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all px-6 py-3 cursor-pointer cta-text flex items-center gap-2 group hover:shadow-md">
               Start Curation
               <span class="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
             </button>
@@ -262,7 +262,7 @@ onUnmounted(() => {
                 <div v-else>
                   <button 
                     @click="toggleRole(idx)"
-                    class="text-[10px] font-bold border border-outline-variant px-3 py-1.5 text-primary hover:bg-primary hover:text-on-primary transition-all duration-150 cursor-pointer active:translate-y-[1px]"
+                    class="text-[10px] font-bold border border-outline-variant px-3 py-1.5 text-primary hover:bg-primary hover:text-on-primary transition-all duration-150 cursor-pointer active:translate-y-px"
                   >
                     Change Access
                   </button>
@@ -284,7 +284,7 @@ onUnmounted(() => {
                     :key="act.id"
                     class="relative pl-6 border-l-2 border-outline-variant hover:border-primary transition-colors"
                   >
-                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 bg-outline group-hover:bg-primary transition-colors" :class="{ 'bg-primary animate-ping': act.isActive }"></div>
+                    <div class="absolute -left-1.25 top-1.5 w-2 h-2 bg-outline group-hover:bg-primary transition-colors" :class="{ 'bg-primary animate-ping': act.isActive }"></div>
                     <p class="text-xs text-on-surface leading-relaxed">
                       <span class="font-semibold">{{ act.user }}</span> {{ act.action }} <span class="italic text-on-surface-variant">{{ act.target }}</span>
                     </p>
@@ -357,7 +357,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <button @click="router.push({ path: '/login', query: { signup: 'true' } })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all px-8 py-4 cursor-pointer text-base font-semibold hover:shadow-md active:translate-y-[1px]">
+        <button @click="router.push({ path: '/login', query: { signup: 'true' } })" class="bg-primary text-on-primary hover:bg-primary-container active:bg-surface-tint transition-all px-8 py-4 cursor-pointer text-base font-semibold hover:shadow-md active:translate-y-px">
           Create Free Account
         </button>
       </section>

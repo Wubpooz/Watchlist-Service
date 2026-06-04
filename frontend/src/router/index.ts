@@ -3,6 +3,9 @@ import { useAuthStore } from '@/stores/auth';
 
 // Lazy load pages
 const LoginPage = () => import('@/pages/LoginPage.vue');
+const SignUpPage = () => import('@/pages/SignUpPage.vue');
+const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue');
+const ResetPasswordPage = () => import('@/pages/ResetPasswordPage.vue');
 const HomePage = () => import('@/pages/HomePage.vue');
 const CollectionsPage = () => import('@/pages/CollectionsPage.vue');
 const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
@@ -22,6 +25,24 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: LoginPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/signup',
+    name: 'SignUp',
+    component: SignUpPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPasswordPage,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPasswordPage,
     meta: { requiresAuth: false }
   },
   {
@@ -78,8 +99,8 @@ router.beforeEach((to, _from, next) => {
   if (requiresAuth && !authStore.isAuthenticated) {
     // Redirect to landing if route requires auth and user is not authenticated
     next({ name: 'Landing', query: { redirect: to.fullPath } });
-  } else if ((to.path === '/landing' || to.path === '/login') && authStore.isAuthenticated) {
-    // Redirect to home if user is already logged in and tries to visit landing or login
+  } else if (['/landing', '/login', '/signup', '/forgot-password', '/reset-password'].includes(to.path) && authStore.isAuthenticated) {
+    // Redirect to home if user is already logged in and tries to visit auth pages
     next({ name: 'Home' });
   } else {
     next();

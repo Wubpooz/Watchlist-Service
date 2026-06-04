@@ -121,6 +121,60 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function forgotPassword(email: string) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(extractErrorMessage(errData, 'Failed to send reset email'));
+      }
+
+      return await response.json();
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'An error occurred';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function resetPassword(token: string, newPassword: string) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, newPassword }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(extractErrorMessage(errData, 'Failed to reset password'));
+      }
+
+      return await response.json();
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'An error occurred';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     user,
     authToken,
@@ -132,6 +186,8 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     checkAuth,
     fetchUserInfo,
+    forgotPassword,
+    resetPassword,
   };
 });
 

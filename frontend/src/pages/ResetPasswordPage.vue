@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -7,20 +7,47 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-const email = ref('');
-const password = ref('');
-const rememberDevice = ref(false);
+const token = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
 const isLoading = ref(false);
 const error = ref('');
+const isSuccess = ref(false);
+
+onMounted(() => {
+  const queryToken = route.query.token;
+  if (typeof queryToken === 'string' && queryToken.length > 0) {
+    token.value = queryToken;
+  }
+});
 
 const handleSubmit = async () => {
   error.value = '';
+
+  if (!token.value) {
+    error.value = 'Invalid or missing password reset token. Please request a new reset email.';
+    return;
+  }
+
+  if (newPassword.value.length < 8) {
+    error.value = 'Password must be at least 8 characters long.';
+    return;
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match.';
+    return;
+  }
+
   isLoading.value = true;
 
   try {
-    await authStore.login(email.value, password.value, rememberDevice.value);
-    const redirect = route.query.redirect as string || '/';
-    router.push(redirect);
+    await authStore.resetPassword(token.value, newPassword.value);
+    isSuccess.value = true;
+    // Redirect to login after 2.5 seconds
+    setTimeout(() => {
+      router.push('/login');
+    }, 2500);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'An error occurred';
   } finally {
@@ -33,7 +60,7 @@ const handleSubmit = async () => {
   <div class="auth-page-container min-h-screen flex flex-col justify-between bg-white text-[#161616]">
     <!-- Top/Header row with back button -->
     <header class="w-full px-6 flex justify-start items-center select-none h-14 shrink-0">
-      <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/landing">
+      <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/login">
         <span class="material-symbols-outlined text-lg">arrow_back</span>
         Back
       </RouterLink>
@@ -50,78 +77,88 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Login Container -->
+      <!-- Reset Password Container -->
       <div class="auth-card w-full max-w-md border border-[#e0e0e0] p-8 bg-white flex flex-col">
-        <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Log in to your library</h1>
-        
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email Input -->
-          <div>
-            <label class="carbon-label" for="email">Email address</label>
-            <input 
-              v-model="email"
-              autocomplete="email" 
-              class="carbon-input" 
-              id="email" 
-              name="email" 
-              required 
-              type="email"
-              placeholder="Enter your email"
-            />
-          </div>
+        <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Reset password</h1>
 
-          <!-- Password Input -->
+        <!-- Info / Token state banners -->
+        <div v-if="isSuccess" class="bg-[#defbe6] border-l-4 border-[#24a148] p-4 mb-8 flex items-start">
+          <span class="material-symbols-outlined text-[#24a148] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
           <div>
-            <label class="carbon-label" for="password">Password</label>
+            <h3 class="text-[#161616] font-semibold text-sm font-body">Password updated successfully!</h3>
+            <p class="text-[#161616] text-sm mt-1 font-body">Redirecting you to the login screen...</p>
+          </div>
+        </div>
+
+        <div v-else-if="token" class="bg-[#defbe6] border-l-4 border-[#24a148] p-4 mb-8 flex items-start">
+          <span class="material-symbols-outlined text-[#24a148] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          <div>
+            <h3 class="text-[#161616] font-semibold text-sm font-body">Token validated successfully.</h3>
+            <p class="text-[#161616] text-sm mt-1 font-body">Please enter your new password below.</p>
+          </div>
+        </div>
+
+        <div v-else class="bg-[#ffd7d8] border-l-4 border-[#da1e28] p-4 mb-8 flex items-start">
+          <span class="material-symbols-outlined text-[#da1e28] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+          <div>
+            <h3 class="text-[#8b0000] font-semibold text-sm font-body">Invalid or missing reset token</h3>
+            <p class="text-[#8b0000] text-sm mt-1 font-body">A password reset token is required in the URL parameters. Please use the link sent to your email.</p>
+          </div>
+        </div>
+
+        <!-- Error message -->
+        <div v-if="error" class="error-message mb-6">
+          {{ error }}
+        </div>
+
+        <form v-if="!isSuccess" @submit.prevent="handleSubmit" class="space-y-6">
+          <div>
+            <label class="carbon-label" for="new_password">New password</label>
             <input 
-              v-model="password"
-              autocomplete="current-password" 
+              v-model="newPassword"
               class="carbon-input" 
-              id="password" 
-              name="password" 
+              id="new_password" 
+              name="new_password" 
+              placeholder="••••••••" 
               required 
               type="password"
-              placeholder="Enter your password"
+              :disabled="!token || isLoading"
+            />
+          </div>
+          
+          <div>
+            <label class="carbon-label" for="confirm_password">Confirm password</label>
+            <input 
+              v-model="confirmPassword"
+              class="carbon-input" 
+              id="confirm_password" 
+              name="confirm_password" 
+              placeholder="••••••••" 
+              required 
+              type="password"
+              :disabled="!token || isLoading"
             />
           </div>
 
-          <!-- Controls: Checkbox and Forgot Password -->
-          <div class="flex items-center justify-between pt-2">
-            <label class="flex items-center cursor-pointer group">
-              <input 
-                v-model="rememberDevice"
-                class="carbon-checkbox" 
-                name="remember" 
-                type="checkbox"
-              />
-              <span class="text-[14px] text-[#161616]">Remember this device</span>
-            </label>
-            <RouterLink class="carbon-link" to="/forgot-password">Forgot password?</RouterLink>
-          </div>
-
-          <!-- Error message if present -->
-          <div v-if="error" class="error-message">
-            {{ error }}
-          </div>
-
-          <!-- Submit Button -->
           <div class="pt-4">
             <button 
               class="carbon-btn group" 
               type="submit"
-              :disabled="isLoading"
+              :disabled="!token || isLoading"
             >
-              <span>{{ isLoading ? 'Loading...' : 'Log in' }}</span>
+              <span>{{ isLoading ? 'Updating...' : 'Update password' }}</span>
               <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
           </div>
         </form>
 
-        <div class="mt-6 pt-6 border-t border-[#e0e0e0]">
-          <p class="text-[14px] text-[#525252]">
-            Don't have an account? 
-            <RouterLink class="carbon-link ml-1" to="/signup">Sign up</RouterLink>
-          </p>
+        <div v-if="!token" class="pt-4 flex justify-center">
+          <RouterLink 
+            class="text-[#0f62fe] font-body text-[14px] tracking-[0.16px] hover:underline"
+            to="/forgot-password"
+          >
+            Request new reset link
+          </RouterLink>
         </div>
       </div>
     </main>
@@ -208,59 +245,6 @@ const handleSubmit = async () => {
   outline: 2px solid #ffffff;
   outline-offset: -4px;
   box-shadow: 0 0 0 4px #0f62fe;
-}
-
-.carbon-link {
-  color: #0f62fe;
-  text-decoration: none;
-  font-size: 14px;
-  transition: text-decoration 0.15s ease-in-out;
-}
-
-.carbon-link:hover {
-  text-decoration: underline;
-}
-
-.carbon-checkbox {
-  appearance: none;
-  background-color: transparent;
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1rem;
-  height: 1rem;
-  border: 1px solid #161616;
-  border-radius: 0 !important;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.carbon-checkbox::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em #ffffff;
-  background-color: #0f62fe;
-  transform-origin: center;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-
-.carbon-checkbox:checked {
-  background-color: #161616;
-  border-color: #161616;
-}
-
-.carbon-checkbox:checked::before {
-  transform: scale(1);
-}
-
-.carbon-checkbox:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: 2px;
 }
 
 .error-message {
