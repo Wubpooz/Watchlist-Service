@@ -89,3 +89,132 @@ body {
 h1, h2, h3 {
   font-weight: 300;
 }
+
+/* Carbon Design System Form Components */
+.carbon-input {
+  background-color: var(--color-surface-container);
+  border: none;
+  border-bottom: 1px solid var(--color-outline);
+  border-radius: 0 !important;
+  padding: 0.875rem 1rem;
+  width: 100%;
+  font-size: 14px;
+  color: var(--color-on-surface);
+  transition: background-color 0.15s ease-in-out, border-bottom-color 0.15s ease-in-out;
+  outline: none;
+}
+
+.carbon-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-bottom-color: transparent;
+}
+
+.carbon-input::placeholder {
+  color: #a8a8a8;
+}
+
+.carbon-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.carbon-btn {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 0 !important;
+  padding: 15px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.16px;
+}
+
+.carbon-btn:hover:not(:disabled) {
+  background-color: #0050e6;
+}
+
+.carbon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.carbon-btn:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: -4px;
+  box-shadow: 0 0 0 4px var(--color-primary);
+}
+
+.carbon-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: text-decoration 0.15s ease-in-out;
+}
+
+.carbon-link:hover {
+  text-decoration: underline;
+}
+
+.carbon-checkbox {
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--color-on-surface);
+  border-radius: 0 !important;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.carbon-checkbox::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #ffffff;
+  background-color: var(--color-primary);
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.carbon-checkbox:checked {
+  background-color: var(--color-on-surface);
+  border-color: var(--color-on-surface);
+}
+
+.carbon-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.carbon-checkbox:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.error-message {
+  padding: 12px;
+  background-color: #ffd7d8;
+  color: #8b0000;
+  border-left: 3px solid var(--color-error);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  border-radius: 0 !important;
+}
+

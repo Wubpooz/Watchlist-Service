@@ -31,7 +31,6 @@ const handleSubmit = async () => {
 
 <template>
   <div class="auth-page-container min-h-screen flex flex-col justify-between bg-white text-[#161616]">
-    <!-- Top/Header row with back button -->
     <header class="w-full px-6 flex justify-start items-center select-none h-14 shrink-0">
       <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/landing">
         <span class="material-symbols-outlined text-lg">arrow_back</span>
@@ -39,9 +38,7 @@ const handleSubmit = async () => {
       </RouterLink>
     </header>
 
-    <!-- Main section: Centered container -->
     <main class="flex-grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
-      <!-- Logo (same size on all pages) -->
       <div class="mb-6 w-20 h-20 select-none flex items-center justify-center shrink-0">
         <img 
           alt="Watchlist Service Logo" 
@@ -50,12 +47,10 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Login Container -->
       <div class="auth-card w-full max-w-md border border-[#e0e0e0] p-8 bg-white flex flex-col">
         <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Log in to your library</h1>
         
         <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email Input -->
           <div>
             <label class="carbon-label" for="email">Email address</label>
             <input 
@@ -70,7 +65,6 @@ const handleSubmit = async () => {
             />
           </div>
 
-          <!-- Password Input -->
           <div>
             <label class="carbon-label" for="password">Password</label>
             <input 
@@ -85,7 +79,6 @@ const handleSubmit = async () => {
             />
           </div>
 
-          <!-- Controls: Checkbox and Forgot Password -->
           <div class="flex items-center justify-between pt-2">
             <label class="flex items-center cursor-pointer group">
               <input 
@@ -99,12 +92,10 @@ const handleSubmit = async () => {
             <RouterLink class="carbon-link" to="/forgot-password">Forgot password?</RouterLink>
           </div>
 
-          <!-- Error message if present -->
           <div v-if="error" class="error-message">
             {{ error }}
           </div>
 
-          <!-- Submit Button -->
           <div class="pt-4">
             <button 
               class="carbon-btn group" 
@@ -126,7 +117,6 @@ const handleSubmit = async () => {
       </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
       <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
         <div class="select-none">
@@ -144,132 +134,3 @@ const handleSubmit = async () => {
   </div>
 </template>
 
-<style scoped>
-/* Carbon Design System Form Styles */
-.carbon-input {
-  background-color: #f4f4f4;
-  border: none;
-  border-bottom: 1px solid #8d8d8d;
-  border-radius: 0 !important;
-  padding: 0.875rem 1rem;
-  width: 100%;
-  font-size: 14px;
-  color: #161616;
-  transition: background-color 0.15s ease-in-out, border-bottom-color 0.15s ease-in-out;
-  outline: none;
-}
-
-.carbon-input:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: -2px;
-  border-bottom-color: transparent;
-}
-
-.carbon-input::placeholder {
-  color: #a8a8a8;
-}
-
-.carbon-label {
-  display: block;
-  font-size: 12px;
-  color: #525252;
-  margin-bottom: 0.5rem;
-  font-weight: 400;
-  font-family: 'IBM Plex Sans', sans-serif;
-}
-
-.carbon-btn {
-  background-color: #0f62fe;
-  color: #ffffff;
-  border: none;
-  border-radius: 0 !important;
-  padding: 15px;
-  width: 100%;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  letter-spacing: 0.16px;
-}
-
-.carbon-btn:hover:not(:disabled) {
-  background-color: #0050e6;
-}
-
-.carbon-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.carbon-btn:focus {
-  outline: 2px solid #ffffff;
-  outline-offset: -4px;
-  box-shadow: 0 0 0 4px #0f62fe;
-}
-
-.carbon-link {
-  color: #0f62fe;
-  text-decoration: none;
-  font-size: 14px;
-  transition: text-decoration 0.15s ease-in-out;
-}
-
-.carbon-link:hover {
-  text-decoration: underline;
-}
-
-.carbon-checkbox {
-  appearance: none;
-  background-color: transparent;
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1rem;
-  height: 1rem;
-  border: 1px solid #161616;
-  border-radius: 0 !important;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.carbon-checkbox::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em #ffffff;
-  background-color: #0f62fe;
-  transform-origin: center;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-}
-
-.carbon-checkbox:checked {
-  background-color: #161616;
-  border-color: #161616;
-}
-
-.carbon-checkbox:checked::before {
-  transform: scale(1);
-}
-
-.carbon-checkbox:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: 2px;
-}
-
-.error-message {
-  padding: 12px;
-  background-color: #ffd7d8;
-  color: #8b0000;
-  border-left: 3px solid #da1e28;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 14px;
-  border-radius: 0 !important;
-}
-</style>

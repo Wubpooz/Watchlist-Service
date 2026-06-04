@@ -58,7 +58,6 @@ const handleSubmit = async () => {
 
 <template>
   <div class="auth-page-container min-h-screen flex flex-col justify-between bg-white text-[#161616]">
-    <!-- Top/Header row with back button -->
     <header class="w-full px-6 flex justify-start items-center select-none h-14 shrink-0">
       <RouterLink class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body text-sm tracking-[0.16px]" to="/login">
         <span class="material-symbols-outlined text-lg">arrow_back</span>
@@ -66,9 +65,7 @@ const handleSubmit = async () => {
       </RouterLink>
     </header>
 
-    <!-- Main section: Centered container -->
     <main class="flex-grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
-      <!-- Logo (same size on all pages) -->
       <div class="mb-6 w-20 h-20 select-none flex items-center justify-center shrink-0">
         <img 
           alt="Watchlist Service Logo" 
@@ -77,11 +74,9 @@ const handleSubmit = async () => {
         />
       </div>
 
-      <!-- Reset Password Container -->
       <div class="auth-card w-full max-w-md border border-[#e0e0e0] p-8 bg-white flex flex-col">
         <h1 class="text-[32px] font-light leading-tight mb-8 text-[#161616] font-display">Reset password</h1>
 
-        <!-- Info / Token state banners -->
         <div v-if="isSuccess" class="bg-[#defbe6] border-l-4 border-[#24a148] p-4 mb-8 flex items-start">
           <span class="material-symbols-outlined text-[#24a148] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">check_circle</span>
           <div>
@@ -106,7 +101,6 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <!-- Error message -->
         <div v-if="error" class="error-message mb-6">
           {{ error }}
         </div>
@@ -163,7 +157,6 @@ const handleSubmit = async () => {
       </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
       <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
         <div class="select-none">
@@ -181,79 +174,3 @@ const handleSubmit = async () => {
   </div>
 </template>
 
-<style scoped>
-/* Carbon Design System Form Styles */
-.carbon-input {
-  background-color: #f4f4f4;
-  border: none;
-  border-bottom: 1px solid #8d8d8d;
-  border-radius: 0 !important;
-  padding: 0.875rem 1rem;
-  width: 100%;
-  font-size: 14px;
-  color: #161616;
-  transition: background-color 0.15s ease-in-out, border-bottom-color 0.15s ease-in-out;
-  outline: none;
-}
-
-.carbon-input:focus {
-  outline: 2px solid #0f62fe;
-  outline-offset: -2px;
-  border-bottom-color: transparent;
-}
-
-.carbon-input::placeholder {
-  color: #a8a8a8;
-}
-
-.carbon-label {
-  display: block;
-  font-size: 12px;
-  color: #525252;
-  margin-bottom: 0.5rem;
-  font-weight: 400;
-  font-family: 'IBM Plex Sans', sans-serif;
-}
-
-.carbon-btn {
-  background-color: #0f62fe;
-  color: #ffffff;
-  border: none;
-  border-radius: 0 !important;
-  padding: 15px;
-  width: 100%;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  letter-spacing: 0.16px;
-}
-
-.carbon-btn:hover:not(:disabled) {
-  background-color: #0050e6;
-}
-
-.carbon-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.carbon-btn:focus {
-  outline: 2px solid #ffffff;
-  outline-offset: -4px;
-  box-shadow: 0 0 0 4px #0f62fe;
-}
-
-.error-message {
-  padding: 12px;
-  background-color: #ffd7d8;
-  color: #8b0000;
-  border-left: 3px solid #da1e28;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 14px;
-  border-radius: 0 !important;
-}
-</style>
