@@ -14,6 +14,7 @@ import { authRoutes } from './routes/auth.routes.js';
 import { userRoutes } from './routes/user.routes.js';
 import { mediaRoutes } from './routes/media.routes.js';
 import { collectionRoutes } from './routes/collection.routes.js';
+import { statsRoutes } from './routes/stats.routes.js';
 import { createMcpRoutes } from './mcp/index.js';
 import env from '../env.js';
 
@@ -199,6 +200,7 @@ app.route('/api/auth', authRoutes);
 app.route('/api/users', userRoutes);
 app.route('/api/media', mediaRoutes);
 app.route('/api/collections', collectionRoutes);
+app.route('/api/stats', statsRoutes);
 app.route('/mcp', createMcpRoutes());
 
 // Better-Auth handler for built-in endpoints (OAuth, etc.)
