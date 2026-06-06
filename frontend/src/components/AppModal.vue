@@ -94,13 +94,14 @@ onUnmounted(() => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 1.5rem;
-  backdrop-filter: blur(1px);
+  /* Removed backdrop-filter: blur to prevent stuttering/lagging on standard devices */
+  will-change: opacity;
 }
 
 .modal-container {
@@ -112,6 +113,7 @@ onUnmounted(() => {
   flex-direction: column;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   max-height: calc(100vh - 3rem);
+  will-change: transform;
 }
 
 .modal-header {

@@ -51,7 +51,21 @@ export const statsService = {
    * @returns A UserStats object with all computed metrics
    */
   async getUserStats(userId: string): Promise<UserStats> {
-    // Fetch owned collection IDs (needed for media access scoping)
+    // 1. Check database-backed cache
+    try {
+      const cache = await prisma.statsCache.findUnique({
+        where: { userId },
+      });
+
+      const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+      if (cache && (Date.now() - new Date(cache.updatedAt).getTime()) < CACHE_TTL_MS) {
+        return cache.data as any;
+      }
+    } catch (e) {
+      console.error('Failed to read stats cache from database:', e);
+    }
+
+    // 2. Fetch owned collection IDs (needed for media access scoping)
     const ownedCollections = await prisma.collection.findMany({
       where: { ownerId: userId },
       select: { id: true },
@@ -155,7 +169,7 @@ export const statsService = {
       collectionName: entry.collection.name,
     }));
 
-    return {
+    const finalStats: UserStats = {
       totalMedia,
       byType,
       topTags,
@@ -165,5 +179,24 @@ export const statsService = {
       avgMediaPerCollection,
       recentItems,
     };
+
+    // 3. Persist stats to cache table
+    try {
+      await prisma.statsCache.upsert({
+        where: { userId },
+        create: {
+          userId,
+          data: finalStats as any,
+        },
+        update: {
+          data: finalStats as any,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error('Failed to update stats cache in database:', e);
+    }
+
+    return finalStats;
   },
 };

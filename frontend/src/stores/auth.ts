@@ -5,6 +5,8 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  username?: string | null;
+  displayUsername?: string | null;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -95,7 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       const data = await response.json();
-      user.value = data;
+      user.value = data.user || data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred';
       logout();
@@ -103,11 +105,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() {
+  async function logout() {
     authToken.value = null;
     user.value = null;
     localStorage.removeItem('authToken');
     sessionStorage.removeItem('authToken');
+    try {
+      await import('./stats').then((m) => m.useStatsStore().clearStats());
+    } catch (e) {
+      console.error('Failed to clear stats store on logout:', e);
+    }
   }
 
   // Check if user is still authenticated on app load
@@ -175,6 +182,37 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(data: { name?: string; username?: string }) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken.value}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(extractErrorMessage(errData, 'Failed to update profile'));
+      }
+
+      const resJson = await response.json();
+      const updatedUser = resJson.user || resJson;
+      user.value = updatedUser;
+      return updatedUser;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'An error occurred';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     user,
     authToken,
@@ -188,6 +226,7 @@ export const useAuthStore = defineStore('auth', () => {
     fetchUserInfo,
     forgotPassword,
     resetPassword,
+    updateProfile,
   };
 });
 
