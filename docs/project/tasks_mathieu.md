@@ -1,8 +1,8 @@
 # Tâches Mathieu
 
 ## Page Statistiques
-- [ ] Présentation des statistiques de l'utilisateur
-- [ ] Tests du bon calcul des statistiques et de leur affichage dans l'interface avant le déploiement.
+- [x] Présentation des statistiques de l'utilisateur
+- [x] Tests du bon calcul des statistiques et de leur affichage dans l'interface avant le déploiement.
 
 
 ## UI
