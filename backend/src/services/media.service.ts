@@ -330,6 +330,7 @@ export const mediaService = {
    */
   async getMediaCollections(mediaId: string, userId?: string): Promise<{ id: string; name: string }[] | null> {
     const media = await this.getById(mediaId, userId);
+    const accessWhere = queryUtils.buildCollectionAccessWhere(userId);
     
     if (!media) {
       throw new AppError('Media not found', 404);
@@ -337,7 +338,10 @@ export const mediaService = {
 
     return await prisma.collection.findMany({
       where: {
-        media: { some: { mediaId } },
+        AND: [
+          { media: { some: { mediaId } } },
+          accessWhere,
+        ]
       },
       select: { id: true, name: true },
     });
