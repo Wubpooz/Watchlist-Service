@@ -1,30 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useStatsStore } from '@/stores/stats';
 import { useAuthStore } from '@/stores/auth';
 import AppModal from '@/components/AppModal.vue';
 
-// === Types ==================================================================
-interface MediaTypeCount { type: string; count: number }
-interface TagCount { tag: string; count: number }
-interface PlatformCount { platform: string; count: number }
-interface RecentItem { mediaId: string; title: string; type: string; addedAt: string; collectionName: string }
-
-interface UserStats {
-  totalMedia: number;
-  byType: MediaTypeCount[];
-  topTags: TagCount[];
-  topPlatforms: PlatformCount[];
-  collectionsOwned: number;
-  collectionsShared: number;
-  avgMediaPerCollection: number;
-  recentItems: RecentItem[];
-}
-
 // === State ===================================================================
+const statsStore = useStatsStore();
 const authStore = useAuthStore();
-const stats = ref<UserStats | null>(null);
-const loading = ref(true);
-const error = ref<string | null>(null);
+
+const stats = computed(() => statsStore.stats);
+const loading = computed(() => statsStore.isLoading || (!statsStore.stats && !statsStore.error));
+const error = computed(() => statsStore.error);
+
+// Compteurs et statistiques calculés basés sur le store Pinia (Données dérivées)
+const totalMediaCount = computed(() => statsStore.totalMedia);
+const averageMediaPerCollection = computed(() => statsStore.avgMediaPerCollection);
+const collectionsOwnedCount = computed(() => statsStore.collectionsOwned);
+const collectionsSharedCount = computed(() => statsStore.collectionsShared);
+const totalCollectionsCount = computed(() => statsStore.totalCollections);
 
 const isModalOpen = ref(false);
 const selectedRecentItem = ref<any>(null);
@@ -34,21 +27,48 @@ function openRecentItem(item: any) {
   isModalOpen.value = true;
 }
 
-// === Fetch ===================================================================
-onMounted(async () => {
+// Modal state for dynamic media list (when clicking legend, tag, or platform)
+const isListModalOpen = ref(false);
+const listModalTitle = ref('');
+const listModalLoading = ref(false);
+const listModalError = ref<string | null>(null);
+const listModalItems = ref<any[]>([]);
+
+async function openMediaListModal(filterType: 'type' | 'tag' | 'platform', filterValue: string, displayLabel: string) {
+  listModalTitle.value = `Media matching: ${displayLabel}`;
+  listModalItems.value = [];
+  listModalLoading.value = true;
+  listModalError.value = null;
+  isListModalOpen.value = true;
+
   try {
     const token = authStore.authToken;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stats`, { headers, credentials: 'include' });
+    let url = `${import.meta.env.VITE_API_URL ?? ''}/api/media?pageSize=50`;
+    if (filterType === 'type') {
+      url += `&type=${filterValue}`;
+    } else if (filterType === 'tag') {
+      url += `&tag=${encodeURIComponent(filterValue)}`;
+    } else if (filterType === 'platform') {
+      url += `&platform=${encodeURIComponent(filterValue)}`;
+    }
+
+    const res = await fetch(url, { headers, credentials: 'include' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    stats.value = await res.json() as UserStats;
+    const data = await res.json();
+    listModalItems.value = data.items ?? [];
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load statistics';
+    listModalError.value = e instanceof Error ? e.message : 'Failed to fetch media';
   } finally {
-    loading.value = false;
+    listModalLoading.value = false;
   }
+}
+
+// === Fetch ===================================================================
+onMounted(() => {
+  statsStore.fetchStats();
 });
 
 // === Computed: Media Distribution (donut chart) ===============================
@@ -69,12 +89,12 @@ const MEDIA_TYPE_LABELS: Record<string, string> = {
  * Derived entirely from the raw API response — demonstrates the computed pattern.
  */
 const typeItems = computed(() => {
-  if (!stats.value || stats.value.totalMedia === 0) return [];
-  return stats.value.byType.map(({ type, count }) => ({
+  if (totalMediaCount.value === 0) return [];
+  return statsStore.byType.map(({ type, count }) => ({
     type,
     label: MEDIA_TYPE_LABELS[type] ?? type,
     count,
-    pct: Math.round((count / stats.value!.totalMedia) * 100),
+    pct: Math.round((count / totalMediaCount.value) * 100),
     color: MEDIA_TYPE_COLORS[type] ?? '#8d8d8d',
   }));
 });
@@ -93,9 +113,10 @@ const donutGradient = computed(() => {
 
 // === Computed: Top Tags =======================================================
 const topTagsDisplay = computed(() => {
-  if (!stats.value?.topTags.length) return [];
-  const max = stats.value.topTags[0]?.count ?? 1;
-  return stats.value.topTags.slice(0, 6).map(({ tag, count }) => ({
+  const tags = statsStore.topTags;
+  if (!tags.length) return [];
+  const max = tags[0]?.count ?? 1;
+  return tags.slice(0, 6).map(({ tag, count }) => ({
     tag,
     count,
     widthPct: Math.round((count / max) * 100),
@@ -104,9 +125,10 @@ const topTagsDisplay = computed(() => {
 
 // === Computed: Top Platforms ==================================================
 const topPlatformsDisplay = computed(() => {
-  if (!stats.value?.topPlatforms.length) return [];
-  const max = stats.value.topPlatforms[0]?.count ?? 1;
-  return stats.value.topPlatforms.slice(0, 5).map(({ platform, count }) => ({
+  const platforms = statsStore.topPlatforms;
+  if (!platforms.length) return [];
+  const max = platforms[0]?.count ?? 1;
+  return platforms.slice(0, 5).map(({ platform, count }) => ({
     platform,
     count,
     widthPct: Math.round((count / max) * 100),
@@ -116,8 +138,7 @@ const topPlatformsDisplay = computed(() => {
 
 // === Computed: Recent items formatted ========================================
 const recentItemsDisplay = computed(() => {
-  if (!stats.value?.recentItems) return [];
-  return stats.value.recentItems.map((item) => ({
+  return statsStore.recentItems.map((item) => ({
     ...item,
     typeLabel: MEDIA_TYPE_LABELS[item.type] ?? item.type,
     typeColor: MEDIA_TYPE_COLORS[item.type] ?? '#8d8d8d',
@@ -157,7 +178,7 @@ function platformColor(platform: string): string {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="stats && stats.totalMedia === 0" class="stats-empty">
+    <div v-else-if="stats && totalMediaCount === 0" class="stats-empty">
       <span class="material-symbols-outlined stats-empty-icon">library_add</span>
       <h2>No media yet</h2>
       <p>Add media to your collections to see your library analytics here.</p>
@@ -175,12 +196,17 @@ function platformColor(platform: string): string {
         <div class="donut-wrapper">
           <div class="donut-chart" :style="{ background: donutGradient }"></div>
           <div class="donut-center">
-            <div class="donut-total">{{ stats.totalMedia.toLocaleString() }}</div>
+            <div class="donut-total">{{ totalMediaCount.toLocaleString() }}</div>
             <div class="donut-label">Total Items</div>
           </div>
         </div>
         <div class="donut-legend">
-          <div v-for="item in typeItems" :key="item.type" class="legend-item">
+          <div 
+            v-for="item in typeItems" 
+            :key="item.type" 
+            class="legend-item legend-item-clickable"
+            @click="openMediaListModal('type', item.type, item.label)"
+          >
             <div class="legend-dot" :style="{ backgroundColor: item.color }"></div>
             <span>{{ item.label }} ({{ item.pct }}%)</span>
           </div>
@@ -194,7 +220,12 @@ function platformColor(platform: string): string {
           <span class="material-symbols-outlined stats-card-icon">bar_chart</span>
         </div>
         <div v-if="topTagsDisplay.length" class="bar-list">
-          <div v-for="item in topTagsDisplay" :key="item.tag" class="bar-item">
+          <div 
+            v-for="item in topTagsDisplay" 
+            :key="item.tag" 
+            class="bar-item bar-item-clickable"
+            @click="openMediaListModal('tag', item.tag, `#${item.tag}`)"
+          >
             <div class="bar-meta">
               <span class="bar-label">{{ item.tag }}</span>
               <span class="bar-count">{{ item.count }}</span>
@@ -218,25 +249,25 @@ function platformColor(platform: string): string {
         </div>
         <div class="collection-summary">
           <div class="collection-big-stat">
-            <div class="collection-big-number">{{ stats.avgMediaPerCollection }}</div>
+            <div class="collection-big-number">{{ averageMediaPerCollection }}</div>
             <div class="collection-big-label">Avg. Items per Collection</div>
           </div>
           <div class="collection-metrics">
             <div class="metric-cell">
               <div class="metric-name">Owned</div>
-              <div class="metric-value">{{ stats.collectionsOwned }}</div>
+              <div class="metric-value">{{ collectionsOwnedCount }}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-name">Shared</div>
-              <div class="metric-value">{{ stats.collectionsShared }}</div>
+              <div class="metric-value">{{ collectionsSharedCount }}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-name">Total Media</div>
-              <div class="metric-value">{{ stats.totalMedia.toLocaleString() }}</div>
+              <div class="metric-value">{{ totalMediaCount.toLocaleString() }}</div>
             </div>
             <div class="metric-cell">
-              <div class="metric-name">Types</div>
-              <div class="metric-value">{{ stats.byType.length }}</div>
+              <div class="metric-name">Total Collections</div>
+              <div class="metric-value">{{ totalCollectionsCount }}</div>
             </div>
           </div>
         </div>
@@ -262,7 +293,12 @@ function platformColor(platform: string): string {
           <span class="material-symbols-outlined stats-card-icon">cell_tower</span>
         </div>
         <div v-if="topPlatformsDisplay.length" class="platform-list">
-          <div v-for="item in topPlatformsDisplay" :key="item.platform" class="platform-row">
+          <div 
+            v-for="item in topPlatformsDisplay" 
+            :key="item.platform" 
+            class="platform-row platform-row-clickable"
+            @click="openMediaListModal('platform', item.platform, item.platform)"
+          >
             <div class="platform-badge" :style="{ backgroundColor: platformColor(item.platform) }">
               {{ item.initial }}
             </div>
@@ -307,6 +343,34 @@ function platformColor(platform: string): string {
       </div>
       <template #footer>
         <button class="modal-close-action" @click="isModalOpen = false">Close</button>
+      </template>
+    </AppModal>
+
+    <!-- Modal for dynamic media list (when clicking legend, tag, or platform) -->
+    <AppModal v-model="isListModalOpen" :title="listModalTitle">
+      <div v-if="listModalLoading" class="list-modal-loading">
+        <div class="loading-spinner"></div>
+        <span>Fetching matching media…</span>
+      </div>
+      <div v-else-if="listModalError" class="list-modal-error">
+        <span class="material-symbols-outlined">error</span>
+        <p>{{ listModalError }}</p>
+      </div>
+      <div v-else-if="listModalItems.length === 0" class="list-modal-empty">
+        <span class="material-symbols-outlined">sentiment_dissatisfied</span>
+        <p>No media found matching this filter.</p>
+      </div>
+      <div v-else class="list-modal-content">
+        <div v-for="media in listModalItems" :key="media.id" class="list-modal-row">
+          <div class="list-modal-media-info">
+            <span class="list-modal-media-title">{{ media.title }}</span>
+            <span v-if="media.description" class="list-modal-media-desc">{{ media.description }}</span>
+          </div>
+          <span class="list-modal-media-type">{{ MEDIA_TYPE_LABELS[media.type] ?? media.type }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <button class="modal-close-action" @click="isListModalOpen = false">Close</button>
       </template>
     </AppModal>
   </div>
@@ -765,5 +829,109 @@ function platformColor(platform: string): string {
 
 .modal-close-action:hover {
   background-color: #4c4c4c;
+}
+
+/* Clickable states for interactive charts/stats */
+.legend-item-clickable {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.legend-item-clickable:hover {
+  background-color: #f4f4f4;
+}
+
+.bar-item-clickable {
+  cursor: pointer;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.bar-item-clickable:hover {
+  background-color: #f4f4f4;
+}
+
+.platform-row-clickable {
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.platform-row-clickable:hover {
+  background-color: #f4f4f4;
+}
+
+/* List Modal Styling */
+.list-modal-loading,
+.list-modal-error,
+.list-modal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: #525252;
+}
+
+.list-modal-error {
+  color: #da1e28;
+}
+
+.list-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.list-modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f4f4f4;
+  border-left: 3px solid #0f62fe;
+}
+
+.list-modal-media-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.list-modal-media-title {
+  font-weight: 600;
+  color: #161616;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-modal-media-desc {
+  font-size: 11px;
+  color: #525252;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-modal-media-type {
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #e0e0e0;
+  color: #161616;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
 }
 </style>

@@ -139,6 +139,7 @@ model Collection {
   members CollectionUser[]
 
   @@map("collections")
+  @@index([ownerId])
 }
 
 model CollectionMedia {
@@ -153,6 +154,7 @@ model CollectionMedia {
   media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   @@unique([collectionId, mediaId])
+  @@index([collectionId, addedAt])
   @@map("collection_media")
 }
 
@@ -169,5 +171,15 @@ model CollectionUser {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([collectionId, userId])
+  @@index([userId, accepted])
   @@map("collection_users")
 }
+
+model StatsCache {
+  userId    String   @id @map("user_id")
+  data      Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stats_cache")
+}
+

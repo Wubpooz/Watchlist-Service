@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
 
@@ -159,6 +159,56 @@ describe('Auth Store - Authentication Validation', () => {
       authStore.isLoading = false;
       
       expect(authStore.isLoading).toBe(false);
+    });
+  });
+
+  describe('Profile Update', () => {
+    it('should update user profile successfully', async () => {
+      const authStore = useAuthStore();
+      authStore.authToken = 'test-token';
+      
+      const mockUser = {
+        id: '123',
+        email: 'user@example.com',
+        name: 'Jane Doe',
+        username: 'janedoe'
+      };
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ user: mockUser })
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await authStore.updateProfile({ name: 'Jane Doe', username: 'janedoe' });
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/users/me', expect.objectContaining({
+        method: 'PATCH',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-token'
+        })
+      }));
+      expect(authStore.user).toEqual(mockUser);
+      expect(result).toEqual(mockUser);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should handle profile update failure', async () => {
+      const authStore = useAuthStore();
+      authStore.authToken = 'test-token';
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: 'Username already taken' })
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(authStore.updateProfile({ username: 'taken' })).rejects.toThrow('Username already taken');
+      expect(authStore.error).toBe('Username already taken');
+
+      vi.unstubAllGlobals();
     });
   });
 });

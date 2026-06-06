@@ -9,6 +9,7 @@ const authStore = useAuthStore();
 
 const email = ref('');
 const password = ref('');
+const showPassword = ref(false);
 const rememberDevice = ref(false);
 const isLoading = ref(false);
 const error = ref('');
@@ -67,16 +68,28 @@ const handleSubmit = async () => {
 
           <div>
             <label class="carbon-label" for="password">Password</label>
-            <input 
-              v-model="password"
-              autocomplete="current-password" 
-              class="carbon-input" 
-              id="password" 
-              name="password" 
-              required 
-              type="password"
-              placeholder="Enter your password"
-            />
+            <div class="relative">
+              <input 
+                v-model="password"
+                autocomplete="current-password" 
+                class="carbon-input pr-10" 
+                id="password" 
+                name="password" 
+                required 
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[#525252] hover:text-[#161616] cursor-pointer flex items-center justify-center p-1"
+                @click="showPassword = !showPassword"
+                aria-label="Toggle password visibility"
+              >
+                <span class="material-symbols-outlined text-lg">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div class="flex items-center justify-between pt-2">
