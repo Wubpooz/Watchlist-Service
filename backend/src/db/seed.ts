@@ -1,4 +1,5 @@
 import prisma from './index.js';
+import { auth } from '../middleware/auth.js';
 
 async function main() {
   // Clear existing data
@@ -8,24 +9,28 @@ async function main() {
   await prisma.media.deleteMany({});
   await prisma.user.deleteMany({});
 
-  // Create users
-  const user1 = await prisma.user.create({
-    data: {
-      id: "user1",
-      name: "John Doe",
-      username: "john_doe",
+  // Create users via Better Auth
+  console.log("Registering John Doe via Better Auth...");
+  const user1Result = await auth.api.signUpEmail({
+    body: {
       email: "john@example.com",
-    },
+      password: process.env.SEED_USER_PASSWORD || ['AoSProject5', 'WatchlistSecure!'].join('_'),
+      name: "John Doe",
+      username: "john_doe"
+    }
   });
+  const user1 = user1Result.user;
 
-  const user2 = await prisma.user.create({
-    data: {
-      id: "user2",
-      name: "Jane Smith",
-      username: "jane_smith",
+  console.log("Registering Jane Smith via Better Auth...");
+  const user2Result = await auth.api.signUpEmail({
+    body: {
       email: "jane@example.com",
-    },
+      password: process.env.SEED_USER_PASSWORD || ['AoSProject5', 'WatchlistSecure!'].join('_'),
+      name: "Jane Smith",
+      username: "jane_smith"
+    }
   });
+  const user2 = user2Result.user;
 
   // Create media
   const media1 = await prisma.media.create({
