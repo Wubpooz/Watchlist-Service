@@ -26,12 +26,19 @@ type CollectionMediaItem = {
   };
 };
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
 const collection = ref<Collection | null>(null);
 const mediaItems = ref<CollectionMediaItem[]>([]);
+const owner = ref<User | null>(null);
 const loading = ref(true);
 const actionMessage = ref<string | null>(null);
 const actionError = ref<string | null>(null);
@@ -125,6 +132,15 @@ async function loadCollectionDetail(): Promise<void> {
   } finally {
     loading.value = false;
   }
+
+  const ownerId = collection.value?.ownerId;
+  const ownerRes = await fetch(`${apiBaseUrl}/api/users/${ownerId}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+    credentials: 'include',
+  });
+  const data = await ownerRes.json();
+  owner.value = data.user || data;
 }
 
 function startEditDescription(): void {
@@ -370,6 +386,11 @@ onMounted(() => {
 
         <aside class="inspector">
           <h3>Properties</h3>
+
+          <div class="property-group">
+            <span class="property-label">Owner</span>
+            <span class="property-value">{{ owner?.name + ' (' + owner?.email + ')' || 'Unknown' }}</span>
+          </div>
 
           <div class="property-group">
             <span class="property-label">Visibility</span>
