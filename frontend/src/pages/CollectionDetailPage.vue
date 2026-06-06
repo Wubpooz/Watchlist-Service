@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import AppModal from '@/components/AppModal.vue';
 import { useAuthStore } from '@/stores/auth';
 
 type CollectionVisibility = 'PUBLIC' | 'PRIVATE';
@@ -26,6 +27,21 @@ type CollectionMediaItem = {
   };
 };
 
+type MediaItem = {
+  id: string;
+  title: string;
+  type: string;
+};
+
+type MediaListResponse = {
+  data: MediaItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  pages: number;
+  cursor?: string | null;
+};
+
 type User = {
   id: string;
   name: string;
@@ -49,9 +65,14 @@ const deletingCollection = ref(false);
 const removingMediaIds = ref<string[]>([]);
 const addMediaError = ref<string | null>(null);
 const addMediaModalOpen = ref(false);
+const addableMedia = ref<MediaItem[]>([]);
+const selectedMediaIds = ref<string[]>([]);
+const loadingAddableMedia = ref(false);
+const addingMedia = ref(false);
 
 const collectionId = computed(() => String(route.params.id ?? ''));
 const visibilityLabel = computed(() => (collection.value?.visibility === 'PUBLIC' ? 'Public' : 'Private'));
+const selectedMediaCount = computed(() => selectedMediaIds.value.length);
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -68,6 +89,107 @@ function buildHeaders(): Record<string, string> {
 function openAddMediaModal(): void {
   addMediaError.value = null;
   addMediaModalOpen.value = true;
+  selectedMediaIds.value = [];
+  void loadAddableMedia();
+}
+
+function closeAddMediaModal(): void {
+  if (addingMedia.value) {
+    return;
+  }
+
+  addMediaModalOpen.value = false;
+  addMediaError.value = null;
+  selectedMediaIds.value = [];
+}
+
+async function loadAddableMedia(): Promise<void> {
+  if (!collection.value) {
+    return;
+  }
+
+  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+  loadingAddableMedia.value = true;
+  addMediaError.value = null;
+
+  try {
+    const pageSize = 100;
+    let page = 1;
+    let totalPages = 1;
+    const allMedia: MediaItem[] = [];
+
+    while (page <= totalPages) {
+      const response = await fetch(`${apiBaseUrl}/api/media?page=${page}&pageSize=${pageSize}&sort=title&order=asc`, {
+        headers: buildHeaders(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load media catalog (${response.status})`);
+      }
+
+      const payload = await response.json() as MediaListResponse;
+      allMedia.push(...payload.data);
+      totalPages = payload.pages || 1;
+      page += 1;
+    }
+
+    const existingMediaIds = new Set(mediaItems.value.map((item) => item.media.id));
+    addableMedia.value = allMedia.filter((media) => !existingMediaIds.has(media.id));
+  } catch (err) {
+    addMediaError.value = err instanceof Error ? err.message : 'Failed to load media catalog';
+  } finally {
+    loadingAddableMedia.value = false;
+  }
+}
+
+async function addSelectedMedia(): Promise<void> {
+  if (!collection.value) {
+    return;
+  }
+
+  if (selectedMediaIds.value.length === 0) {
+    addMediaError.value = 'Select at least one media item.';
+    return;
+  }
+
+  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+  const nextPosition = mediaItems.value.reduce((maxPosition, item) => Math.max(maxPosition, item.position), -1) + 1;
+
+  addingMedia.value = true;
+  addMediaError.value = null;
+
+  try {
+    const responses = await Promise.all(
+      selectedMediaIds.value.map((mediaId, index) => {
+        return fetch(`${apiBaseUrl}/api/collections/${collection.value!.id}/media`, {
+          method: 'POST',
+          headers: buildHeaders(),
+          credentials: 'include',
+          body: JSON.stringify({
+            mediaId,
+            position: nextPosition + index,
+          }),
+        });
+      })
+    );
+
+    for (const response of responses) {
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
+        throw new Error(payload?.error || payload?.message || 'Failed to add selected media');
+      }
+    }
+
+    addMediaModalOpen.value = false;
+    selectedMediaIds.value = [];
+    actionMessage.value = 'Selected media added to collection.';
+    await loadCollectionDetail();
+  } catch (err) {
+    addMediaError.value = err instanceof Error ? err.message : 'Failed to add selected media';
+  } finally {
+    addingMedia.value = false;
+  }
 }
 
 function formatDate(isoDate: string): string {
@@ -138,6 +260,10 @@ async function loadCollectionDetail(): Promise<void> {
     actionError.value = err instanceof Error ? err.message : 'Failed to load collection details';
   } finally {
     loading.value = false;
+  }
+
+  if (!collection.value) {
+    return;
   }
 
   const ownerId = collection.value?.ownerId;
@@ -419,6 +545,50 @@ onMounted(() => {
         </aside>
       </div>
     </div>
+
+    <AppModal v-model="addMediaModalOpen" title="Add media to collection" @close="closeAddMediaModal">
+      <div class="add-media-modal-body">
+        <p class="modal-copy">
+          Choose one or more media items to add to this collection.
+        </p>
+
+        <p v-if="addMediaError" class="modal-error">
+          {{ addMediaError }}
+        </p>
+
+        <div v-else-if="loadingAddableMedia" class="modal-state">
+          Loading media catalog...
+        </div>
+
+        <div v-else-if="addableMedia.length === 0" class="modal-state">
+          No additional media is available to add.
+        </div>
+
+        <div v-else class="media-picker-list" role="list" aria-label="Available media">
+          <label v-for="media in addableMedia" :key="media.id" class="media-picker-item">
+            <input
+              v-model="selectedMediaIds"
+              type="checkbox"
+              :value="media.id"
+              class="carbon-checkbox"
+            >
+            <span class="media-picker-copy">
+              <span class="media-picker-title">{{ media.title }}</span>
+              <span class="media-picker-type">{{ formatMediaType(media.type) }}</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="secondary-btn" :disabled="addingMedia" @click="closeAddMediaModal">
+          Cancel
+        </button>
+        <button type="button" class="primary-btn" :disabled="addingMedia || selectedMediaCount === 0 || loadingAddableMedia || addableMedia.length === 0" @click="addSelectedMedia">
+          {{ addingMedia ? 'Adding...' : `Add selected (${selectedMediaCount})` }}
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -758,6 +928,72 @@ onMounted(() => {
 .add-media-button:focus-visible {
   outline: 2px solid #0f62fe;
   outline-offset: 2px;
+}
+
+.add-media-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.modal-copy {
+  margin: 0;
+  color: #525252;
+  line-height: 1.5;
+}
+
+.modal-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #da1e28;
+  background: #ffd7d9;
+  color: #8b0000;
+}
+
+.modal-state {
+  padding: 14px 12px;
+  border: 1px solid #e0e0e0;
+  background: #f4f4f4;
+  color: #525252;
+}
+
+.media-picker-list {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.media-picker-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.media-picker-item:hover {
+  background: #f4f4f4;
+  border-color: #c6c6c6;
+}
+
+.media-picker-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.media-picker-title {
+  color: #161616;
+  font-weight: 600;
+}
+
+.media-picker-type {
+  color: #525252;
+  font-size: 13px;
 }
 
 @media (max-width: 980px) {
