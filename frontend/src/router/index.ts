@@ -12,6 +12,7 @@ const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
 const InvitationsPage = () => import('@/pages/InvitationsPage.vue');
 const LayoutPage = () => import('@/pages/LayoutPage.vue');
+const SettingsPage = () => import('@/pages/SettingsPage.vue');
 const LandingPage = () => import('@/views/LandingView.vue');
 const NotFoundPage = () => import('@/pages/NotFoundPage.vue');
 
@@ -73,6 +74,12 @@ const routes: RouteRecordRaw[] = [
         path: 'statistics',
         name: 'Statistics',
         component: StatisticsPage,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: SettingsPage,
         meta: { requiresAuth: true }
       },
       {

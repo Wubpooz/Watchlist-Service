@@ -238,6 +238,11 @@ onUnmounted(() => {
             <span class="user-email">{{ authStore.user?.email }}</span>
           </div>
           <div class="dropdown-divider"></div>
+          <RouterLink :to="{ name: 'Settings' }" class="dropdown-item" @click="isDropdownOpen = false">
+            <span class="material-symbols-outlined dropdown-icon">settings</span>
+            <span>Settings</span>
+          </RouterLink>
+          <div class="dropdown-divider"></div>
           <button class="dropdown-item" @click="$emit('logout')">
             <span class="material-symbols-outlined dropdown-icon">logout</span>
             <span>Log out</span>
@@ -416,6 +421,7 @@ onUnmounted(() => {
   color: #161616;
   cursor: pointer;
   transition: background-color 0.15s;
+  text-decoration: none;
 }
 
 .dropdown-item:hover {
