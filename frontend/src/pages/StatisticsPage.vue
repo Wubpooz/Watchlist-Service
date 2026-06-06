@@ -1,30 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
+import { useStatsStore } from '@/stores/stats';
 import AppModal from '@/components/AppModal.vue';
 
-// === Types ==================================================================
-interface MediaTypeCount { type: string; count: number }
-interface TagCount { tag: string; count: number }
-interface PlatformCount { platform: string; count: number }
-interface RecentItem { mediaId: string; title: string; type: string; addedAt: string; collectionName: string }
-
-interface UserStats {
-  totalMedia: number;
-  byType: MediaTypeCount[];
-  topTags: TagCount[];
-  topPlatforms: PlatformCount[];
-  collectionsOwned: number;
-  collectionsShared: number;
-  avgMediaPerCollection: number;
-  recentItems: RecentItem[];
-}
-
 // === State ===================================================================
-const authStore = useAuthStore();
-const stats = ref<UserStats | null>(null);
-const loading = ref(true);
-const error = ref<string | null>(null);
+const statsStore = useStatsStore();
+
+const stats = computed(() => statsStore.stats);
+const loading = computed(() => statsStore.isLoading || (!statsStore.stats && !statsStore.error));
+const error = computed(() => statsStore.error);
 
 const isModalOpen = ref(false);
 const selectedRecentItem = ref<any>(null);
@@ -35,20 +19,8 @@ function openRecentItem(item: any) {
 }
 
 // === Fetch ===================================================================
-onMounted(async () => {
-  try {
-    const token = authStore.authToken;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stats`, { headers, credentials: 'include' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    stats.value = await res.json() as UserStats;
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load statistics';
-  } finally {
-    loading.value = false;
-  }
+onMounted(() => {
+  statsStore.fetchStats();
 });
 
 // === Computed: Media Distribution (donut chart) ===============================

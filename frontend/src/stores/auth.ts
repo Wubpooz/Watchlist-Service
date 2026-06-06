@@ -103,11 +103,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() {
+  async function logout() {
     authToken.value = null;
     user.value = null;
     localStorage.removeItem('authToken');
     sessionStorage.removeItem('authToken');
+    try {
+      await import('./stats').then((m) => m.useStatsStore().clearStats());
+    } catch (e) {
+      console.error('Failed to clear stats store on logout:', e);
+    }
   }
 
   // Check if user is still authenticated on app load
