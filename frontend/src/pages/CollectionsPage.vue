@@ -88,9 +88,6 @@ const filteredCollections = computed(() => {
   return collections.value;
 });
 
-const activeTabLabel = computed(() => collectionTabs.find((tab) => tab.key === activeTab.value)?.label ?? 'All Collections');
-const collectionGridCount = computed(() => filteredCollections.value.length);
-
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -282,32 +279,6 @@ function tabCount(tab: CollectionTab): number {
 
 <template>
   <div class="page-container">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Collections</p>
-        <h1>My Collections</h1>
-        <p class="hero-copy">
-          Browse collections owned by {{ currentUserLabel }} or shared with you, and switch between the tabs below.
-        </p>
-      </div>
-
-      <div class="hero-side">
-        <div class="hero-stats">
-          <div class="stat-card">
-            <span class="stat-value">{{ collectionCount }}</span>
-            <span class="stat-label">Visible collections</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-value">{{ mediaCount }}</span>
-            <span class="stat-label">Media items</span>
-          </div>
-        </div>
-
-        <button type="button" class="create-button" @click="openCreateCollectionModal">
-          New collection
-        </button>
-      </div>
-    </header>
 
     <section class="tab-shell" aria-label="Collection filters">
       <div class="tab-list" role="tablist" aria-label="Collection categories">
@@ -327,8 +298,9 @@ function tabCount(tab: CollectionTab): number {
       </div>
 
       <div class="tab-meta">
-        <span>{{ activeTabLabel }}</span>
-        <span>{{ collectionGridCount }} results</span>
+        <button type="button" class="create-button" @click="openCreateCollectionModal">
+          New collection
+        </button>
       </div>
     </section>
 
@@ -568,7 +540,6 @@ function tabCount(tab: CollectionTab): number {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-bottom: 14px;
   color: #667085;
   font-size: 13px;
   white-space: nowrap;
@@ -588,7 +559,6 @@ function tabCount(tab: CollectionTab): number {
   border: 1px solid #0f62fe;
   background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
   color: #ffffff;
-  box-shadow: 0 12px 24px rgba(15, 98, 254, 0.24);
 }
 
 .create-button:hover,
