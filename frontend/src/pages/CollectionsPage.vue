@@ -45,6 +45,8 @@ const authStore = useAuthStore();
 const collections = ref<CollectionItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const actionError = ref<string | null>(null);
+const removingMediaIds = ref<string[]>([]);
 
 const currentUserLabel = computed(() => authStore.user?.name || authStore.user?.email || 'your account');
 const collectionCount = computed(() => collections.value.length);
@@ -60,6 +62,10 @@ function buildHeaders(): Record<string, string> {
   }
 
   return headers;
+}
+
+function isRemovingMedia(collectionMediaId: string): boolean {
+  return removingMediaIds.value.includes(collectionMediaId);
 }
 
 async function fetchOwnedCollections(): Promise<CollectionItem[]> {
@@ -143,6 +149,54 @@ function formatMediaType(type: string): string {
 function collectionVisibilityLabel(visibility: string): string {
   return visibility.charAt(0) + visibility.slice(1).toLowerCase();
 }
+
+async function removeMediaFromCollection(collectionId: string, collectionMediaId: string, mediaTitle: string): Promise<void> {
+  const confirmed = window.confirm(`Remove ${mediaTitle} from this collection?`);
+  if (!confirmed) {
+    return;
+  }
+
+  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+  actionError.value = null;
+  removingMediaIds.value = [...removingMediaIds.value, collectionMediaId];
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/collections/${collectionId}/media/${collectionMediaId}`, {
+      method: 'DELETE',
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
+      throw new Error(payload?.error || payload?.message || 'Failed to remove media from collection');
+    }
+
+    collections.value = collections.value.map((collection) => {
+      if (collection.id !== collectionId) {
+        return collection;
+      }
+
+      const nextMedia = collection.media.filter((entry) => entry.id !== collectionMediaId);
+      const nextCount = collection._count?.media;
+
+      return {
+        ...collection,
+        media: nextMedia,
+        _count: nextCount === undefined
+          ? collection._count
+          : {
+              ...collection._count,
+              media: Math.max(0, nextCount - 1),
+            },
+      };
+    });
+  } catch (err) {
+    actionError.value = err instanceof Error ? err.message : 'Failed to remove media from collection';
+  } finally {
+    removingMediaIds.value = removingMediaIds.value.filter((id) => id !== collectionMediaId);
+  }
+}
 </script>
 
 <template>
@@ -174,6 +228,10 @@ function collectionVisibilityLabel(visibility: string): string {
 
     <section v-else-if="error" class="state-card state-error">
       <p>{{ error }}</p>
+    </section>
+
+    <section v-else-if="actionError" class="state-card state-error action-state">
+      <p>{{ actionError }}</p>
     </section>
 
     <section v-else-if="collections.length === 0" class="state-card state-empty">
@@ -209,21 +267,35 @@ function collectionVisibilityLabel(visibility: string): string {
           </div>
 
           <div v-if="collection.media.length" class="media-list">
-            <RouterLink
+            <div
               v-for="entry in collection.media"
               :key="entry.id"
-              :to="`/media/${entry.media.id}`"
-              class="media-item media-link"
-              :aria-label="`Open details for ${entry.media.title}`"
+              class="media-item"
             >
-              <div class="media-title-row">
-                <h4>{{ entry.media.title }}</h4>
-                <span class="media-type">{{ formatMediaType(entry.media.type) }}</span>
-              </div>
-              <p v-if="entry.media.description" class="media-description">
-                {{ entry.media.description }}
-              </p>
-            </RouterLink>
+              <RouterLink
+                :to="`/media/${entry.media.id}`"
+                class="media-link"
+                :aria-label="`Open details for ${entry.media.title}`"
+              >
+                <div class="media-title-row">
+                  <h4>{{ entry.media.title }}</h4>
+                  <span class="media-type">{{ formatMediaType(entry.media.type) }}</span>
+                </div>
+                <p v-if="entry.media.description" class="media-description">
+                  {{ entry.media.description }}
+                </p>
+              </RouterLink>
+
+              <button
+                type="button"
+                class="media-remove-button"
+                :disabled="isRemovingMedia(entry.id)"
+                :aria-label="`Remove ${entry.media.title} from ${collection.name}`"
+                @click="removeMediaFromCollection(collection.id, entry.id, entry.media.title)"
+              >
+                {{ isRemovingMedia(entry.id) ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
           </div>
 
           <div v-else class="media-empty">
@@ -328,6 +400,10 @@ function collectionVisibilityLabel(visibility: string): string {
   display: block;
   margin-top: 6px;
   color: #9ca3af;
+}
+
+.action-state {
+  margin-bottom: 20px;
 }
 
 .collection-grid {
@@ -439,6 +515,10 @@ function collectionVisibilityLabel(visibility: string): string {
 }
 
 .media-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 16px;
   border-radius: 16px;
   background: #f8fafc;
@@ -446,6 +526,7 @@ function collectionVisibilityLabel(visibility: string): string {
 }
 
 .media-link {
+  flex: 1;
   display: block;
   text-decoration: none;
   color: inherit;
@@ -490,6 +571,32 @@ function collectionVisibilityLabel(visibility: string): string {
   line-height: 1.5;
 }
 
+.media-remove-button {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 10px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+}
+
+.media-remove-button:hover:not(:disabled),
+.media-remove-button:focus-visible:not(:disabled) {
+  background: #ffe4e6;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.media-remove-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .media-empty {
   padding: 18px;
   border-radius: 16px;
@@ -527,6 +634,14 @@ function collectionVisibilityLabel(visibility: string): string {
   .media-title-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .media-item {
+    flex-direction: column;
+  }
+
+  .media-remove-button {
+    align-self: flex-start;
   }
 
   .collection-count {
