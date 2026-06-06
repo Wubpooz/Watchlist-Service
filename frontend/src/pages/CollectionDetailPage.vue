@@ -344,9 +344,16 @@ onMounted(() => {
             </div>
 
             <div v-for="item in mediaItems" :key="item.id" class="table-row" role="row">
-              <span class="media-title">{{ item.media.title }}</span>
-              <span>{{ formatMediaType(item.media.type) }}</span>
-              <span>{{ formatDate(item.addedAt) }}</span>
+              <RouterLink :to="`/media/${item.media.id}`" class="media-title">
+                {{ item.media.title }}
+              </RouterLink>
+              <RouterLink :to="`/media/${item.media.id}`">
+                {{ formatMediaType(item.media.type) }}
+              </RouterLink>
+              <RouterLink :to="`/media/${item.media.id}`">
+                {{ formatDate(item.addedAt) }}
+              </RouterLink>
+
               <div class="row-actions">
                 <button
                   type="button"
