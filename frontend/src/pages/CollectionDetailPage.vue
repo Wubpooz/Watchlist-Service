@@ -198,7 +198,7 @@ function formatDate(isoDate: string): string {
     return 'Invalid date';
   }
 
-  return date.toLocaleDateString('en-CA');
+  return new Date(date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 function formatDateTime(isoDate: string): string {
@@ -207,7 +207,7 @@ function formatDateTime(isoDate: string): string {
     return 'Invalid date';
   }
 
-  return date.toLocaleString();
+  return new Date(date).toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 function formatMediaType(type: string): string {
