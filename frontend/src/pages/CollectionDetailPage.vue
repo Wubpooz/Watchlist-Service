@@ -47,6 +47,8 @@ const descriptionDraft = ref('');
 const savingDescription = ref(false);
 const deletingCollection = ref(false);
 const removingMediaIds = ref<string[]>([]);
+const addMediaError = ref<string | null>(null);
+const addMediaModalOpen = ref(false);
 
 const collectionId = computed(() => String(route.params.id ?? ''));
 const visibilityLabel = computed(() => (collection.value?.visibility === 'PUBLIC' ? 'Public' : 'Private'));
@@ -61,6 +63,11 @@ function buildHeaders(): Record<string, string> {
   }
 
   return headers;
+}
+
+function openAddMediaModal(): void {
+  addMediaError.value = null;
+  addMediaModalOpen.value = true;
 }
 
 function formatDate(isoDate: string): string {
@@ -345,6 +352,9 @@ onMounted(() => {
         <section class="media-section">
           <div class="section-head">
             <h2>Collection Items ({{ mediaItems.length }})</h2>
+            <button type="button" class="add-media-button" @click="openAddMediaModal">
+              Add media
+            </button>
           </div>
 
           <div class="table-wrap" role="table" aria-label="Collection media list">
@@ -614,6 +624,10 @@ onMounted(() => {
 
 .section-head {
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .table-wrap {
@@ -715,6 +729,35 @@ onMounted(() => {
 .property-value {
   color: #161616;
   font-size: 14px;
+}
+
+.add-media-button {
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.add-media-button {
+  padding: 12px 18px;
+  border: 1px solid #0f62fe;
+  background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.add-media-button:hover {
+  transform: translateY(-1px);
+}
+
+.add-media-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.add-media-button:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
 }
 
 @media (max-width: 980px) {

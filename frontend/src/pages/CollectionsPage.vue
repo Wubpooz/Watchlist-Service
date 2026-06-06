@@ -299,7 +299,7 @@ function tabCount(tab: CollectionTab): number {
 
       <div class="tab-meta">
         <button type="button" class="create-button" @click="openCreateCollectionModal">
-          New collection
+          Create collection
         </button>
       </div>
     </section>
