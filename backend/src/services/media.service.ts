@@ -321,4 +321,25 @@ export const mediaService = {
       throw new AppError('Forbidden', 403);
     }
   },
+
+  /**
+   * Get all collections that contain a given media ID, with access control
+   * @param {string} mediaId Media ID
+   * @param {string} [userId] Optional authenticated user ID for access control
+   * @returns {Promise<{ id: string; name: string }[]>} List of collections containing the media that the user has access to
+   */
+  async getMediaCollections(mediaId: string, userId?: string): Promise<{ id: string; name: string }[] | null> {
+    const media = await this.getById(mediaId, userId);
+    
+    if (!media) {
+      throw new AppError('Media not found', 404);
+    }
+
+    return await prisma.collection.findMany({
+      where: {
+        media: { some: { mediaId } },
+      },
+      select: { id: true, name: true },
+    });
+  }
 };

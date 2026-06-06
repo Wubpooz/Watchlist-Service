@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
 const mediaId = computed(() => route.params.id as string);
@@ -18,9 +19,30 @@ type Media = {
   url?: string | null;
 };
 
+type CollectionSummary = {
+  id: string;
+  name: string;
+};
+
 const media = ref<Media | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+
+const authStore = useAuthStore();
+const collectionsWithMedia = ref<CollectionSummary[]>([]); // For future use when we fetch collections containing this media
+const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (authStore.authToken) {
+    headers.Authorization = `Bearer ${authStore.authToken}`;
+  }
+
+  return headers;
+}
 
 async function loadMedia(id: string) {
   loading.value = true;
@@ -31,6 +53,19 @@ async function loadMedia(id: string) {
     const data = await res.json();
     // API may return the media directly or wrapped, handle both
     media.value = data.media ?? data;
+
+    const mediaCollectionsRes = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(id)}/collections`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!mediaCollectionsRes.ok) {
+      throw new Error(`Failed to load collections containing this media (${mediaCollectionsRes.status})`);
+    }
+
+    const mediaCollectionsData = await mediaCollectionsRes.json();
+    collectionsWithMedia.value = mediaCollectionsData ?? [];
+
   } catch (err: any) {
     error.value = err?.message ?? 'Unknown error';
   } finally {
@@ -93,12 +128,14 @@ onMounted(() => {
     </div>
     <!-- right side : name, author, type, description, release, tags, platforms, add to collection button, collections that have it -->
     <div class="media-details">
+
       <h1 v-if="media?.description" class="media-title">{{ media.title }}</h1>
       <div class="author-type-row">
         <span v-if="media?.directorAuthor" class="author-text">{{ media.directorAuthor }}</span>
         <span v-if="media?.type" class="visibility-chip">{{ media.type }}</span>
       </div>
       <p v-if="media?.description" class="media-description">{{ media.description }}</p>
+
       <ul class="data-list">
         <li v-if="media?.releaseDate"><strong>Release Date:</strong> {{ media.releaseDate ? new Date(media.releaseDate).toLocaleDateString(undefined, { year: 'numeric' }) : '—' }}</li>
         <li v-if="media?.tags && media.tags.length">
@@ -116,6 +153,30 @@ onMounted(() => {
           </span>
         </li>
       </ul>
+
+      <div class="collection-section">
+        <!-- button opens a modal to add to a collection, kind of like how in collection detail page we open a modal to add a media -->
+        <div class="add-to-collection-row">
+          <button type="button" class="add-to-collection-button">
+            Add to a collection
+          </button>
+        </div>
+        <!-- list of collections that have this media, each item is a link to the collection detail page -->
+        <div class="collections-with-media">
+          <strong>Collections you have access to that contain this item</strong>
+
+          <div v-if="collectionsWithMedia.length === 0" class="placeholder" style="margin-top: 12px">
+            This media is not in any of your collections yet.
+          </div>
+
+          <ul class="collection-list" v-for="collection in collectionsWithMedia" :key="collection.id">
+            <li class="collection-link">
+              <RouterLink :to="`/collections/${collection.id}`">{{ collection.name }}</RouterLink>
+            </li>
+          </ul>
+
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -198,14 +259,61 @@ onMounted(() => {
 }
 
 .media-description,
-.data-list {
+.data-list,
+.add-to-collection-row,
+.collections-with-media {
   padding-top: 24px;
   padding-bottom: 24px;
+}
+
+.media-description,
+.data-list {
   border-bottom: 1px solid #e0e0e0;
 }
 
 .detail-list-item {
   text-transform: capitalize;
+}
+
+.add-to-collection-button {
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.add-to-collection-button {
+  padding: 12px 18px;
+  border: 1px solid #0f62fe;
+  background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.add-to-collection-button:hover {
+  transform: translateY(-1px);
+}
+
+.add-to-collection-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.add-to-collection-button:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
+}
+
+.collection-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+}
+
+.collection-link {
+  /* padding: 8px 12px; */
+  border-radius: 6px;
+  color: #0f62fe;
 }
 
 </style>

@@ -172,6 +172,7 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `GET /api/media/{mediaId}` : get a media item by ID
 - `PATCH /api/media/{mediaId}` : update media item
 - `DELETE /api/media/{mediaId}` : delete media item (admin/owner)
+- `GET /api/media/{mediaId}/collections` : list collections the media is contained in
 
 &nbsp;  
 #### Collections
