@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import { useAuthStore } from '@/stores/auth';
 
 interface MediaItem {
@@ -46,7 +47,16 @@ const collections = ref<CollectionItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const actionError = ref<string | null>(null);
+const createError = ref<string | null>(null);
+const createModalOpen = ref(false);
+const creatingCollection = ref(false);
+const newCollectionName = ref('');
+const newCollectionDescription = ref('');
+const newCollectionTags = ref('');
+const newCollectionVisibility = ref<'PUBLIC' | 'PRIVATE'>('PRIVATE');
 const removingMediaIds = ref<string[]>([]);
+
+const visibilityOptions = ['PUBLIC', 'PRIVATE'] as const;
 
 const currentUserLabel = computed(() => authStore.user?.name || authStore.user?.email || 'your account');
 const collectionCount = computed(() => collections.value.length);
@@ -66,6 +76,34 @@ function buildHeaders(): Record<string, string> {
 
 function isRemovingMedia(collectionMediaId: string): boolean {
   return removingMediaIds.value.includes(collectionMediaId);
+}
+
+function openCreateCollectionModal(): void {
+  createError.value = null;
+  createModalOpen.value = true;
+}
+
+function closeCreateCollectionModal(): void {
+  if (creatingCollection.value) {
+    return;
+  }
+
+  createModalOpen.value = false;
+  createError.value = null;
+}
+
+function resetCreateCollectionForm(): void {
+  newCollectionName.value = '';
+  newCollectionDescription.value = '';
+  newCollectionTags.value = '';
+  newCollectionVisibility.value = 'PRIVATE';
+}
+
+function normalizeTags(tagsInput: string): string[] {
+  return tagsInput
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
 }
 
 async function fetchOwnedCollections(): Promise<CollectionItem[]> {
@@ -130,6 +168,54 @@ async function fetchOwnedCollections(): Promise<CollectionItem[]> {
       media: [],
     };
   });
+}
+
+async function createCollection(): Promise<void> {
+  const name = newCollectionName.value.trim();
+  const description = newCollectionDescription.value.trim();
+  const tags = normalizeTags(newCollectionTags.value);
+
+  if (!name) {
+    createError.value = 'Collection name is required';
+    return;
+  }
+
+  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+  createError.value = null;
+  creatingCollection.value = true;
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/collections`, {
+      method: 'POST',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        name,
+        ...(description ? { description } : {}),
+        ...(tags.length ? { tags } : {}),
+        visibility: newCollectionVisibility.value,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
+      throw new Error(payload?.error || payload?.message || 'Failed to create collection');
+    }
+
+    const createdCollection = await response.json() as Omit<CollectionItem, 'media'> & { media?: never };
+    collections.value = [{
+      ...createdCollection,
+      media: [],
+      _count: createdCollection._count ?? { media: 0, members: 0 },
+    }, ...collections.value];
+
+    resetCreateCollectionForm();
+    createModalOpen.value = false;
+  } catch (err) {
+    createError.value = err instanceof Error ? err.message : 'Failed to create collection';
+  } finally {
+    creatingCollection.value = false;
+  }
 }
 
 onMounted(async () => {
@@ -210,15 +296,21 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
         </p>
       </div>
 
-      <div class="hero-stats">
-        <div class="stat-card">
-          <span class="stat-value">{{ collectionCount }}</span>
-          <span class="stat-label">Collections</span>
+      <div class="hero-actions">
+        <div class="hero-stats">
+          <div class="stat-card">
+            <span class="stat-value">{{ collectionCount }}</span>
+            <span class="stat-label">Collections</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">{{ mediaCount }}</span>
+            <span class="stat-label">Media items</span>
+          </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ mediaCount }}</span>
-          <span class="stat-label">Media items</span>
-        </div>
+
+        <button type="button" class="create-button" @click="openCreateCollectionModal">
+          New collection
+        </button>
       </div>
     </header>
 
@@ -304,6 +396,68 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
         </div>
       </article>
     </section>
+
+    <AppModal v-model="createModalOpen" title="Create collection" @close="createError = null">
+      <form id="create-collection-form" class="collection-form" @submit.prevent="createCollection">
+        <div class="field-group">
+          <label for="collection-name">Name</label>
+          <input
+            id="collection-name"
+            v-model="newCollectionName"
+            type="text"
+            name="name"
+            maxlength="200"
+            placeholder="My Favorites"
+            required
+          >
+        </div>
+
+        <div class="field-group">
+          <label for="collection-description">Description</label>
+          <textarea
+            id="collection-description"
+            v-model="newCollectionDescription"
+            name="description"
+            rows="4"
+            maxlength="1000"
+            placeholder="What will this collection hold?"
+          ></textarea>
+        </div>
+
+        <div class="field-group">
+          <label for="collection-tags">Tags</label>
+          <input
+            id="collection-tags"
+            v-model="newCollectionTags"
+            type="text"
+            name="tags"
+            maxlength="500"
+            placeholder="favorites, movies, watchlist"
+          >
+          <span class="field-hint">Separate tags with commas.</span>
+        </div>
+
+        <div class="field-group">
+          <label for="collection-visibility">Visibility</label>
+          <select id="collection-visibility" v-model="newCollectionVisibility" name="visibility">
+            <option v-for="option in visibilityOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </select>
+        </div>
+
+        <p v-if="createError" class="form-error">{{ createError }}</p>
+      </form>
+
+      <template #footer>
+        <button type="button" class="secondary-button" :disabled="creatingCollection" @click="closeCreateCollectionModal">
+          Cancel
+        </button>
+        <button type="submit" form="create-collection-form" class="primary-button" :disabled="creatingCollection">
+          {{ creatingCollection ? 'Creating...' : 'Create collection' }}
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -324,6 +478,12 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   border-radius: 20px;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.hero-actions {
+  display: grid;
+  gap: 14px;
+  justify-items: end;
 }
 
 .eyebrow {
@@ -354,6 +514,94 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   grid-template-columns: repeat(2, minmax(120px, 1fr));
   gap: 12px;
   min-width: 280px;
+}
+
+.create-button,
+.primary-button,
+.secondary-button {
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.create-button {
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(15, 98, 254, 0.24);
+}
+
+.create-button:hover,
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.create-button:disabled,
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.collection-form {
+  display: grid;
+  gap: 16px;
+}
+
+.field-group {
+  display: grid;
+  gap: 8px;
+}
+
+.field-group label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.field-group input,
+.field-group textarea,
+.field-group select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+
+.field-group input:focus,
+.field-group textarea:focus,
+.field-group select:focus {
+  outline: 2px solid rgba(15, 98, 254, 0.18);
+  border-color: #0f62fe;
+}
+
+.field-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.form-error {
+  margin: 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.primary-button {
+  padding: 12px 18px;
+  background: #111827;
+  color: #ffffff;
+}
+
+.secondary-button {
+  padding: 12px 18px;
+  background: #e5e7eb;
+  color: #111827;
 }
 
 .stat-card {
