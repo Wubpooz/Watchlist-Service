@@ -8,6 +8,7 @@ const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue');
 const ResetPasswordPage = () => import('@/pages/ResetPasswordPage.vue');
 const HomePage = () => import('@/pages/HomePage.vue');
 const CollectionsPage = () => import('@/pages/CollectionsPage.vue');
+const CollectionDetailPage = () => import('@/pages/CollectionDetailPage.vue');
 const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
 const LayoutPage = () => import('@/pages/LayoutPage.vue');
@@ -60,6 +61,12 @@ const routes: RouteRecordRaw[] = [
         path: 'collections',
         name: 'Collections',
         component: CollectionsPage,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'collections/:id',
+        name: 'CollectionDetail',
+        component: CollectionDetailPage,
         meta: { requiresAuth: true }
       },
       {

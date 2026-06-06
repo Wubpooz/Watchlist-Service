@@ -48,7 +48,6 @@ const authStore = useAuthStore();
 const collections = ref<CollectionItem[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const actionError = ref<string | null>(null);
 const createError = ref<string | null>(null);
 const createModalOpen = ref(false);
 const creatingCollection = ref(false);
@@ -56,7 +55,6 @@ const newCollectionName = ref('');
 const newCollectionDescription = ref('');
 const newCollectionTags = ref('');
 const newCollectionVisibility = ref<'PUBLIC' | 'PRIVATE'>('PRIVATE');
-const removingMediaIds = ref<string[]>([]);
 const activeTab = ref<CollectionTab>('all');
 
 const visibilityOptions = ['PUBLIC', 'PRIVATE'] as const;
@@ -103,10 +101,6 @@ function buildHeaders(): Record<string, string> {
   }
 
   return headers;
-}
-
-function isRemovingMedia(collectionMediaId: string): boolean {
-  return removingMediaIds.value.includes(collectionMediaId);
 }
 
 function openCreateCollectionModal(): void {
@@ -257,10 +251,6 @@ onMounted(async () => {
   }
 });
 
-function formatMediaType(type: string): string {
-  return type.replace(/_/g, ' ').toLowerCase();
-}
-
 function collectionAccessLabel(collection: CollectionItem): string {
   if (collection.ownerId === authStore.user?.id) {
     return 'Owned by me';
@@ -271,10 +261,6 @@ function collectionAccessLabel(collection: CollectionItem): string {
   }
 
   return 'Shared with me';
-}
-
-function collectionVisibilityLabel(visibility: string): string {
-  return visibility.charAt(0) + visibility.slice(1).toLowerCase();
 }
 
 function tabCount(tab: CollectionTab): number {
@@ -291,54 +277,6 @@ function tabCount(tab: CollectionTab): number {
   }
 
   return collections.value.length;
-}
-
-async function removeMediaFromCollection(collectionId: string, collectionMediaId: string, mediaTitle: string): Promise<void> {
-  const confirmed = window.confirm(`Remove ${mediaTitle} from this collection?`);
-  if (!confirmed) {
-    return;
-  }
-
-  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
-  actionError.value = null;
-  removingMediaIds.value = [...removingMediaIds.value, collectionMediaId];
-
-  try {
-    const response = await fetch(`${apiBaseUrl}/api/collections/${collectionId}/media/${collectionMediaId}`, {
-      method: 'DELETE',
-      headers: buildHeaders(),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
-      throw new Error(payload?.error || payload?.message || 'Failed to remove media from collection');
-    }
-
-    collections.value = collections.value.map((collection) => {
-      if (collection.id !== collectionId) {
-        return collection;
-      }
-
-      const nextMedia = collection.media.filter((entry) => entry.id !== collectionMediaId);
-      const nextCount = collection._count?.media;
-
-      return {
-        ...collection,
-        media: nextMedia,
-        _count: nextCount === undefined
-          ? collection._count
-          : {
-              ...collection._count,
-              media: Math.max(0, nextCount - 1),
-            },
-      };
-    });
-  } catch (err) {
-    actionError.value = err instanceof Error ? err.message : 'Failed to remove media from collection';
-  } finally {
-    removingMediaIds.value = removingMediaIds.value.filter((id) => id !== collectionMediaId);
-  }
 }
 </script>
 
@@ -402,79 +340,41 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
       <p>{{ error }}</p>
     </section>
 
-    <section v-else-if="actionError" class="state-card state-error action-state">
-      <p>{{ actionError }}</p>
-    </section>
-
     <section v-else-if="filteredCollections.length === 0" class="state-card state-empty">
       <p>No collections found yet.</p>
       <span>Create your first collection to start grouping media together.</span>
     </section>
 
     <section v-else class="collection-grid">
-      <article v-for="collection in filteredCollections" :key="collection.id" class="collection-card">
-        <div class="collection-header">
-          <div>
-            <p class="collection-kicker">{{ collectionAccessLabel(collection) }}</p>
-            <h2>{{ collection.name }}</h2>
-          </div>
-          <div class="collection-count">
-            <span>{{ collection.media.length }}</span>
-            <small>items</small>
-          </div>
-        </div>
-
-        <p v-if="collection.description" class="collection-description">
-          {{ collection.description }}
-        </p>
-
-        <div v-if="collection.tags.length" class="tag-list">
-          <span v-for="tag in collection.tags" :key="tag" class="tag-chip">{{ tag }}</span>
-        </div>
-
-        <div class="media-section">
-          <div class="section-title">
-            <h3>Contained media</h3>
-            <span>{{ collection._count?.media ?? collection.media.length }} total</span>
-          </div>
-
-          <div v-if="collection.media.length" class="media-list">
-            <div
-              v-for="entry in collection.media"
-              :key="entry.id"
-              class="media-item"
-            >
-              <RouterLink
-                :to="`/media/${entry.media.id}`"
-                class="media-link"
-                :aria-label="`Open details for ${entry.media.title}`"
-              >
-                <div class="media-title-row">
-                  <h4>{{ entry.media.title }}</h4>
-                  <span class="media-type">{{ formatMediaType(entry.media.type) }}</span>
-                </div>
-                <p v-if="entry.media.description" class="media-description">
-                  {{ entry.media.description }}
-                </p>
-              </RouterLink>
-
-              <button
-                type="button"
-                class="media-remove-button"
-                :disabled="isRemovingMedia(entry.id)"
-                :aria-label="`Remove ${entry.media.title} from ${collection.name}`"
-                @click="removeMediaFromCollection(collection.id, entry.id, entry.media.title)"
-              >
-                {{ isRemovingMedia(entry.id) ? 'Removing...' : 'Remove' }}
-              </button>
+      <RouterLink
+        v-for="collection in filteredCollections"
+        :key="collection.id"
+        :to="`/collections/${collection.id}`"
+        class="collection-card-link"
+      >
+        <article class="collection-card">
+          <div class="collection-header">
+            <div>
+              <p class="collection-kicker">{{ collectionAccessLabel(collection) }}</p>
+              <h2>{{ collection.name }}</h2>
+            </div>
+            <div class="collection-count">
+              <span>{{ collection._count?.media ?? collection.media.length }}</span>
+              <small>items</small>
             </div>
           </div>
 
-          <div v-else class="media-empty">
-            <p>This collection does not contain any media yet.</p>
+          <p v-if="collection.description" class="collection-description">
+            {{ collection.description }}
+          </p>
+
+          <div v-if="collection.tags.length" class="tag-list">
+            <span v-for="tag in collection.tags" :key="tag" class="tag-chip">{{ tag }}</span>
           </div>
-        </div>
-      </article>
+
+          <p class="collection-open-link" aria-hidden="true">Open collection -&gt;</p>
+        </article>
+      </RouterLink>
     </section>
 
     <AppModal v-model="createModalOpen" title="Create collection" @close="createError = null">
@@ -816,14 +716,15 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   color: #9ca3af;
 }
 
-.action-state {
-  margin-bottom: 20px;
-}
-
 .collection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 20px;
+}
+
+.collection-card-link {
+  text-decoration: none;
+  color: inherit;
 }
 
 .collection-card {
@@ -832,6 +733,14 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   border-radius: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.collection-card-link:hover .collection-card,
+.collection-card-link:focus-visible .collection-card {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+  border-color: #bfd3ef;
 }
 
 .collection-header {
@@ -899,129 +808,11 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   font-weight: 600;
 }
 
-.media-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.section-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.section-title h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #111827;
-}
-
-.section-title span {
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-.media-list {
-  display: grid;
-  gap: 12px;
-}
-
-.media-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-}
-
-.media-link {
-  flex: 1;
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.media-link:hover,
-.media-link:focus-visible {
-  transform: translateY(-1px);
-  border-color: #bfdbfe;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-}
-
-.media-link:hover h4 {
+.collection-open-link {
+  margin: 18px 0 0;
   color: #0f62fe;
-}
-
-.media-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.media-item h4 {
-  margin: 0;
-  font-size: 0.98rem;
-  color: #111827;
-}
-
-.media-type {
-  flex-shrink: 0;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: #e0f2fe;
-  color: #075985;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.media-description {
-  margin: 8px 0 0;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-.media-remove-button {
-  flex-shrink: 0;
-  align-self: center;
-  padding: 10px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 999px;
-  background: #fff1f2;
-  color: #b91c1c;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
-}
-
-.media-remove-button:hover:not(:disabled),
-.media-remove-button:focus-visible:not(:disabled) {
-  background: #ffe4e6;
-  border-color: #fca5a5;
-  color: #991b1b;
-}
-
-.media-remove-button:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
-.media-empty {
-  padding: 18px;
-  border-radius: 16px;
-  background: #f9fafb;
-  color: #6b7280;
-  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 @media (max-width: 900px) {
@@ -1038,6 +829,8 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 
 @media (max-width: 640px) {
   .page-container {
+    padding: 0 8px;
+  }
 
   .tab-shell {
     flex-direction: column;
@@ -1046,8 +839,6 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 
   .tab-meta {
     padding-bottom: 0;
-  }
-    padding: 0 8px;
   }
 
   .hero,
@@ -1061,19 +852,9 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
     margin-bottom: 22px;
   }
 
-  .collection-header,
-  .section-title,
-  .media-title-row {
+  .collection-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .media-item {
-    flex-direction: column;
-  }
-
-  .media-remove-button {
-    align-self: flex-start;
   }
 
   .collection-count {
