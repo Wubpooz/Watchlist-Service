@@ -176,8 +176,7 @@ async function addSelectedMedia(): Promise<void> {
 
     for (const response of responses) {
       if (!response.ok) {
-        const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
-        throw new Error(payload?.error || payload?.message || 'Failed to add selected media');
+        throw new Error('Failed to add selected media');
       }
     }
 
@@ -316,8 +315,7 @@ async function saveDescription(): Promise<void> {
     });
 
     if (!res.ok) {
-      const payload = await res.json().catch(() => null) as { error?: string; message?: string } | null;
-      throw new Error(payload?.error || payload?.message || 'Failed to update collection description');
+      throw new Error('Failed to update collection description');
     }
 
     const updated = await res.json() as Collection;
@@ -358,8 +356,7 @@ async function removeMedia(collectionMediaId: string, mediaTitle: string): Promi
     });
 
     if (!res.ok) {
-      const payload = await res.json().catch(() => null) as { error?: string; message?: string } | null;
-      throw new Error(payload?.error || payload?.message || 'Failed to remove media from collection');
+      throw new Error('Failed to remove media from collection');
     }
 
     mediaItems.value = mediaItems.value.filter((item) => item.id !== collectionMediaId);
@@ -394,8 +391,7 @@ async function deleteCollection(): Promise<void> {
     });
 
     if (!res.ok) {
-      const payload = await res.json().catch(() => null) as { error?: string; message?: string } | null;
-      throw new Error(payload?.error || payload?.message || 'Failed to delete collection');
+      throw new Error('Failed to delete collection');
     }
 
     await router.push('/collections');
