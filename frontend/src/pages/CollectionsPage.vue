@@ -42,6 +42,8 @@ interface CollectionListResponse {
   cursor?: string | null;
 }
 
+type CollectionTab = 'all' | 'owned' | 'shared' | 'public';
+
 const authStore = useAuthStore();
 const collections = ref<CollectionItem[]>([]);
 const loading = ref(true);
@@ -55,12 +57,41 @@ const newCollectionDescription = ref('');
 const newCollectionTags = ref('');
 const newCollectionVisibility = ref<'PUBLIC' | 'PRIVATE'>('PRIVATE');
 const removingMediaIds = ref<string[]>([]);
+const activeTab = ref<CollectionTab>('all');
 
 const visibilityOptions = ['PUBLIC', 'PRIVATE'] as const;
+const collectionTabs: Array<{ key: CollectionTab; label: string }> = [
+  { key: 'all', label: 'All Collections' },
+  { key: 'owned', label: 'Owned by me' },
+  { key: 'shared', label: 'Shared with me' },
+  { key: 'public', label: 'Public' },
+];
 
 const currentUserLabel = computed(() => authStore.user?.name || authStore.user?.email || 'your account');
 const collectionCount = computed(() => collections.value.length);
 const mediaCount = computed(() => collections.value.reduce((total, collection) => total + collection.media.length, 0));
+const ownedCollections = computed(() => collections.value.filter((collection) => collection.ownerId === authStore.user?.id));
+const sharedCollections = computed(() => collections.value.filter((collection) => collection.ownerId !== authStore.user?.id && collection.visibility !== 'PUBLIC'));
+const publicCollections = computed(() => collections.value.filter((collection) => collection.visibility === 'PUBLIC'));
+
+const filteredCollections = computed(() => {
+  if (activeTab.value === 'owned') {
+    return ownedCollections.value;
+  }
+
+  if (activeTab.value === 'shared') {
+    return sharedCollections.value;
+  }
+
+  if (activeTab.value === 'public') {
+    return publicCollections.value;
+  }
+
+  return collections.value;
+});
+
+const activeTabLabel = computed(() => collectionTabs.find((tab) => tab.key === activeTab.value)?.label ?? 'All Collections');
+const collectionGridCount = computed(() => filteredCollections.value.length);
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -106,10 +137,10 @@ function normalizeTags(tagsInput: string): string[] {
     .filter((tag) => tag.length > 0);
 }
 
-async function fetchOwnedCollections(): Promise<CollectionItem[]> {
+async function fetchCollections(): Promise<CollectionItem[]> {
   const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
   const pageSize = 100;
-  const ownedCollections: CollectionItem[] = [];
+  const loadedCollections: CollectionItem[] = [];
   let page = 1;
   let totalPages = 1;
 
@@ -128,9 +159,7 @@ async function fetchOwnedCollections(): Promise<CollectionItem[]> {
     }
 
     const payload = await response.json() as CollectionListResponse;
-    const ownedPage = payload.data.filter((collection) => collection.ownerId === authStore.user!.id);
-
-    ownedCollections.push(...ownedPage.map((collection) => ({
+    loadedCollections.push(...payload.data.map((collection) => ({
       ...collection,
       media: [],
     })));
@@ -140,7 +169,7 @@ async function fetchOwnedCollections(): Promise<CollectionItem[]> {
   }
 
   const mediaResults = await Promise.allSettled(
-    ownedCollections.map(async (collection) => {
+    loadedCollections.map(async (collection) => {
       const mediaResponse = await fetch(`${apiBaseUrl}/api/collections/${collection.id}/media`, {
         headers: buildHeaders(),
         credentials: 'include',
@@ -164,7 +193,7 @@ async function fetchOwnedCollections(): Promise<CollectionItem[]> {
     }
 
     return {
-      ...ownedCollections[index],
+      ...loadedCollections[index],
       media: [],
     };
   });
@@ -220,7 +249,7 @@ async function createCollection(): Promise<void> {
 
 onMounted(async () => {
   try {
-    collections.value = await fetchOwnedCollections();
+    collections.value = await fetchCollections();
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load collections';
   } finally {
@@ -232,8 +261,36 @@ function formatMediaType(type: string): string {
   return type.replace(/_/g, ' ').toLowerCase();
 }
 
+function collectionAccessLabel(collection: CollectionItem): string {
+  if (collection.ownerId === authStore.user?.id) {
+    return 'Owned by me';
+  }
+
+  if (collection.visibility === 'PUBLIC') {
+    return 'Public';
+  }
+
+  return 'Shared with me';
+}
+
 function collectionVisibilityLabel(visibility: string): string {
   return visibility.charAt(0) + visibility.slice(1).toLowerCase();
+}
+
+function tabCount(tab: CollectionTab): number {
+  if (tab === 'owned') {
+    return ownedCollections.value.length;
+  }
+
+  if (tab === 'shared') {
+    return sharedCollections.value.length;
+  }
+
+  if (tab === 'public') {
+    return publicCollections.value.length;
+  }
+
+  return collections.value.length;
 }
 
 async function removeMediaFromCollection(collectionId: string, collectionMediaId: string, mediaTitle: string): Promise<void> {
@@ -292,15 +349,15 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
         <p class="eyebrow">Collections</p>
         <h1>My Collections</h1>
         <p class="hero-copy">
-          Browse the collections owned by {{ currentUserLabel }} and the media stored inside each one.
+          Browse collections owned by {{ currentUserLabel }} or shared with you, and switch between the tabs below.
         </p>
       </div>
 
-      <div class="hero-actions">
+      <div class="hero-side">
         <div class="hero-stats">
           <div class="stat-card">
             <span class="stat-value">{{ collectionCount }}</span>
-            <span class="stat-label">Collections</span>
+            <span class="stat-label">Visible collections</span>
           </div>
           <div class="stat-card">
             <span class="stat-value">{{ mediaCount }}</span>
@@ -314,6 +371,29 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
       </div>
     </header>
 
+    <section class="tab-shell" aria-label="Collection filters">
+      <div class="tab-list" role="tablist" aria-label="Collection categories">
+        <button
+          v-for="tab in collectionTabs"
+          :key="tab.key"
+          type="button"
+          class="tab-button"
+          :class="{ active: activeTab === tab.key }"
+          role="tab"
+          :aria-selected="activeTab === tab.key"
+          @click="activeTab = tab.key"
+        >
+          <span>{{ tab.label }}</span>
+          <strong>{{ tabCount(tab.key) }}</strong>
+        </button>
+      </div>
+
+      <div class="tab-meta">
+        <span>{{ activeTabLabel }}</span>
+        <span>{{ collectionGridCount }} results</span>
+      </div>
+    </section>
+
     <section v-if="loading" class="state-card">
       <p>Loading your collections...</p>
     </section>
@@ -326,16 +406,16 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
       <p>{{ actionError }}</p>
     </section>
 
-    <section v-else-if="collections.length === 0" class="state-card state-empty">
+    <section v-else-if="filteredCollections.length === 0" class="state-card state-empty">
       <p>No collections found yet.</p>
       <span>Create your first collection to start grouping media together.</span>
     </section>
 
     <section v-else class="collection-grid">
-      <article v-for="collection in collections" :key="collection.id" class="collection-card">
+      <article v-for="collection in filteredCollections" :key="collection.id" class="collection-card">
         <div class="collection-header">
           <div>
-            <p class="collection-kicker">{{ collectionVisibilityLabel(collection.visibility) }}</p>
+            <p class="collection-kicker">{{ collectionAccessLabel(collection) }}</p>
             <h2>{{ collection.name }}</h2>
           </div>
           <div class="collection-count">
@@ -465,6 +545,7 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
 }
 
 .hero {
@@ -472,15 +553,17 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
   padding: 28px 28px 24px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #dfe5ee;
   border-radius: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  background:
+    radial-gradient(circle at top right, rgba(15, 98, 254, 0.1), transparent 30%),
+    linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
-.hero-actions {
+.hero-side {
   display: grid;
   gap: 14px;
   justify-items: end;
@@ -516,6 +599,81 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   min-width: 280px;
 }
 
+.tab-shell {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #d6dde8;
+}
+
+.tab-list {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 13px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #667085;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tab-button strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tab-button:hover {
+  color: #1d2939;
+  background: rgba(15, 98, 254, 0.04);
+}
+
+.tab-button.active {
+  color: #0f62fe;
+  border-bottom-color: #0f62fe;
+}
+
+.tab-button.active strong {
+  background: rgba(15, 98, 254, 0.12);
+  color: #0f62fe;
+}
+
+.tab-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  color: #667085;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .create-button,
 .primary-button,
 .secondary-button {
@@ -527,6 +685,7 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 
 .create-button {
   padding: 12px 18px;
+  border: 1px solid #0f62fe;
   background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
   color: #ffffff;
   box-shadow: 0 12px 24px rgba(15, 98, 254, 0.24);
@@ -544,6 +703,13 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   cursor: not-allowed;
   opacity: 0.65;
   transform: none;
+}
+
+.create-button:focus-visible,
+.tab-button:focus-visible,
+.media-remove-button:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
 }
 
 .collection-form {
@@ -656,14 +822,15 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 
 .collection-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 20px;
 }
 
 .collection-card {
-  padding: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  background: #ffffff;
+  padding: 20px;
+  border: 1px solid #d9e1ec;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 }
 
@@ -680,12 +847,12 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: #0f62fe;
 }
 
 .collection-card h2 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: #111827;
 }
 
@@ -788,6 +955,10 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
+.media-link:hover h4 {
+  color: #0f62fe;
+}
+
 .media-title-row {
   display: flex;
   align-items: flex-start;
@@ -859,7 +1030,7 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
     flex-direction: column;
   }
 
-  .hero-stats {
+  .hero-side {
     width: 100%;
     min-width: 0;
   }
@@ -867,6 +1038,15 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
 
 @media (max-width: 640px) {
   .page-container {
+
+  .tab-shell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tab-meta {
+    padding-bottom: 0;
+  }
     padding: 0 8px;
   }
 
@@ -875,6 +1055,10 @@ async function removeMediaFromCollection(collectionId: string, collectionMediaId
   .state-card {
     padding: 20px;
     border-radius: 16px;
+  }
+
+  .tab-shell {
+    margin-bottom: 22px;
   }
 
   .collection-header,
