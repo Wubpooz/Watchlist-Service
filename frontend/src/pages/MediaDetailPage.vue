@@ -43,7 +43,7 @@ onMounted(() => {
 });
 </script>
 
-<template>
+<!-- <template>
   <div class="page-container">
     <h1>Media Details</h1>
 
@@ -83,15 +83,54 @@ onMounted(() => {
     </div>
     <div v-else class="placeholder">No media found.</div>
   </div>
+</template> -->
+
+<template>
+  <div class="page-container">
+    <!-- left side : cover image if we ever have those -->
+    <div v-if="media?.url" class="cover-image">
+      <img v-if="media?.url" :src="media.url" alt="Media Cover" class="cover-img" />
+    </div>
+    <!-- right side : name, author, type, description, release, tags, platforms, add to collection button, collections that have it -->
+    <div class="media-details">
+      <h1 v-if="media?.description" class="media-title">{{ media.title }}</h1>
+      <div class="author-type-row">
+        <span v-if="media?.directorAuthor" class="author-text">{{ media.directorAuthor }}</span>
+        <span v-if="media?.type" class="visibility-chip">{{ media.type }}</span>
+      </div>
+      <p v-if="media?.description" class="media-description">{{ media.description }}</p>
+      <ul class="data-list">
+        <li v-if="media?.releaseDate"><strong>Release Date:</strong> {{ media.releaseDate ? new Date(media.releaseDate).toLocaleDateString(undefined, { year: 'numeric' }) : '—' }}</li>
+        <li v-if="media?.tags && media.tags.length">
+          <strong>Tags: </strong>
+          <!-- tag1, tag2, tag3 -->
+          <span class="detail-list-item" v-for="(tag, index) in media.tags" :key="tag">
+            {{ tag }}<span v-if="index < media.tags.length - 1">, </span>
+          </span>
+        </li>
+        <li v-if="media?.platforms && media.platforms.length">
+          <strong>Platforms: </strong>
+          <!-- platform1, platform2, platform3 -->
+          <span class="detail-list-item" v-for="(platform, index) in media.platforms" :key="platform">
+            {{ platform }}<span v-if="index < media.platforms.length - 1">, </span>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 .page-container {
-  max-width: 900px;
+  max-width: 1800px;
+  height: 100%;
   margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
 }
 
-.page-container h1 {
+/* .page-container h1 {
   color: #42b883;
   margin-bottom: 1rem;
 }
@@ -113,16 +152,60 @@ onMounted(() => {
 
 .meta-list li { margin: 6px 0 }
 
-.chips { margin: 0.5rem 0 }
-.chip {
-  display: inline-block;
-  background: #2b2b2b;
-  color: #ddd;
-  padding: 4px 8px;
-  border-radius: 999px;
-  margin-right: 6px;
-  font-size: 0.9rem;
+.scores ul { padding-left: 1rem } */
+
+
+.cover-image {
+  /* background-color: #e0e0e0; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.scores ul { padding-left: 1rem }
+.media-details {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.media-title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1;
+  font-weight: 300;
+  color: #161616;
+}
+
+.author-type-row {
+  display: flex;
+  gap: 12px;
+  padding: 0;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.author-text {
+  color: #525252;
+}
+
+.visibility-chip {
+  font-size: 12px;
+  color: #161616;
+  background: #f3f3f3;
+  padding: 4px 8px;
+  border: 1px solid #dedede;
+}
+
+.media-description,
+.data-list {
+  padding-top: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-list-item {
+  text-transform: capitalize;
+}
+
 </style>
