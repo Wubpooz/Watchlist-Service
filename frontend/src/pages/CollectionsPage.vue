@@ -209,7 +209,13 @@ function collectionVisibilityLabel(visibility: string): string {
           </div>
 
           <div v-if="collection.media.length" class="media-list">
-            <div v-for="entry in collection.media" :key="entry.id" class="media-item">
+            <RouterLink
+              v-for="entry in collection.media"
+              :key="entry.id"
+              :to="`/media/${entry.media.id}`"
+              class="media-item media-link"
+              :aria-label="`Open details for ${entry.media.title}`"
+            >
               <div class="media-title-row">
                 <h4>{{ entry.media.title }}</h4>
                 <span class="media-type">{{ formatMediaType(entry.media.type) }}</span>
@@ -217,7 +223,7 @@ function collectionVisibilityLabel(visibility: string): string {
               <p v-if="entry.media.description" class="media-description">
                 {{ entry.media.description }}
               </p>
-            </div>
+            </RouterLink>
           </div>
 
           <div v-else class="media-empty">
@@ -437,6 +443,20 @@ function collectionVisibilityLabel(visibility: string): string {
   border-radius: 16px;
   background: #f8fafc;
   border: 1px solid #e5e7eb;
+}
+
+.media-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.media-link:hover,
+.media-link:focus-visible {
+  transform: translateY(-1px);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .media-title-row {
