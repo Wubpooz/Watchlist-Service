@@ -10,6 +10,7 @@ const HomePage = () => import('@/pages/HomePage.vue');
 const CollectionsPage = () => import('@/pages/CollectionsPage.vue');
 const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
+const InvitationsPage = () => import('@/pages/InvitationsPage.vue');
 const LayoutPage = () => import('@/pages/LayoutPage.vue');
 const LandingPage = () => import('@/views/LandingView.vue');
 const NotFoundPage = () => import('@/pages/NotFoundPage.vue');
@@ -60,6 +61,12 @@ const routes: RouteRecordRaw[] = [
         path: 'collections',
         name: 'Collections',
         component: CollectionsPage,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'invitations',
+        name: 'Invitations',
+        component: InvitationsPage,
         meta: { requiresAuth: true }
       },
       {
