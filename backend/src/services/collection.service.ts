@@ -551,7 +551,7 @@ export const collectionService = {
    * @returns {Promise<CollectionUser[]>} Array of pending invitations
    * @throws {AppError} If unable to retrieve invitations
    */
-  async listUserInvitations(userId: string): Promise<CollectionUser[]> {
+  async listUserInvitations(userId: string): Promise<any[]> {
     try {
       return await prisma.collectionUser.findMany({
         where: {
@@ -559,7 +559,11 @@ export const collectionService = {
           accepted: false,
         },
         include: {
-          collection: true,
+          collection: {
+            include: {
+              owner: true,
+            },
+          },
           user: true,
         },
         orderBy: {
