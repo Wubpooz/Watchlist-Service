@@ -10,6 +10,13 @@ const stats = computed(() => statsStore.stats);
 const loading = computed(() => statsStore.isLoading || (!statsStore.stats && !statsStore.error));
 const error = computed(() => statsStore.error);
 
+// Compteurs et statistiques calculés basés sur le store Pinia (Données dérivées)
+const totalMediaCount = computed(() => statsStore.totalMedia);
+const averageMediaPerCollection = computed(() => statsStore.avgMediaPerCollection);
+const collectionsOwnedCount = computed(() => statsStore.collectionsOwned);
+const collectionsSharedCount = computed(() => statsStore.collectionsShared);
+const totalCollectionsCount = computed(() => statsStore.totalCollections);
+
 const isModalOpen = ref(false);
 const selectedRecentItem = ref<any>(null);
 
@@ -41,12 +48,12 @@ const MEDIA_TYPE_LABELS: Record<string, string> = {
  * Derived entirely from the raw API response — demonstrates the computed pattern.
  */
 const typeItems = computed(() => {
-  if (!stats.value || stats.value.totalMedia === 0) return [];
-  return stats.value.byType.map(({ type, count }) => ({
+  if (totalMediaCount.value === 0) return [];
+  return statsStore.byType.map(({ type, count }) => ({
     type,
     label: MEDIA_TYPE_LABELS[type] ?? type,
     count,
-    pct: Math.round((count / stats.value!.totalMedia) * 100),
+    pct: Math.round((count / totalMediaCount.value) * 100),
     color: MEDIA_TYPE_COLORS[type] ?? '#8d8d8d',
   }));
 });
@@ -65,9 +72,10 @@ const donutGradient = computed(() => {
 
 // === Computed: Top Tags =======================================================
 const topTagsDisplay = computed(() => {
-  if (!stats.value?.topTags.length) return [];
-  const max = stats.value.topTags[0]?.count ?? 1;
-  return stats.value.topTags.slice(0, 6).map(({ tag, count }) => ({
+  const tags = statsStore.topTags;
+  if (!tags.length) return [];
+  const max = tags[0]?.count ?? 1;
+  return tags.slice(0, 6).map(({ tag, count }) => ({
     tag,
     count,
     widthPct: Math.round((count / max) * 100),
@@ -76,9 +84,10 @@ const topTagsDisplay = computed(() => {
 
 // === Computed: Top Platforms ==================================================
 const topPlatformsDisplay = computed(() => {
-  if (!stats.value?.topPlatforms.length) return [];
-  const max = stats.value.topPlatforms[0]?.count ?? 1;
-  return stats.value.topPlatforms.slice(0, 5).map(({ platform, count }) => ({
+  const platforms = statsStore.topPlatforms;
+  if (!platforms.length) return [];
+  const max = platforms[0]?.count ?? 1;
+  return platforms.slice(0, 5).map(({ platform, count }) => ({
     platform,
     count,
     widthPct: Math.round((count / max) * 100),
@@ -88,8 +97,7 @@ const topPlatformsDisplay = computed(() => {
 
 // === Computed: Recent items formatted ========================================
 const recentItemsDisplay = computed(() => {
-  if (!stats.value?.recentItems) return [];
-  return stats.value.recentItems.map((item) => ({
+  return statsStore.recentItems.map((item) => ({
     ...item,
     typeLabel: MEDIA_TYPE_LABELS[item.type] ?? item.type,
     typeColor: MEDIA_TYPE_COLORS[item.type] ?? '#8d8d8d',
@@ -129,7 +137,7 @@ function platformColor(platform: string): string {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="stats && stats.totalMedia === 0" class="stats-empty">
+    <div v-else-if="stats && totalMediaCount === 0" class="stats-empty">
       <span class="material-symbols-outlined stats-empty-icon">library_add</span>
       <h2>No media yet</h2>
       <p>Add media to your collections to see your library analytics here.</p>
@@ -147,7 +155,7 @@ function platformColor(platform: string): string {
         <div class="donut-wrapper">
           <div class="donut-chart" :style="{ background: donutGradient }"></div>
           <div class="donut-center">
-            <div class="donut-total">{{ stats.totalMedia.toLocaleString() }}</div>
+            <div class="donut-total">{{ totalMediaCount.toLocaleString() }}</div>
             <div class="donut-label">Total Items</div>
           </div>
         </div>
@@ -190,25 +198,25 @@ function platformColor(platform: string): string {
         </div>
         <div class="collection-summary">
           <div class="collection-big-stat">
-            <div class="collection-big-number">{{ stats.avgMediaPerCollection }}</div>
+            <div class="collection-big-number">{{ averageMediaPerCollection }}</div>
             <div class="collection-big-label">Avg. Items per Collection</div>
           </div>
           <div class="collection-metrics">
             <div class="metric-cell">
               <div class="metric-name">Owned</div>
-              <div class="metric-value">{{ stats.collectionsOwned }}</div>
+              <div class="metric-value">{{ collectionsOwnedCount }}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-name">Shared</div>
-              <div class="metric-value">{{ stats.collectionsShared }}</div>
+              <div class="metric-value">{{ collectionsSharedCount }}</div>
             </div>
             <div class="metric-cell">
               <div class="metric-name">Total Media</div>
-              <div class="metric-value">{{ stats.totalMedia.toLocaleString() }}</div>
+              <div class="metric-value">{{ totalMediaCount.toLocaleString() }}</div>
             </div>
             <div class="metric-cell">
-              <div class="metric-name">Types</div>
-              <div class="metric-value">{{ stats.byType.length }}</div>
+              <div class="metric-name">Total Collections</div>
+              <div class="metric-value">{{ totalCollectionsCount }}</div>
             </div>
           </div>
         </div>

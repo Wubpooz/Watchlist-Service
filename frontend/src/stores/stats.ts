@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useAuthStore } from './auth';
 
 export interface MediaTypeCount { type: string; count: number }
@@ -23,6 +23,19 @@ export const useStatsStore = defineStore('stats', () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const authStore = useAuthStore();
+
+  // Getters/Computed properties derived from state
+  const totalMedia = computed(() => stats.value?.totalMedia ?? 0);
+  const avgMediaPerCollection = computed(() => stats.value?.avgMediaPerCollection ?? 0);
+  const collectionsOwned = computed(() => stats.value?.collectionsOwned ?? 0);
+  const collectionsShared = computed(() => stats.value?.collectionsShared ?? 0);
+  const recentItems = computed(() => stats.value?.recentItems ?? []);
+  const topTags = computed(() => stats.value?.topTags ?? []);
+  const topPlatforms = computed(() => stats.value?.topPlatforms ?? []);
+  const byType = computed(() => stats.value?.byType ?? []);
+  
+  // Total collections is a derived metric (owned + shared)
+  const totalCollections = computed(() => (stats.value?.collectionsOwned ?? 0) + (stats.value?.collectionsShared ?? 0));
 
   async function fetchStats(force = false) {
     // If stats already exist, load in background without showing the loading spinner
@@ -62,6 +75,15 @@ export const useStatsStore = defineStore('stats', () => {
     stats,
     isLoading,
     error,
+    totalMedia,
+    avgMediaPerCollection,
+    collectionsOwned,
+    collectionsShared,
+    recentItems,
+    topTags,
+    topPlatforms,
+    byType,
+    totalCollections,
     fetchStats,
     clearStats,
   };
