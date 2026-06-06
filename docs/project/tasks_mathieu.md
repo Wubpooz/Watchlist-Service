@@ -6,8 +6,8 @@
 
 
 ## UI
-- [ ] **Logique spécifique 1 (Données dérivées) :** Création de variables calculées (`computed`) basées sur le store Pinia pour alimenter les graphiques ou compteurs (totaux, moyennes, répartition par type).
-- [ ] **Logique spécifique 2 (Teleport & Slots) :** Développement d'un composant de modale réutilisable rendu en dehors de l'arbre DOM principal, incluant l'injection de contenu dynamique.
+- [x] **Logique spécifique 1 (Données dérivées) :** Création de variables calculées (`computed`) basées sur le store Pinia pour alimenter les graphiques ou compteurs (totaux, moyennes, répartition par type).
+- [x] **Logique spécifique 2 (Teleport & Slots) :** Développement d'un composant de modale réutilisable rendu en dehors de l'arbre DOM principal, incluant l'injection de contenu dynamique.
 
 
 

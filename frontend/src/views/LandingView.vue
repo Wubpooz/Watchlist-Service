@@ -1,8 +1,26 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import AppModal from '@/components/AppModal.vue';
 
 const router = useRouter();
+
+// Modal state for Footer Links
+const isModalOpen = ref(false);
+const modalTitle = ref('');
+const modalBodyType = ref<'privacy' | 'terms' | 'cookies' | null>(null);
+
+const openInfoModal = (type: 'privacy' | 'terms' | 'cookies') => {
+  modalBodyType.value = type;
+  if (type === 'privacy') {
+    modalTitle.value = 'Privacy Policy';
+  } else if (type === 'terms') {
+    modalTitle.value = 'Terms of Use';
+  } else if (type === 'cookies') {
+    modalTitle.value = 'Cookie Preferences';
+  }
+  isModalOpen.value = true;
+};
 
 // State for Live Activity Feed
 interface Activity {
@@ -376,12 +394,57 @@ onUnmounted(() => {
           </span>
         </div>
         <nav class="flex space-x-6">
-          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Privacy</a>
-          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Terms of Use</a>
-          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" href="#">Cookie Preferences</a>
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" @click.prevent="openInfoModal('privacy')">Privacy</a>
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" @click.prevent="openInfoModal('terms')">Terms of Use</a>
+          <a class="font-body font-normal text-[12px] leading-normal text-surface-variant hover:text-white transition-colors cursor-pointer" @click.prevent="openInfoModal('cookies')">Cookie Preferences</a>
         </nav>
       </div>
     </footer>
+
+    <!-- Reusable Info Modal -->
+    <AppModal v-model="isModalOpen" :title="modalTitle">
+      <div v-if="modalBodyType === 'privacy'" class="space-y-4 text-sm leading-relaxed text-on-surface-variant">
+        <p>Your privacy is important to us. This policy explains how we collect, use, and guard your personal data.</p>
+        <h4 class="font-semibold text-on-surface text-base">1. Data We Collect</h4>
+        <p>We collect only the essential data required to provide our watchlists, collections, and analytics services, including your email and account preference data.</p>
+        <h4 class="font-semibold text-on-surface text-base">2. Data Sovereignty</h4>
+        <p>If you choose to self-host using our Docker containers, all data remains entirely on your own infrastructure.</p>
+      </div>
+
+      <div v-else-if="modalBodyType === 'terms'" class="space-y-4 text-sm leading-relaxed text-on-surface-variant">
+        <p>By using the Watchlist Service, you agree to these Terms of Use. Please read them carefully.</p>
+        <h4 class="font-semibold text-on-surface text-base">1. Account Terms</h4>
+        <p>You must maintain the security of your account credentials. You are responsible for all activity under your account.</p>
+        <h4 class="font-semibold text-on-surface text-base">2. Acceptable Use</h4>
+        <p>You may not use our service to store or transmit malicious content or violate intellectual property rights.</p>
+      </div>
+
+      <div v-else-if="modalBodyType === 'cookies'" class="space-y-4 text-sm leading-relaxed text-on-surface-variant">
+        <p>We use cookies to enhance your browsing experience, analyze site traffic, and support user authentication.</p>
+        <div class="space-y-3 pt-2">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked disabled class="rounded border-outline-variant text-primary focus:ring-primary" />
+            <div>
+              <p class="font-semibold text-on-surface text-sm">Essential Cookies</p>
+              <p class="text-xs text-on-surface-variant">Required for system login and secure session management.</p>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked class="rounded border-outline-variant text-primary focus:ring-primary" />
+            <div>
+              <p class="font-semibold text-on-surface text-sm">Analytics Cookies</p>
+              <p class="text-xs text-on-surface-variant">Help us understand how curators interact with the landing page.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+      
+      <template #footer>
+        <button class="bg-primary text-on-primary hover:bg-primary-container px-4 py-2 text-xs font-semibold cursor-pointer active:translate-y-px transition-all" @click="isModalOpen = false">
+          Accept & Close
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>
 
