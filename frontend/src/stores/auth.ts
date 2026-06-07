@@ -115,6 +115,11 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (e) {
       console.error('Failed to clear stats store on logout:', e);
     }
+    try {
+      await import('./collections').then((m) => m.useCollectionsStore().clearCollections());
+    } catch (e) {
+      console.error('Failed to clear collections store on logout:', e);
+    }
   }
 
   // Check if user is still authenticated on app load

@@ -1,31 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppModal from '@/components/AppModal.vue';
 import { useAuthStore } from '@/stores/auth';
-
-type CollectionVisibility = 'PUBLIC' | 'PRIVATE';
-
-type Collection = {
-  id: string;
-  name: string;
-  description?: string | null;
-  visibility: CollectionVisibility;
-  ownerId: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type CollectionMediaItem = {
-  id: string;
-  position: number;
-  addedAt: string;
-  media: {
-    id: string;
-    title: string;
-    type: string;
-  };
-};
+import { useCollectionsStore } from '@/stores/collections';
+import type { CollectionDetail } from '@/stores/collections';
 
 type MediaItem = {
   id: string;
@@ -51,11 +30,11 @@ type User = {
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const collectionsStore = useCollectionsStore();
 
-const collection = ref<Collection | null>(null);
-const mediaItems = ref<CollectionMediaItem[]>([]);
+const collection = computed<CollectionDetail | null>(() => collectionsStore.selectedCollection);
+const mediaItems = computed(() => collectionsStore.selectedCollectionMedia);
 const owner = ref<User | null>(null);
-const loading = ref(true);
 const actionMessage = ref<string | null>(null);
 const actionError = ref<string | null>(null);
 const editMode = ref(false);
@@ -73,6 +52,9 @@ const addingMedia = ref(false);
 const collectionId = computed(() => String(route.params.id ?? ''));
 const visibilityLabel = computed(() => (collection.value?.visibility === 'PUBLIC' ? 'Public' : 'Private'));
 const selectedMediaCount = computed(() => selectedMediaIds.value.length);
+const loading = computed(() => collectionsStore.isLoading);
+const loadError = computed(() => collectionsStore.error);
+const displayError = computed(() => actionError.value || loadError.value);
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -220,59 +202,38 @@ function isRemovingMedia(collectionMediaId: string): boolean {
 async function loadCollectionDetail(): Promise<void> {
   if (!collectionId.value) {
     actionError.value = 'Collection id is missing from the route.';
-    loading.value = false;
     return;
   }
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
-  loading.value = true;
   actionError.value = null;
   actionMessage.value = null;
+  owner.value = null;
+  descriptionDraft.value = '';
 
   try {
-    const [collectionRes, mediaRes] = await Promise.all([
-      fetch(`${apiBaseUrl}/api/collections/${collectionId.value}`, {
-        headers: buildHeaders(),
-        credentials: 'include',
-      }),
-      fetch(`${apiBaseUrl}/api/collections/${collectionId.value}/media`, {
-        headers: buildHeaders(),
-        credentials: 'include',
-      }),
-    ]);
-
-    if (!collectionRes.ok) {
-      throw new Error(`Failed to load collection (${collectionRes.status})`);
+    await collectionsStore.fetchCollectionDetail(collectionId.value);
+    if (!collection.value) {
+      throw new Error('Collection details were not returned by the store');
     }
 
-    if (!mediaRes.ok) {
-      throw new Error(`Failed to load collection media (${mediaRes.status})`);
+    descriptionDraft.value = collection.value.description ?? '';
+    const ownerId = collection.value.ownerId;
+    const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+    const ownerRes = await fetch(`${apiBaseUrl}/api/users/${ownerId}`, {
+      method: 'GET',
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!ownerRes.ok) {
+      throw new Error(`Failed to load owner information (${ownerRes.status})`);
     }
 
-    const collectionPayload = await collectionRes.json() as Collection;
-    const mediaPayload = await mediaRes.json() as CollectionMediaItem[];
-
-    collection.value = collectionPayload;
-    descriptionDraft.value = collectionPayload.description ?? '';
-    mediaItems.value = mediaPayload;
+    const data = await ownerRes.json();
+    owner.value = data.user || data;
   } catch (err) {
-    actionError.value = err instanceof Error ? err.message : 'Failed to load collection details';
-  } finally {
-    loading.value = false;
+    actionError.value = collectionsStore.error || (err instanceof Error ? err.message : 'Failed to load collection details');
   }
-
-  if (!collection.value) {
-    return;
-  }
-
-  const ownerId = collection.value?.ownerId;
-  const ownerRes = await fetch(`${apiBaseUrl}/api/users/${ownerId}`, {
-    method: 'GET',
-    headers: buildHeaders(),
-    credentials: 'include',
-  });
-  const data = await ownerRes.json();
-  owner.value = data.user || data;
 }
 
 function startEditDescription(): void {
@@ -318,8 +279,8 @@ async function saveDescription(): Promise<void> {
       throw new Error('Failed to update collection description');
     }
 
-    const updated = await res.json() as Collection;
-    collection.value = {
+    const updated = await res.json() as CollectionDetail;
+    collectionsStore.selectedCollection = {
       ...collection.value,
       ...updated,
     };
@@ -359,7 +320,7 @@ async function removeMedia(collectionMediaId: string, mediaTitle: string): Promi
       throw new Error('Failed to remove media from collection');
     }
 
-    mediaItems.value = mediaItems.value.filter((item) => item.id !== collectionMediaId);
+    collectionsStore.selectedCollectionMedia = collectionsStore.selectedCollectionMedia.filter((item) => item.id !== collectionMediaId);
     actionMessage.value = `${mediaTitle} removed from collection.`;
   } catch (err) {
     actionError.value = err instanceof Error ? err.message : 'Failed to remove media from collection';
@@ -394,6 +355,7 @@ async function deleteCollection(): Promise<void> {
       throw new Error('Failed to delete collection');
     }
 
+    collectionsStore.removeCollection(collection.value.id);
     await router.push('/collections');
   } catch (err) {
     actionError.value = err instanceof Error ? err.message : 'Failed to delete collection';
@@ -401,10 +363,6 @@ async function deleteCollection(): Promise<void> {
     deletingCollection.value = false;
   }
 }
-
-onMounted(() => {
-  void loadCollectionDetail();
-});
 
 watch(collectionId, () => {
   void loadCollectionDetail();
@@ -415,8 +373,8 @@ watch(collectionId, () => {
   <div class="collection-detail-page">
     <div v-if="loading" class="state-card">Loading collection details...</div>
 
-    <div v-else-if="actionError && !collection" class="state-card state-error">
-      {{ actionError }}
+    <div v-else-if="displayError && !collection" class="state-card state-error">
+      {{ displayError }}
     </div>
 
     <div v-else-if="collection" class="canvas">
@@ -471,7 +429,7 @@ watch(collectionId, () => {
         </div>
       </header>
 
-      <p v-if="actionError" class="inline-message error">{{ actionError }}</p>
+      <p v-if="displayError" class="inline-message error">{{ displayError }}</p>
       <p v-if="actionMessage" class="inline-message success">{{ actionMessage }}</p>
 
       <div class="content-grid">
