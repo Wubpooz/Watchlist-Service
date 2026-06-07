@@ -8,6 +8,8 @@ import { useAbortController } from '@/composables/useAbortController';
 const router = useRouter();
 const authStore = useAuthStore();
 
+const isSidebarCollapsed = ref(false);
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
@@ -315,39 +317,48 @@ const cardMeta = (item: MediaItem): string =>
   <div class="catalog-layout">
 
     <!-- ── Left Sidebar ───────────────────────────────────────── -->
-    <aside class="catalog-sidebar">
+    <aside class="catalog-sidebar" :class="{ 'catalog-sidebar--collapsed': isSidebarCollapsed }">
       <div class="sidebar-header">
-        <span class="sidebar-title">Collections</span>
-        <span class="sidebar-subtitle">Global Library</span>
+        <div class="sidebar-header-text">
+          <span class="sidebar-title">Collections</span>
+          <span class="sidebar-subtitle">Global Library</span>
+        </div>
+        <button class="sidebar-toggle" @click="isSidebarCollapsed = !isSidebarCollapsed">
+          <span class="material-symbols-outlined">
+            {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
+          </span>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
         <button
           :class="['sidebar-item', { 'sidebar-item--active': activeType === null }]"
+          title="All Media"
           @click="setType(null)"
         >
           <span class="material-symbols-outlined">grid_view</span>
-          <span>All Media</span>
+          <span class="sidebar-label">All Media</span>
         </button>
         <button
           v-for="nav in TYPE_NAV"
           :key="nav.type"
           :class="['sidebar-item', { 'sidebar-item--active': activeType === nav.type }]"
+          :title="nav.label"
           @click="setType(nav.type)"
         >
           <span class="material-symbols-outlined">{{ nav.icon }}</span>
-          <span>{{ nav.label }}</span>
+          <span class="sidebar-label">{{ nav.label }}</span>
         </button>
       </nav>
 
       <div class="sidebar-footer">
-        <a href="#" class="sidebar-item">
+        <a href="#" class="sidebar-item" title="Help">
           <span class="material-symbols-outlined">help</span>
-          <span>Help</span>
+          <span class="sidebar-label">Help</span>
         </a>
-        <a href="#" class="sidebar-item">
+        <a href="#" class="sidebar-item" title="Feedback">
           <span class="material-symbols-outlined">chat_bubble</span>
-          <span>Feedback</span>
+          <span class="sidebar-label">Feedback</span>
         </a>
       </div>
     </aside>
@@ -597,14 +608,74 @@ const cardMeta = (item: MediaItem): string =>
   top: 0;
   height: calc(100vh - 48px);
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.catalog-sidebar--collapsed {
+  width: 48px;
+  min-width: 48px;
+}
+
+.catalog-sidebar--collapsed .sidebar-label,
+.catalog-sidebar--collapsed .sidebar-header-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, width 0.2s ease;
+}
+
+.sidebar-label,
+.sidebar-header-text {
+  opacity: 1;
+  transition: opacity 0.15s ease, width 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-header {
-  padding: 16px;
+  padding: 12px 8px 12px 16px;
   border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 56px;
+}
+
+.sidebar-header-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #525252;
+  border-radius: 0;
+  padding: 0;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.sidebar-toggle:hover {
+  background-color: #e0e0e0;
+  color: #161616;
+}
+
+.sidebar-toggle .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sidebar-title {
@@ -658,6 +729,15 @@ const cardMeta = (item: MediaItem): string =>
   border-left: 4px solid #0f62fe;
   color: #161616;
   padding-left: 12px;
+}
+
+.catalog-sidebar--collapsed .sidebar-item {
+  padding-left: 14px;
+  justify-content: center;
+}
+
+.catalog-sidebar--collapsed .sidebar-item--active {
+  padding-left: 10px;
 }
 
 .sidebar-footer {

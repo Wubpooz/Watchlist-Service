@@ -36,6 +36,7 @@ const isLoading = ref(true);
 const error    = ref('');
 
 const respondingId = ref<string | null>(null);
+const isSidebarCollapsed = ref(false);
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
 
@@ -105,35 +106,47 @@ onMounted(() => {
   <div class="dash-layout">
 
     <!-- ── Left sidebar ──────────────────────────────────────────── -->
-    <aside class="dash-sidebar">
+    <aside class="dash-sidebar" :class="{ 'dash-sidebar--collapsed': isSidebarCollapsed }">
       <div class="sidebar-header">
-        <span class="sidebar-title">Navigation</span>
-        <span class="sidebar-subtitle">Media Tracking</span>
+        <div class="sidebar-header-text">
+          <span class="sidebar-title">Navigation</span>
+          <span class="sidebar-subtitle">Media Tracking</span>
+        </div>
+        <button
+          class="sidebar-toggle"
+          :aria-label="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          :title="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          @click="isSidebarCollapsed = !isSidebarCollapsed"
+        >
+          <span class="material-symbols-outlined">
+            {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
+          </span>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink :to="{ name: 'Home' }"        class="sidebar-item" active-class="sidebar-item--active">
+        <RouterLink :to="{ name: 'Home' }"        class="sidebar-item" active-class="sidebar-item--active" title="Dashboard">
           <span class="material-symbols-outlined">dashboard</span>
-          <span>Dashboard</span>
+          <span class="sidebar-label">Dashboard</span>
         </RouterLink>
-        <RouterLink :to="{ name: 'Collections' }" class="sidebar-item" active-class="sidebar-item--active">
+        <RouterLink :to="{ name: 'Collections' }" class="sidebar-item" active-class="sidebar-item--active" title="My Collections">
           <span class="material-symbols-outlined">subscriptions</span>
-          <span>My Collections</span>
+          <span class="sidebar-label">My Collections</span>
         </RouterLink>
-        <RouterLink :to="{ name: 'Catalog' }"     class="sidebar-item" active-class="sidebar-item--active">
+        <RouterLink :to="{ name: 'Catalog' }"     class="sidebar-item" active-class="sidebar-item--active" title="Media Catalog">
           <span class="material-symbols-outlined">movie_filter</span>
-          <span>Media Catalog</span>
+          <span class="sidebar-label">Media Catalog</span>
         </RouterLink>
-        <RouterLink :to="{ name: 'Statistics' }"  class="sidebar-item" active-class="sidebar-item--active">
+        <RouterLink :to="{ name: 'Statistics' }"  class="sidebar-item" active-class="sidebar-item--active" title="Statistics">
           <span class="material-symbols-outlined">insert_chart</span>
-          <span>Statistics</span>
+          <span class="sidebar-label">Statistics</span>
         </RouterLink>
       </nav>
 
       <div class="sidebar-footer">
-        <RouterLink :to="{ name: 'Settings' }" class="sidebar-item" active-class="sidebar-item--active">
+        <RouterLink :to="{ name: 'Settings' }" class="sidebar-item" active-class="sidebar-item--active" title="Settings">
           <span class="material-symbols-outlined">settings</span>
-          <span>Settings</span>
+          <span class="sidebar-label">Settings</span>
         </RouterLink>
       </div>
     </aside>
@@ -338,11 +351,36 @@ onMounted(() => {
   top: 0;
   height: calc(100vh - 48px);
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.dash-sidebar--collapsed {
+  width: 48px;
+  min-width: 48px;
 }
 
 .sidebar-header {
-  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px 12px 16px;
   border-bottom: 1px solid #e0e0e0;
+  min-height: 56px;
+  gap: 8px;
+}
+
+.sidebar-header-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity 0.15s ease, width 0.2s ease;
+}
+
+.dash-sidebar--collapsed .sidebar-header-text {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
 }
 
 .sidebar-title {
@@ -353,6 +391,7 @@ onMounted(() => {
   letter-spacing: 0.32px;
   text-transform: uppercase;
   margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .sidebar-subtitle {
@@ -360,7 +399,28 @@ onMounted(() => {
   font-size: 12px;
   color: #8d8d8d;
   letter-spacing: 0.16px;
+  white-space: nowrap;
 }
+
+/* Toggle button */
+.sidebar-toggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #525252;
+  border-radius: 0;
+  transition: background-color 0.1s, color 0.1s;
+  padding: 0;
+}
+
+.sidebar-toggle:hover { background-color: #e0e0e0; color: #161616; }
+.sidebar-toggle .material-symbols-outlined { font-size: 20px; }
 
 .sidebar-nav {
   flex: 1;
@@ -378,7 +438,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 12px 14px;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 14px;
   color: #525252;
@@ -387,6 +447,8 @@ onMounted(() => {
   border-left: 4px solid transparent;
   transition: background-color 0.1s, color 0.1s;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-item:hover { background-color: #e0e0e0; color: #161616; }
@@ -398,7 +460,19 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.sidebar-item .material-symbols-outlined { font-size: 20px; }
+.sidebar-item .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
+
+/* Hide labels when collapsed */
+.sidebar-label {
+  transition: opacity 0.15s ease;
+  overflow: hidden;
+}
+
+.dash-sidebar--collapsed .sidebar-label {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
 
 /* ── Main content ────────────────────────────────────────── */
 .dash-main {
