@@ -152,8 +152,10 @@ export const useCollectionsStore = defineStore('collections', () => {
     }
   }
 
-  async function fetchCollectionDetail(collectionId: string) {
-    isLoading.value = true;
+  async function fetchCollectionDetail(collectionId: string, force = false) {
+    if (selectedCollection.value?.id !== collectionId || force) {
+      isLoading.value = true;
+    }
     error.value = null;
 
     try {
@@ -186,7 +188,11 @@ export const useCollectionsStore = defineStore('collections', () => {
       selectedCollectionMedia.value = mediaPayload;
       return { collection: collectionPayload, media: mediaPayload };
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load collection details';
+      if (selectedCollection.value?.id === collectionId) {
+        console.error('Background collection detail refresh failed:', err);
+      } else {
+        error.value = err instanceof Error ? err.message : 'Failed to load collection details';
+      }
       throw err;
     } finally {
       isLoading.value = false;
