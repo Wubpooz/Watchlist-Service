@@ -61,4 +61,26 @@ export const userService = {
     });
     return collections;
   },
+
+  /**
+   * Fetch owned collections for a user by user ID
+   * @param {string} userId User ID
+   * @returns {Collection[]} Array of owned collections
+   * @throws AppError if fetching collections fails
+   */
+  async getOwnedCollections(userId: string): Promise<Collection[]> {
+    const collections = await prisma.collection.findMany({
+      where: {
+        ownerId: userId
+      },
+      include: {
+        _count: {
+          select: {
+            media: true,
+          },
+        },
+      },
+    });
+    return collections;
+  },
 };

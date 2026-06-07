@@ -2,49 +2,66 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import AppModal from '@/components/AppModal.vue';
 
-const route  = useRoute();
+const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
+const mediaId = computed(() => route.params.id as string);
 
-// === Types ====================================================================
-
-type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
-
-interface MediaDetail {
+type Media = {
   id: string;
   title: string;
-  description: string | null;
-  type: MediaType;
-  releaseDate: string | null;
-  directorAuthor: string | null;
-  tags: string[];
-  platforms: string[];
-  url: string | null;
-  scores: unknown;
-  createdAt: string;
-  updatedAt: string;
-  collections: unknown[];
-}
+  description?: string | null;
+  type?: string | null;
+  releaseDate?: string | null;
+  directorAuthor?: string | null;
+  tags?: string[];
+  platforms?: string[];
+  scores?: Record<string, number> | null;
+  url?: string | null;
+};
 
-interface Collection {
+type CollectionSummary = {
   id: string;
   name: string;
-  visibility: string;
+};
+
+type CollectionToAdd = {
+  id: string;
+  name: string;
+  description?: string | null;
+  tags?: string[];
+  visisibility: string;
+  createdAt: string;
+  updatedAt: string;
+  ownerId: string;
+  _count?: {
+    media?: number;
+    members?: number;
+  };
+  media: Media[];
 }
 
-// === State ====================================================================
+const media = ref<Media | null>(null);
+const loading = ref(false);
+const error = ref<string | null>(null);
 
-const mediaId   = computed(() => route.params.id as string);
-const media     = ref<MediaDetail | null>(null);
-const isLoading = ref(true);
-const error     = ref('');
+const authStore = useAuthStore();
+const collectionsWithMedia = ref<CollectionSummary[]>([]); // For future use when we fetch collections containing this media
+const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
 
-const collections        = ref<Collection[]>([]);
-const selectedCollection = ref('');
-const isAdding           = ref(false);
-const addError           = ref('');
-const addSuccess         = ref(false);
+const addToCollectionError = ref<string | null>(null);
+const addToCollectionModalOpen = ref(false);
+const selectedCollectionIds = ref<string[]>([]);
+const loadingAddableCollections = ref(false);
+const addableCollections = ref<CollectionToAdd[]>([]);
+const addingCollection = ref(false);
+
+const selectedCollectionCount = computed(() => selectedCollectionIds.value.length);
+
+const addImageURLError = ref<string | null>(null);
+const addImageURLModalOpen = ref(false);
+const addingImageURL = ref(false);
 
 // === Display helpers ==========================================================
 
@@ -63,86 +80,193 @@ const releaseYear = (d?: string | null) => {
   try { return new Date(d).getFullYear().toString(); } catch { return '—'; }
 };
 
-// Collections this media already belongs to (from the join field in the response).
-const existingCollections = computed(() => {
-  if (!media.value?.collections) return [];
-  return (media.value.collections as any[])
-    .map(c => ({
-      id:   c.collection?.id   ?? c.id   ?? '',
-      name: c.collection?.name ?? c.name ?? '',
-    }))
-    .filter(c => c.id && c.name);
-});
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
-// === API ======================================================================
-
-const authHeaders = (): Record<string, string> => {
-  const h: Record<string, string> = {};
-  if (authStore.authToken) h['Authorization'] = `Bearer ${authStore.authToken}`;
-  return h;
-};
-
-const fetchMedia = async () => {
-  isLoading.value = true;
-  error.value = '';
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/media/${mediaId.value}`,
-      { headers: authHeaders(), credentials: 'include' }
-    );
-    if (res.status === 404) { error.value = 'This media item could not be found.'; }
-    else if (!res.ok)       { error.value = 'Failed to load media details.'; }
-    else                    { media.value = await res.json(); }
-  } catch {
-    error.value = 'Network error. Please try again.';
-  } finally {
-    isLoading.value = false;
+  if (authStore.authToken) {
+    headers.Authorization = `Bearer ${authStore.authToken}`;
   }
-};
 
-const fetchCollections = async () => {
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/collections?pageSize=50`,
-      { headers: authHeaders(), credentials: 'include' }
-    );
-    if (res.ok) { const b = await res.json(); collections.value = b.data ?? []; }
-  } catch { /* silent — dropdown degrades gracefully */ }
-};
+  return headers;
+}
 
-const addToCollection = async () => {
-  if (!selectedCollection.value || !media.value) return;
-  isAdding.value = true;
-  addError.value = '';
+async function loadMedia(id: string) {
+  loading.value = true;
+  error.value = null;
   try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/collections/${selectedCollection.value}/media`,
-      {
-        method: 'POST',
-        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ mediaId: media.value.id, position: 0 }),
-      }
-    );
-    if (res.ok || res.status === 201) {
-      addSuccess.value = true;
-      selectedCollection.value = '';
-      await fetchMedia(); // refresh to update existing-collections list
-      setTimeout(() => { addSuccess.value = false; }, 3000);
-    } else {
-      const d = await res.json().catch(() => ({}));
-      addError.value = (d as { message?: string })?.message ?? 'Failed to add to collection.';
+    const res = await fetch(`/api/media/${encodeURIComponent(id)}`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`Failed to fetch media (${res.status})`);
+    const data = await res.json();
+    // API may return the media directly or wrapped, handle both
+    media.value = data.media ?? data;
+
+    const mediaCollectionsRes = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(id)}/collections`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!mediaCollectionsRes.ok) {
+      throw new Error(`Failed to load collections containing this media (${mediaCollectionsRes.status})`);
     }
-  } catch {
-    addError.value = 'Network error. Please try again.';
+
+    const mediaCollectionsData = await mediaCollectionsRes.json();
+    collectionsWithMedia.value = mediaCollectionsData ?? [];
+
+  } catch (err: any) {
+    error.value = err?.message ?? 'Unknown error';
   } finally {
-    isAdding.value = false;
+    loading.value = false;
   }
-};
+}
+
+function openAddToCollectionModal(): void {
+  addToCollectionError.value = null;
+  addToCollectionModalOpen.value = true;
+  selectedCollectionIds.value = [];
+  void loadAddableCollections();
+}
+
+function closeAddToCollectionModal(): void {
+  if (addingCollection.value) {
+    return;
+  }
+
+  addToCollectionError.value = null;
+  addToCollectionModalOpen.value = false;
+  selectedCollectionIds.value = [];
+}
+
+// collections the user owns that do not have this media, to show in the "add to collection" modal
+async function loadAddableCollections(): Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  loadingAddableCollections.value = true;
+  addToCollectionError.value = null;
+
+  const userId = authStore.user?.id;
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/users/${encodeURIComponent(userId!)}/owned-collections`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load collections you own (${response.status})`);
+    }
+
+    const ownedCollectionsData = await response.json();
+    const ownedCollections: CollectionToAdd[] = ownedCollectionsData.collections ?? [];
+
+    // keep the collection that are in ownedCollections but not in collectionsWithMedia
+    const collectionsWithMediaIds = new Set(collectionsWithMedia.value.map(c => c.id));
+    addableCollections.value = ownedCollections.filter(c => !collectionsWithMediaIds.has(c.id));
+  } catch (err) {
+    addToCollectionError.value = err instanceof Error ? err.message : 'Failed to load collections';
+  } finally {
+    loadingAddableCollections.value = false;
+  }
+}
+
+async function addToSelectedCollections() : Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  if (selectedCollectionIds.value.length === 0) {
+    addToCollectionError.value = 'Please select at least one collection to add to.';
+    return;
+  }
+
+  addingCollection.value = true;
+  addToCollectionError.value = null;
+
+  try {
+    const responses = await Promise.all(
+      selectedCollectionIds.value.map(collectionId => {
+        return fetch(`${apiBaseUrl}/api/collections/${encodeURIComponent(collectionId)}/media`, {
+          method: 'POST',
+          headers: buildHeaders(),
+          credentials: 'include',
+          body: JSON.stringify({
+            mediaId: media.value!.id,
+            position: 0 // thought this would cause me emotional turmoil but turns out it just kinda worked
+          })
+        });
+      })
+    );
+
+    for (const response of responses) {
+      if (!response.ok) {
+        throw new Error('Failed to add selected media');
+      }
+    }
+
+    addToCollectionModalOpen.value = false;
+    selectedCollectionIds.value = [];
+    await loadMedia(media.value.id);
+  } catch (err) {
+    addToCollectionError.value = err instanceof Error ? err.message : 'Failed to add to collections';
+  } finally {
+    addingCollection.value = false;
+  }
+}
+
+function openAddImageURLModal(): void {
+  addImageURLError.value = null;
+  addImageURLModalOpen.value = true;
+}
+
+function closeAddImageURLModal(): void {
+  if (addingImageURL.value) {
+    return;
+  }
+  addImageURLError.value = null;
+  addImageURLModalOpen.value = false;
+}
+
+async function addImageURL(): Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  addingImageURL.value = true;
+  addImageURLError.value = null;
+
+  try {
+    const imageURLInput = document.querySelector('input[name="image-url"]') as HTMLInputElement | null;
+    const imageURL = imageURLInput?.value.trim();
+    const response = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(media.value.id)}`, {
+      method: 'PATCH',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        url: imageURL
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to add image URL (${response.status})`);
+    }
+
+    addImageURLModalOpen.value = false;
+    await loadMedia(media.value.id);
+  } catch (err) {
+    addImageURLError.value = err instanceof Error ? err.message : 'Failed to add image';
+  } finally {
+    addingImageURL.value = false;
+  }
+}
 
 onMounted(() => {
-  fetchMedia();
-  fetchCollections();
+  if (mediaId.value) loadMedia(mediaId.value);
 });
 </script>
 
@@ -150,7 +274,7 @@ onMounted(() => {
   <div class="detail-page">
 
     <!-- == Loading ================================================ -->
-    <div v-if="isLoading" class="status-area">
+    <div v-if="loading" class="status-area">
       <span class="material-symbols-outlined status-spinner">autorenew</span>
       <span>Loading…</span>
     </div>
@@ -160,7 +284,6 @@ onMounted(() => {
       <span class="material-symbols-outlined" style="font-size:40px;color:#8d8d8d">broken_image</span>
       <p class="status-msg">{{ error }}</p>
       <div class="status-actions">
-        <button class="btn-ghost" @click="fetchMedia">Retry</button>
         <button class="btn-ghost" @click="router.push({ name: 'Catalog' })">Back to catalog</button>
       </div>
     </div>
@@ -178,14 +301,18 @@ onMounted(() => {
 
         <!-- == Left: Poster ====================================== -->
         <div class="poster-col">
-          <div
-            class="poster"
-            :style="{ backgroundColor: TYPE_COLOR[media.type] ?? '#393939' }"
-          >
-            <span class="material-symbols-outlined poster-icon">
-              {{ TYPE_ICON[media.type] ?? 'category' }}
-            </span>
-          </div>
+
+          <button type="button" class="add-image-button" @click="openAddImageURLModal">
+            <img v-if="media?.url" :src="media.url" alt="Media Cover" class="poster" />
+            <div v-else
+              class="poster"
+              :style="{ backgroundColor: (media?.type && TYPE_COLOR[media.type]) ?? '#393939' }"
+            >
+              <span class="material-symbols-outlined poster-icon">
+                {{ (media?.type && TYPE_ICON[media.type]) ?? 'category' }}
+              </span>
+            </div>
+          </button>
 
           <a
             v-if="media.url"
@@ -209,7 +336,7 @@ onMounted(() => {
               <span v-if="media.directorAuthor" class="byline-author">
                 {{ media.directorAuthor }}
               </span>
-              <span class="type-badge">{{ TYPE_LABEL[media.type] ?? media.type }}</span>
+              <span class="type-badge">{{ (media?.type && TYPE_LABEL[media.type]) ?? media?.type }}</span>
             </div>
           </div>
 
@@ -236,60 +363,18 @@ onMounted(() => {
           </div>
 
           <!-- == Add to collection ================================ -->
-          <div class="collection-actions">
-
-            <div v-if="addSuccess" class="notice notice--success">
-              <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
-              Added to collection.
-            </div>
-
-            <div v-if="addError" class="notice notice--error">
-              <span class="material-symbols-outlined" style="font-size:16px">error</span>
-              {{ addError }}
-              <button class="notice-close" type="button" @click="addError = ''">
-                <span class="material-symbols-outlined" style="font-size:14px">close</span>
-              </button>
-            </div>
-
-            <div class="collection-row">
-              <div class="select-wrapper">
-                <select
-                  v-model="selectedCollection"
-                  class="collection-select"
-                  :disabled="collections.length === 0"
-                >
-                  <option value="" disabled hidden>
-                    {{ collections.length ? 'Add to collection…' : 'No collections yet' }}
-                  </option>
-                  <option v-for="col in collections" :key="col.id" :value="col.id">
-                    {{ col.name }}
-                  </option>
-                </select>
-                <span class="material-symbols-outlined select-arrow">expand_more</span>
-              </div>
-
-              <button
-                class="btn-add"
-                :disabled="!selectedCollection || isAdding"
-                @click="addToCollection"
-              >
-                <span
-                  v-if="isAdding"
-                  class="material-symbols-outlined btn-spinner"
-                  style="font-size:18px"
-                >autorenew</span>
-                <span v-else class="material-symbols-outlined" style="font-size:18px">add</span>
-                {{ isAdding ? 'Adding…' : 'Add' }}
-              </button>
-            </div>
+          <div class="add-to-collection-row">
+            <button type="button" class="btn-add" @click="openAddToCollectionModal">
+              Add to a collection
+            </button>
           </div>
 
           <!-- == Existing collections ============================= -->
-          <div v-if="existingCollections.length > 0" class="existing-collections">
+          <div v-if="collectionsWithMedia.length > 0" class="existing-collections">
             <h3 class="existing-title">Collections that contain this item</h3>
             <ul class="existing-list">
-              <li v-for="col in existingCollections" :key="col.id">
-                <RouterLink :to="{ name: 'Collections' }" class="existing-link">
+              <li v-for="col in collectionsWithMedia" :key="col.id">
+                <RouterLink :to="`/collections/${col.id}`" class="existing-link">
                   <span class="material-symbols-outlined" style="font-size:16px">folder_open</span>
                   {{ col.name }}
                 </RouterLink>
@@ -300,6 +385,80 @@ onMounted(() => {
         </div>
       </div>
     </template>
+
+
+    <!-- add to collection modal -->
+    <AppModal v-model="addToCollectionModalOpen" title="Add media to collection" @close="closeAddToCollectionModal">
+      <div class="add-collection-modal-body">
+        <p class="modal-copy">
+          Choose one or more collections to add this media to.
+        </p>
+
+        <p v-if="addToCollectionError" class="modal-error">
+          {{ addToCollectionError }}
+        </p>
+
+        <div v-else-if="loadingAddableCollections" class="modal-state">
+          Loading collections...
+        </div>
+
+        <div v-else-if="addableCollections.length === 0" class="modal-state">
+          No collection is available to add this media to.
+        </div>
+
+        <menu v-else class="collection-picker-list" aria-label="Available collections">
+          <label v-for="collection in addableCollections" :key="collection.id" class="collection-picker-item">
+            <input
+              v-model="selectedCollectionIds"
+              type="checkbox"
+              :value="collection.id"
+              class="carbon-checkbox"
+            >
+            <span class="collection-picker-copy">
+              <span class="collection-picker-title">{{ collection.name }}</span>
+            </span>
+          </label>
+        </menu>
+      </div>
+
+      <template #footer>
+        <button type="button" class="secondary-btn" :disabled="addingCollection" @click="closeAddToCollectionModal">
+          Cancel
+        </button>
+        <button type="button" class="primary-btn" :disabled="addingCollection || selectedCollectionCount === 0 || loadingAddableCollections || addableCollections.length === 0" @click="addToSelectedCollections">
+          {{ addingCollection ? 'Adding...' : `Add selected (${selectedCollectionCount})` }}
+        </button>
+      </template>
+    </AppModal>
+
+    <!-- add image modal -->
+    <AppModal v-model="addImageURLModalOpen" title="Add cover image from URL" @close="closeAddImageURLModal">
+      <div class="add-image-modal-body">
+          <p class="modal-copy">
+            Enter the URL of an image to set it as the cover for this media.
+          </p>
+  
+          <p v-if="addImageURLError" class="modal-error">
+            {{ addImageURLError }}
+          </p>
+
+          <input
+            type="text"
+            placeholder="https://example.com/image.jpg"
+            class="carbon-text-input"
+            name="image-url"
+          >
+      </div>
+
+      <template #footer>
+        <button type="button" class="secondary-btn" :disabled="addingImageURL" @click="closeAddImageURLModal">
+          Cancel
+        </button>
+        <button type="button" class="primary-btn" :disabled="addingImageURL" @click="addImageURL">
+          {{ addingImageURL ? 'Adding...' : 'Add Image' }}
+        </button>
+      </template>
+    </AppModal>
 
   </div>
 </template>
@@ -491,75 +650,8 @@ onMounted(() => {
 .meta-value { font-size: 14px; color: #161616; letter-spacing: 0.16px; }
 
 /* == Add to collection ===================================== */
-.collection-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 32px;
-}
-
-.notice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  letter-spacing: 0.16px;
-  padding: 8px 12px;
-}
-
-.notice--success { color: #198038; }
-
-.notice--error {
-  background-color: #ffd7d9;
-  border-left: 3px solid #da1e28;
-  color: #750000;
-}
-
-.notice-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  display: flex;
-  padding: 0;
-  margin-left: auto;
-}
 
 .collection-row { display: flex; align-items: stretch; }
-
-.select-wrapper { position: relative; flex: 1; max-width: 280px; }
-
-.collection-select {
-  appearance: none;
-  display: block;
-  width: 100%;
-  height: 40px;
-  padding: 0 36px 0 12px;
-  background-color: #f4f4f4;
-  border: none;
-  border-bottom: 1px solid #525252;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 14px;
-  color: #161616;
-  letter-spacing: 0.16px;
-  cursor: pointer;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
-  transition: outline 0.1s;
-}
-
-.collection-select:focus { outline-color: #0f62fe; border-bottom-color: transparent; }
-.collection-select:disabled { color: #8d8d8d; cursor: not-allowed; }
-
-.select-arrow {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-  color: #161616;
-  pointer-events: none;
-}
 
 .btn-add {
   display: inline-flex;
@@ -585,6 +677,10 @@ onMounted(() => {
   background-color: #c6c6c6;
   color: #8d8d8d;
   cursor: not-allowed;
+}
+.add-to-collection-row {
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
 /* == Existing collections ================================== */
@@ -641,10 +737,146 @@ onMounted(() => {
 
 .btn-ghost:hover { background-color: #f4f4f4; }
 
-.btn-spinner { animation: spin 1s linear infinite; }
+.add-image-button {
+  filter: brightness(1);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.add-image-button:hover {
+  filter: brightness(0.75);
+  transition: transform 0.2s ease, filter 0.2s ease;
+  cursor: pointer;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: 1px solid transparent;
+  font-size: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #0f62fe;
+  color: #ffffff;
+}
+
+.primary-btn:hover {
+  background: #0353e9;
+}
+
+.secondary-btn {
+  background: #ffffff;
+  border-color: #8d8d8d;
+  color: #161616;
+}
+
+.secondary-btn:hover {
+  background: #f4f4f4;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+.add-to-collection-button {
+  padding: 12px 18px;
+  border: 1px solid #0f62fe;
+  background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.add-to-collection-button:hover {
+  transform: translateY(-1px);
+}
+
+.add-to-collection-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+.add-to-collection-button:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
+}
+
+/* Modals */
+
+.add-collection-modal-body,
+.add-image-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.modal-copy {
+  margin: 0;
+  color: #525252;
+  line-height: 1.5;
+}
+
+.modal-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #da1e28;
+  background: #ffd7d9;
+  color: #8b0000;
+}
+
+.modal-state {
+  padding: 14px 12px;
+  border: 1px solid #e0e0e0;
+  background: #f4f4f4;
+  color: #525252;
+}
+
+.collection-picker-list {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.collection-picker-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.collection-picker-item:hover {
+  background: #f4f4f4;
+  border-color: #c6c6c6;
+}
+
+.collection-picker-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.collection-picker-title {
+  color: #161616;
+  font-weight: 600;
+}
+
+.collection-picker-type {
+  color: #525252;
+  font-size: 13px;
+}
+
 </style>

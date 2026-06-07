@@ -239,3 +239,37 @@ mediaRoutes.delete(
 );
 
 
+// GET /:mediaId/collections - Get all collections that a media belongs to
+mediaRoutes.get(
+  '/:mediaId/collections',
+  describeRoute({
+    tags: ['Media'],
+    description: 'Get all collections that a media is contained in',
+    parameters: [
+      { name: 'mediaId', in: 'path', required: true, schema: { type: 'string' }, example: 'media_123' },
+    ],
+    responses: {
+      200: {
+        description: 'List of collections containing the media',
+        content: {
+          'application/json': {
+            schema: resolver(mediaListResponseSchema),
+          },
+        },
+      },
+      404: { description: 'Media not found' },
+    },
+  }),
+  validator('param', mediaIdParamSchema),
+  async (c) => {
+    const { mediaId } = c.req.valid('param');
+    const sessionUser = c.get('user');
+    const collections = await mediaService.getMediaCollections(mediaId, sessionUser?.id);
+    
+    if (collections === null) {
+      return c.json({ error: 'Media not found' }, 404);
+    }
+    
+    return c.json(collections, 200);
+  }
+)

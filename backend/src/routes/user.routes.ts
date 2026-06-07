@@ -183,3 +183,44 @@ userRoutes.get(
     return c.json({ collections }, 200);
   }
 );
+
+
+// GET /:userId/owned-collections - List owned collections by user
+userRoutes.get(
+  '/:userId/owned-collections',
+  describeRoute({
+    tags: ['Users'],
+    description: 'List owned collections by user',
+    parameters: [
+      {
+        name: 'userId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'user_123',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'List of owned collections by user',
+        content: {
+          'application/json': {
+            schema: resolver(collectionsResponseSchema),
+          },
+        },
+      },
+      404: { description: 'User not found' },
+    },
+  }),
+  validator('param', userIdParamSchema),
+  async (c) => {
+    const userId = c.req.param('userId');
+    const collections = await userService.getOwnedCollections(userId).catch(() => {
+      throw new AppError('Failed to fetch collections', 500);
+    });
+    if (!collections) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    return c.json({ collections }, 200);
+  }
+);
