@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useCollectionsStore } from '@/stores/collections';
 
 interface MediaItem {
   id: string;
@@ -33,24 +34,11 @@ interface CollectionItem {
   media: CollectionMediaItem[];
 }
 
-interface CollectionListResponse {
-  data: Array<Omit<CollectionItem, 'media'> & { media?: never }>;
-  page: number;
-  pageSize: number;
-  total: number;
-  pages: number;
-  cursor?: string | null;
-}
-
 type CollectionTab = 'all' | 'owned' | 'shared' | 'public';
 
 const authStore = useAuthStore();
-const collections = ref<CollectionItem[]>([]);
-const loading = ref(true);
-const error = ref<string | null>(null);
-const createError = ref<string | null>(null);
+const collectionsStore = useCollectionsStore();
 const createModalOpen = ref(false);
-const creatingCollection = ref(false);
 const newCollectionName = ref('');
 const newCollectionDescription = ref('');
 const newCollectionTags = ref('');
@@ -65,12 +53,14 @@ const collectionTabs: Array<{ key: CollectionTab; label: string }> = [
   { key: 'public', label: 'Public' },
 ];
 
-const currentUserLabel = computed(() => authStore.user?.name || authStore.user?.email || 'your account');
-const collectionCount = computed(() => collections.value.length);
-const mediaCount = computed(() => collections.value.reduce((total, collection) => total + collection.media.length, 0));
-const ownedCollections = computed(() => collections.value.filter((collection) => collection.ownerId === authStore.user?.id));
-const sharedCollections = computed(() => collections.value.filter((collection) => collection.ownerId !== authStore.user?.id && collection.visibility !== 'PUBLIC'));
-const publicCollections = computed(() => collections.value.filter((collection) => collection.visibility === 'PUBLIC'));
+const collections = computed(() => collectionsStore.collections);
+const loading = computed(() => collectionsStore.isLoading);
+const error = computed(() => collectionsStore.error);
+const createError = computed(() => collectionsStore.createError);
+const creatingCollection = computed(() => collectionsStore.isLoading && createModalOpen.value);
+const ownedCollections = computed(() => collectionsStore.ownedCollections);
+const sharedCollections = computed(() => collectionsStore.sharedCollections);
+const publicCollections = computed(() => collectionsStore.publicCollections);
 
 const filteredCollections = computed(() => {
   if (activeTab.value === 'owned') {
@@ -88,30 +78,18 @@ const filteredCollections = computed(() => {
   return collections.value;
 });
 
-function buildHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (authStore.authToken) {
-    headers.Authorization = `Bearer ${authStore.authToken}`;
-  }
-
-  return headers;
-}
-
 function openCreateCollectionModal(): void {
-  createError.value = null;
+  collectionsStore.createError = null;
   createModalOpen.value = true;
 }
 
 function closeCreateCollectionModal(): void {
-  if (creatingCollection.value) {
+  if (collectionsStore.isLoading) {
     return;
   }
 
   createModalOpen.value = false;
-  createError.value = null;
+  collectionsStore.createError = null;
 }
 
 function resetCreateCollectionForm(): void {
@@ -128,125 +106,36 @@ function normalizeTags(tagsInput: string): string[] {
     .filter((tag) => tag.length > 0);
 }
 
-async function fetchCollections(): Promise<CollectionItem[]> {
-  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
-  const pageSize = 100;
-  const loadedCollections: CollectionItem[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  if (!authStore.user?.id) {
-    throw new Error('Unable to determine the current user');
-  }
-
-  while (page <= totalPages) {
-    const response = await fetch(`${apiBaseUrl}/api/collections?page=${page}&pageSize=${pageSize}&sort=updatedAt&order=desc`, {
-      headers: buildHeaders(),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to load collections (${response.status})`);
-    }
-
-    const payload = await response.json() as CollectionListResponse;
-    loadedCollections.push(...payload.data.map((collection) => ({
-      ...collection,
-      media: [],
-    })));
-
-    totalPages = payload.pages || 1;
-    page += 1;
-  }
-
-  return loadedCollections;
-
-  const mediaResults = await Promise.allSettled(
-    loadedCollections.map(async (collection) => {
-      const mediaResponse = await fetch(`${apiBaseUrl}/api/collections/${collection.id}/media`, {
-        headers: buildHeaders(),
-        credentials: 'include',
-      });
-
-      if (!mediaResponse.ok) {
-        throw new Error(`Failed to load media for ${collection.name}`);
-      }
-
-      const mediaItems = await mediaResponse.json() as CollectionMediaItem[];
-      return {
-        ...collection,
-        media: mediaItems,
-      };
-    })
-  );
-
-  return mediaResults.map((result, index) => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    }
-
-    return {
-      ...loadedCollections[index],
-      media: [],
-    };
-  });
-}
-
 async function createCollection(): Promise<void> {
   const name = newCollectionName.value.trim();
   const description = newCollectionDescription.value.trim();
   const tags = normalizeTags(newCollectionTags.value);
 
   if (!name) {
-    createError.value = 'Collection name is required';
+    collectionsStore.createError = 'Collection name is required';
     return;
   }
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
-  createError.value = null;
-  creatingCollection.value = true;
-
   try {
-    const response = await fetch(`${apiBaseUrl}/api/collections`, {
-      method: 'POST',
-      headers: buildHeaders(),
-      credentials: 'include',
-      body: JSON.stringify({
-        name,
-        ...(description ? { description } : {}),
-        ...(tags.length ? { tags } : {}),
-        visibility: newCollectionVisibility.value,
-      }),
+    await collectionsStore.createCollection({
+      name,
+      ...(description ? { description } : {}),
+      ...(tags.length ? { tags } : {}),
+      visibility: newCollectionVisibility.value,
     });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null) as { error?: string; message?: string } | null;
-      throw new Error(payload?.error || payload?.message || 'Failed to create collection');
-    }
-
-    const createdCollection = await response.json() as Omit<CollectionItem, 'media'> & { media?: never };
-    collections.value = [{
-      ...createdCollection,
-      media: [],
-      _count: createdCollection._count ?? { media: 0, members: 0 },
-    }, ...collections.value];
-
     resetCreateCollectionForm();
     createModalOpen.value = false;
-  } catch (err) {
-    createError.value = err instanceof Error ? err.message : 'Failed to create collection';
-  } finally {
-    creatingCollection.value = false;
+    await collectionsStore.fetchCollections();
+  } catch {
+    // Error is handled in the store
   }
 }
 
 onMounted(async () => {
   try {
-    collections.value = await fetchCollections();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load collections';
-  } finally {
-    loading.value = false;
+    await collectionsStore.fetchCollections();
+  } catch {
+    // error is handled by the collections store
   }
 });
 
@@ -351,7 +240,7 @@ function tabCount(tab: CollectionTab): number {
       </RouterLink>
     </section>
 
-    <AppModal v-model="createModalOpen" title="Create collection" @close="createError = null">
+    <AppModal v-model="createModalOpen" title="Create collection" @close="closeCreateCollectionModal">
       <form id="create-collection-form" class="collection-form" @submit.prevent="createCollection">
         <div class="field-group">
           <label for="collection-name">Name</label>
