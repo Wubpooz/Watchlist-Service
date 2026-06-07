@@ -10,6 +10,7 @@ const authApi: any = {
   signOut: async () => undefined,
   requestPasswordReset: async () => undefined,
   resetPassword: async () => undefined,
+  changePassword: async () => undefined,
 };
 
 mock.module('../middleware/auth', () => ({
@@ -27,6 +28,7 @@ describe('authRoutes', () => {
     authApi.signOut = async () => undefined;
     authApi.requestPasswordReset = async () => undefined;
     authApi.resetPassword = async () => undefined;
+    authApi.changePassword = async () => undefined;
   });
 
   it('registers a new user', async () => {
@@ -124,6 +126,26 @@ describe('authRoutes', () => {
     expect(body.message).toBe('Authenticated user profile and session info');
     expect(body.user.id).toBe(fixtures.ownerUser.id);
     expect(body.session.id).toBe(fixtures.session.id);
+  });
+
+  it('changes the password of an authenticated user', async () => {
+    const { app } = createRouteTestApp(authRoutes, {
+      user: fixtures.ownerUser,
+      session: fixtures.session,
+    });
+
+    const response = await app.request('/change-password', {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: JSON.stringify({
+        currentPassword: registerPassword,
+        newPassword: newPassword,
+        revokeOtherSessions: false,
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json() as any).toEqual({ message: 'Password changed successfully' });
   });
 
   afterAll(() => {

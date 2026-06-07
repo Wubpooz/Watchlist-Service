@@ -52,6 +52,49 @@ async function handleSave() {
     isSaving.value = false;
   }
 }
+
+const currentPassword = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
+const isChangingPassword = ref(false);
+const passwordSuccessMessage = ref('');
+const passwordErrorMessage = ref('');
+
+async function handleChangePassword() {
+  passwordSuccessMessage.value = '';
+  passwordErrorMessage.value = '';
+
+  if (newPassword.value !== confirmPassword.value) {
+    passwordErrorMessage.value = 'New password and confirmation do not match.';
+    return;
+  }
+
+  if (newPassword.value.length < 8) {
+    passwordErrorMessage.value = 'New password must be at least 8 characters long.';
+    return;
+  }
+
+  isChangingPassword.value = true;
+
+  try {
+    await authStore.changePassword(
+      currentPassword.value,
+      newPassword.value
+    );
+    passwordSuccessMessage.value = 'Password updated successfully.';
+    currentPassword.value = '';
+    newPassword.value = '';
+    confirmPassword.value = '';
+
+    setTimeout(() => {
+      passwordSuccessMessage.value = '';
+    }, 5000);
+  } catch (err: any) {
+    passwordErrorMessage.value = err?.message || 'Failed to update password.';
+  } finally {
+    isChangingPassword.value = false;
+  }
+}
 </script>
 
 <template>
@@ -153,6 +196,71 @@ async function handleSave() {
       >
         <span>{{ isSaving ? 'Saving changes...' : 'Save settings' }}</span>
         <span class="material-symbols-outlined">save</span>
+      </button>
+    </form>
+
+    <!-- Change Password Form -->
+    <form @submit.prevent="handleChangePassword" class="settings-form change-password-section pt-6 border-t mt-6">
+      <h2 class="section-heading">Change Password</h2>
+
+      <!-- Password Change Success message -->
+      <div v-if="passwordSuccessMessage" class="success-message" role="alert">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>{{ passwordSuccessMessage }}</span>
+      </div>
+
+      <!-- Password Change Error message -->
+      <div v-if="passwordErrorMessage" class="error-message" role="alert">
+        <span class="material-symbols-outlined">error</span>
+        <span>{{ passwordErrorMessage }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="currentPassword" class="carbon-label">Current Password</label>
+        <input 
+          id="currentPassword" 
+          type="password" 
+          v-model="currentPassword"
+          class="carbon-input" 
+          placeholder="Enter current password"
+          required
+          minlength="8"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="newPassword" class="carbon-label">New Password</label>
+        <input 
+          id="newPassword" 
+          type="password" 
+          v-model="newPassword"
+          class="carbon-input" 
+          placeholder="Enter new password (minimum 8 characters)"
+          required
+          minlength="8"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="carbon-label">Confirm New Password</label>
+        <input 
+          id="confirmPassword" 
+          type="password" 
+          v-model="confirmPassword"
+          class="carbon-input" 
+          placeholder="Confirm new password"
+          required
+          minlength="8"
+        />
+      </div>
+
+      <button 
+        type="submit" 
+        class="carbon-btn change-password-btn" 
+        :disabled="isChangingPassword"
+      >
+        <span>{{ isChangingPassword ? 'Updating password...' : 'Update password' }}</span>
+        <span class="material-symbols-outlined">lock_reset</span>
       </button>
     </form>
   </div>
@@ -292,5 +400,28 @@ async function handleSave() {
 .submit-btn {
   margin-top: 1rem;
   height: 48px;
+}
+
+.pt-6 {
+  padding-top: 1.5rem;
+}
+
+.border-t {
+  border-top: 1px solid #e0e0e0;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.change-password-btn {
+  background-color: #161616;
+  color: #ffffff;
+  margin-top: 1rem;
+  height: 48px;
+}
+
+.change-password-btn:hover {
+  background-color: #393939;
 }
 </style>

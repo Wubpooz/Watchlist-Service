@@ -218,6 +218,34 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function changePassword(currentPassword: string, newPassword: string, revokeOtherSessions: boolean = false) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken.value}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword, revokeOtherSessions }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(extractErrorMessage(errData, 'Failed to change password'));
+      }
+
+      return await response.json();
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'An error occurred';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   return {
     user,
     authToken,
@@ -232,6 +260,7 @@ export const useAuthStore = defineStore('auth', () => {
     forgotPassword,
     resetPassword,
     updateProfile,
+    changePassword,
   };
 });
 

@@ -3,7 +3,7 @@ import { describeRoute, resolver, validator } from 'hono-openapi';
 import { APIError } from 'better-auth/api';
 import { auth } from '../middleware/auth.js';
 import type { AuthType } from '../middleware/auth.js';
-import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema } from '../schemas/auth.schema.js';
+import { registerBodySchema, loginBodySchema, messageResponseSchema, forgotPasswordBodySchema, resetPasswordBodySchema, changePasswordBodySchema } from '../schemas/auth.schema.js';
 import { createAuthError, resolveApiErrorStatus, AppError } from '../middleware/errorHandler.js';
 
 export const authRoutes = new Hono<{ Variables: AuthType }>();
@@ -389,6 +389,64 @@ authRoutes.get(
       }
       console.error('[Auth Route Error]:', error);
       throw createAuthError('Failed to get authenticated user profile and session info', error);
+    }
+  }
+);
+
+
+// POST /change-password - Change user password
+authRoutes.post(
+  '/change-password',
+  describeRoute({
+    tags: ['Auth'],
+    description: 'Change the authenticated user\'s password',
+    security: [{ bearerAuth: [] }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {},
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password changed successfully',
+        content: {
+          'application/json': {
+            schema: resolver(messageResponseSchema),
+            example: { message: 'Password changed successfully' },
+          },
+        },
+      },
+      400: { description: 'Invalid payload or password requirements not met' },
+      401: { description: 'Unauthorized' },
+    },
+  }),
+  validator('json', changePasswordBodySchema, secureValidationHook),
+  async (c: any) => {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = c.req.valid('json');
+
+    try {
+      await auth.api.changePassword({
+        body: {
+          currentPassword: body.currentPassword,
+          newPassword: body.newPassword,
+          revokeOtherSessions: body.revokeOtherSessions ?? false,
+        },
+        headers: c.req.raw.headers,
+      });
+
+      return c.json({ message: 'Password changed successfully' });
+    } catch (error: any) {
+      if (error instanceof APIError) {
+        throw new AppError(error.message, resolveApiErrorStatus(error));
+      }
+      console.error('[Auth Route Error]:', error);
+      throw createAuthError('Failed to change password. Please ensure your current password is correct.', error);
     }
   }
 );

@@ -26,3 +26,9 @@ export const resetPasswordBodySchema = z.object({
   token: z.string().min(1).describe('Password reset token'),
   newPassword: z.string().min(8).describe('New password (minimum 8 characters)').meta({ example: 'newpassword123' }),
 }) satisfies z.Schema<{ token: string; newPassword: string }>;
+
+export const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(8).describe('Current password').meta({ example: 'currentpassword123' }),
+  newPassword: z.string().min(8).describe('New password (minimum 8 characters)').meta({ example: 'newpassword123' }),
+  revokeOtherSessions: z.boolean().optional().describe('Revoke other active sessions').meta({ example: false }),
+}) satisfies z.Schema<{ currentPassword: string; newPassword: string; revokeOtherSessions?: boolean }>;
