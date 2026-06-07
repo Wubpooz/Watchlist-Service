@@ -58,6 +58,10 @@ const addingCollection = ref(false);
 
 const selectedCollectionCount = computed(() => selectedCollectionIds.value.length);
 
+const addImageURLError = ref<string | null>(null);
+const addImageURLModalOpen = ref(false);
+const addingImageURL = ref(false);
+
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -197,6 +201,52 @@ async function addToSelectedCollections() : Promise<void> {
   }
 }
 
+function openAddImageURLModal(): void {
+  addImageURLError.value = null;
+  addImageURLModalOpen.value = true;
+}
+
+function closeAddImageURLModal(): void {
+  if (addingImageURL.value) {
+    return;
+  }
+  addImageURLError.value = null;
+  addImageURLModalOpen.value = false;
+}
+
+async function addImageURL(): Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  addingImageURL.value = true;
+  addImageURLError.value = null;
+
+  try {
+    const imageURLInput = document.querySelector('input[name="image-url"]') as HTMLInputElement | null;
+    const imageURL = imageURLInput?.value.trim();
+    const response = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(media.value.id)}`, {
+      method: 'PATCH',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        url: imageURL
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to add image URL (${response.status})`);
+    }
+
+    addImageURLModalOpen.value = false;
+    await loadMedia(media.value.id);
+  } catch (err) {
+    addImageURLError.value = err instanceof Error ? err.message : 'Failed to add image';
+  } finally {
+    addingImageURL.value = false;
+  }
+}
+
 onMounted(() => {
   if (mediaId.value) loadMedia(mediaId.value);
 });
@@ -205,8 +255,13 @@ onMounted(() => {
 <template>
   <div class="page-container">
     <!-- left side : cover image if we ever have those -->
-    <div v-if="media?.url" class="cover-image">
-      <img v-if="media?.url" :src="media.url" alt="Media Cover" class="cover-img" />
+    <div class="cover-image">
+
+      <button type="button" class="add-image-button" @click="openAddImageURLModal">
+        <img v-if="media?.url" :src="media.url" alt="Media Cover" class="cover-img" />
+        <span v-else>Add a cover image</span>
+      </button>
+
     </div>
     <!-- right side : name, author, type, description, release, tags, platforms, add to collection button, collections that have it -->
     <div class="media-details">
@@ -304,6 +359,34 @@ onMounted(() => {
         </button>
       </template>
     </AppModal>
+
+    <AppModal v-model="addImageURLModalOpen" title="Add cover image from URL" @close="closeAddImageURLModal">
+      <div class="add-image-modal-body">
+          <p class="modal-copy">
+            Enter the URL of an image to set it as the cover for this media.
+          </p>
+  
+          <p v-if="addImageURLError" class="modal-error">
+            {{ addImageURLError }}
+          </p>
+
+          <input
+            type="text"
+            placeholder="https://example.com/image.jpg"
+            class="carbon-text-input"
+            name="image-url"
+          >
+      </div>
+
+      <template #footer>
+        <button type="button" class="secondary-btn" :disabled="addingImageURL" @click="closeAddImageURLModal">
+          Cancel
+        </button>
+        <button type="button" class="primary-btn" :disabled="addingImageURL" @click="addImageURL">
+          {{ addingImageURL ? 'Adding...' : 'Add Image' }}
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -349,6 +432,14 @@ onMounted(() => {
   justify-content: center;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  max-width: 400px;
+  max-height: 400px;
+  object-fit: cover;
 }
 
 .media-details {
@@ -430,6 +521,17 @@ onMounted(() => {
   outline-offset: 2px;
 }
 
+.add-image-button {
+  filter: brightness(1);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.add-image-button:hover {
+  filter: brightness(0.75);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+
 .collection-list {
   list-style: none;
   padding: 0;
@@ -445,7 +547,8 @@ onMounted(() => {
 
 /* modal */
 
-.add-collection-modal-body {
+.add-collection-modal-body,
+.add-image-modal-body {
   display: grid;
   gap: 14px;
 }
