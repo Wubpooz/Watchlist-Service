@@ -1,88 +1,171 @@
-# Projet APP5 — Architecture Orientée Services
-> A REST API backend for managing cross-platform media watch lists. Users can create collections of movies, shows, books, or articles, share them with others, and manage who can view or edit them.
+# Projet APP5 : Architecture Orientée Services
+> A full-stack media watchlist application. Users can create collections of movies, shows, books, or articles, share them with others, and manage who can view or edit them.
 
+&nbsp;
+## Live Deployment
+| Service | URL |
+|---------|-----|
+| **Frontend (Vercel)** | [watchlist-service.vercel.app](https://watchlist-service.vercel.app/) |
+| **API** | [watchlist-service.vercel.app/api](https://watchlist-service.vercel.app/api) |
+| **API Docs (Scalar UI)** | [watchlist-service.vercel.app/docs](https://watchlist-service.vercel.app/docs) |
+| **OpenAPI JSON** | [watchlist-service.vercel.app/openapi](https://watchlist-service.vercel.app/openapi) |
+| **Database (Supabase)** | [Supabase Editor](https://supabase.com/dashboard/project/xgldfnshjkidrxugxsth/editor/25407?schema=public) |
 
+---
+
+&nbsp;
 ## What's been built
-- **Authentication** — register, login, logout, forgot/reset password via [Better Auth](https://github.com/better-auth/better-auth). Session tokens are returned in the `set-auth-token` response header.
-- **Users** — profile read/update, public user lookup.
-- **Media** — full CRUD with access control. Only the creator can modify or delete their entries.
-- **Collections** — create/list/get/update/delete, with public or private visibility. Supports pagination, tag filtering, and title search.
-- **Roles & invitations** — collection owners can invite users as `COLLABORATOR` or `READER`. Invitees accept or decline via a dedicated endpoint. Owners can change roles or remove members at any time.
-- **MCP server** — stateless HTTP `/mcp` transport plus a stdio entrypoint that reuses the existing collection, media, and user services with per-call bearer-token auth.
-- **OpenAPI spec** — auto-generated and served at `/openapi` (JSON) and `/docs` (Scalar UI).
-- **Docker Compose** — baseline for local containerized execution.
-- **Rate limiting** — basic rate limiter on all routes.
+### Frontend (Vue 3 + Vite)
+- **Landing page**: marketing/entry page before authentication.
+- **Authentication**: sign up, log in, forgot password, reset password flows.
+- **Home / Dashboard**: overview of the user's activity.
+- **Catalog**: browse and search all media items with filtering and sorting. Supports creating new media entries.
+- **Media Detail**: full detail view for a single media item (type, genres, tags, platforms, year, etc.).
+- **Collections**: list, create, and manage collections. Public/private visibility.
+- **Collection Detail**: view all media in a collection, manage members, accept/decline invitations inline.
+- **Invitations**: dedicated page listing all pending collaboration invitations.
+- **Statistics**: personal analytics dashboard (media counts by type, genre breakdowns, library growth over time, etc.).
+- **Settings**: user profile update and account management.
+- **Navigation**: persistent sidebar with auth-aware routing.
+- **404 page**: custom not-found fallback.
 
-There is no front-end, see the progress tracking section at the bottom.
+### Backend (Bun + Hono)
+- **Authentication**: register, login, logout, forgot/reset password via [Better Auth](https://github.com/better-auth/better-auth). Session tokens are returned in the `set-auth-token` response header.
+- **Users**: profile read/update, public user lookup.
+- **Media**: full CRUD with access control. Only the creator can modify or delete their entries.
+- **Collections**: create/list/get/update/delete, with public or private visibility. Supports pagination, tag filtering, and title search.
+- **Roles & invitations**: collection owners can invite users as `COLLABORATOR` or `READER`. Invitees accept or decline via a dedicated endpoint. Owners can change roles or remove members at any time.
+- **MCP server**: stateless HTTP `/mcp` transport plus a stdio entrypoint that reuses the existing collection, media, and user services with per-call bearer-token auth.
+- **OpenAPI spec**: auto-generated and served at `/openapi` (JSON) and `/docs` (Scalar UI).
+- **Docker Compose**: baseline for local containerized execution.
+- **Rate limiting**: basic rate limiter on all routes.
+- **CI/CD**: GitHub Actions pipeline with backend tests, frontend tests, and Vercel deployment.
 
+---
 
-&nbsp;  
+&nbsp;
+## Using the Live Site
+1. Go to **[watchlist-service.vercel.app](https://watchlist-service.vercel.app/)**.
+2. You'll land on the landing page. Click **Sign Up** to create an account, or **Log In** if you already have one.
+3. After logging in you'll be taken to the **Home** dashboard.
 
+### Key pages and how to reach them
+| Page | Path | Description |
+|------|------|-------------|
+| Landing | `/landing` | Marketing page, entry point for unauthenticated users |
+| Login | `/login` | Sign in to your account |
+| Sign Up | `/signup` | Create a new account |
+| Forgot Password | `/forgot-password` | Request a password reset email |
+| Reset Password | `/reset-password` | Complete a password reset |
+| **Home** | `/` | Dashboard with personal overview |
+| **Catalog** | `/catalog` | Browse all media, search, filter, sort |
+| Add Media | `/catalog/new` | Create a new media item |
+| Media Detail | `/media/:id` | View full details for a media item |
+| **Collections** | `/collections` | List and manage your collections |
+| Collection Detail | `/collections/:id` | View collection contents and manage members |
+| **Invitations** | `/invitations` | Accept or decline pending invitations |
+| **Statistics** | `/statistics` | Your personal media analytics |
+| **Settings** | `/settings` | Update your profile and account |
+
+> Unauthenticated users are automatically redirected to the landing page. Authenticated users visiting auth pages are redirected to the home dashboard.
+
+### Default Test Accounts (Pre-seeded)
+For ease of testing, the database is pre-populated with two test accounts:
+
+| Name | Username | Email | Password | Role / Details |
+|------|----------|-------|----------|----------------|
+| **John Doe** | `john_doe` | `john@example.com` | `AoSProject5_WatchlistSecure!` | Owner of pre-seeded collections ("Sci-Fi Classics", "To Watch") |
+| **Jane Smith** | `jane_smith` | `jane@example.com` | `AoSProject5_WatchlistSecure!` | Collaborator/reader invited to John's collections |
+
+---
+
+&nbsp;
 ## Stack (Choix techniques)
+### Backend
 | Layer      | Tool                                                      |
 |------------|-----------------------------------------------------------|
 | Runtime    | [Bun](https://bun.sh)                                     |
 | Framework  | [Hono](https://hono.dev)                                  |
 | Validation | [Zod](https://zod.dev)                                    |
 | ORM        | [Prisma](https://www.prisma.io)                           |
-| Database   | PostgreSQL 16                                             |
+| Database   | PostgreSQL 16 (Supabase in prod)                          |
 | Auth       | [Better Auth](https://github.com/better-auth/better-auth) |
+
+### Frontend
+| Layer      | Tool                                        |
+|------------|---------------------------------------------|
+| Framework  | [Vue 3](https://vuejs.org) (Composition API) |
+| Build tool | [Vite](https://vite.dev)                    |
+| Routing    | [Vue Router 4](https://router.vuejs.org)    |
+| State      | [Pinia](https://pinia.vuejs.org)            |
+| Styling    | [Tailwind CSS v4](https://tailwindcss.com)  |
+| Testing    | [Vitest](https://vitest.dev) + Vue Test Utils |
+
+### Infrastructure
+| Concern | Tool |
+|---------|------|
+| Hosting | [Vercel](https://vercel.com) |
+| Database | [Supabase](https://supabase.com) (PostgreSQL) |
+| CI/CD | GitHub Actions |
+| Containers | Docker + Docker Compose (local dev) |
 
 ---
 
-&nbsp;  
-## Getting Started
-**Prerequisites:** Bun and Docker (for Postgres).
+&nbsp;
+## Getting Started (Local Development)
+**Prerequisites:** Bun >= 1.x and Docker (for Postgres).
 
-1) Clone the repo and install dependencies:
-    ```bash
-    git clone <repo-url>
-    bun install
-    ```
-2) Start Postgres:
-    ```bash
-    docker run --name aos-postgres \
-      -e POSTGRES_USER=johndoe \
-      -e POSTGRES_PASSWORD=randompassword \
-      -e POSTGRES_DB=mydb \
-      -p 5432:5432 -d postgres:16
-    ```
-    If it already exists:
-    ```bash
-    docker start aos-postgres
-    ```
-3) Set up environment:
-    ```bash
-    cp backend/.env.example backend/.env
-    ```
-    Edit `backend/.env` — at minimum update `DATABASE_URL`. MCP is enabled by default outside production; set `MCP_ENABLED=true` explicitly in prod when you are ready.
-4) Set up the database:
-    ```bash
-    bun run prisma:generate
-    bun run prisma:migrate
-    bun run prisma:seed
-    ```
-5) Start the dev server:
-    ```bash
-    bun run dev
-    ```
+### 1. Clone and install
+```bash
+git clone <repo-url>
+bun install
+```
 
-&nbsp;  
+### 2. Start Postgres
+```bash
+docker run --name aos-postgres \
+  -e POSTGRES_USER=johndoe \
+  -e POSTGRES_PASSWORD=randompassword \
+  -e POSTGRES_DB=mydb \
+  -p 5432:5432 -d postgres:16
+```
+If the container already exists:
+```bash
+docker start aos-postgres
+```
 
-The server runs on `http://localhost:3000` by default. If Postgres isn't reachable, startup logs `dbConnection: "error"` but the process still starts.  
-When this setup is done, you can use `bun run dev:stack` to start both the API and Postgres together via Docker Compose (see below).  
+### 3. Configure environment
+```bash
+cp backend/.env.example backend/.env
+```
+Edit `backend/.env`: at minimum update `DATABASE_URL`. MCP is enabled by default outside production; set `MCP_ENABLED=true` explicitly in prod when you are ready.
+
+### 4. Set up the database
+```bash
+bun run prisma:generate
+bun run prisma:migrate
+bun run prisma:seed
+```
+
+### 5. Start the dev servers
+```bash
+# Backend only (http://localhost:3000)
+bun run dev
+
+# Frontend only (http://localhost:5173)
+cd frontend && bun run dev
+```
 
 > **Note:** Bun looks for `.env` in the current working directory. If you run commands from the repo root, either copy `backend/.env` to `.env` at the root, or export `DATABASE_URL` in your shell beforehand.
 
+Once this setup is done, you can use `bun run dev:stack` to start both the API and Postgres together via Docker Compose (see below).
 
-
-
+---
 ## Run with Docker Compose
 This repository includes a local Docker setup (`compose.yaml`) with:
 - `api` (development target, hot reload)
 - `db` (PostgreSQL 16)
 - `api-prod` (optional production-like target via profile)
-
 
 ### Start local stack (dev)
 ```bash
@@ -109,13 +192,13 @@ docker compose --profile prod up --build api-prod db
 
 ---
 
-
-
+&nbsp;
 ## Running Tests
+### Backend tests
 Tests use Bun's built-in test runner. Each route file has a corresponding `.test.ts` file.
 
 ```bash
-# Run all tests
+# Run all backend tests
 bun test
 
 # Run tests for a specific route
@@ -128,28 +211,42 @@ bun run mcp:test
 bun test --watch
 ```
 
-Tests spin up the Hono app in-process and hit it with `app.request(...)`, so no running server or database is needed — they're fully self-contained.
+Tests spin up the Hono app in-process and hit it with `app.request(...)`, so no running server or database is needed: they're fully self-contained.
+
+### Frontend tests
+```bash
+cd frontend
+
+# Run all frontend tests (Vitest)
+bun run test
+
+# Watch mode
+bun run test:watch
+```
+
+Frontend tests cover stores (auth, collections), pages (Catalog, Invitations, Settings, Statistics), and the router navigation guard.
 
 ---
-
-## Endpoints
-### API Documentation
-Once the server is running:
+## API Documentation
+Once the backend is running:
 - **Scalar UI:** `http://localhost:3000/docs`
 - **Raw OpenAPI JSON:** `http://localhost:3000/openapi`
 - **Static copy:** `docs/openapi.yml`
 
-MCP uses its own protocol surface rather than OpenAPI.
+On the live deployment:
+- **Scalar UI:** `https://watchlist-service.vercel.app/docs`
+- **OpenAPI JSON:** `https://watchlist-service.vercel.app/openapi`
 
-### Endpoint list
+---
+## Endpoints
 **Access control:** owner, collaborator, reader roles on collections.
 
 #### System / OpenAPI
 - `GET /health` : health check
 - `GET /openapi` : OpenAPI spec (JSON/YAML)
-- `GET /docs` : Swagger UI / API docs
+- `GET /docs` : Scalar UI / API docs
 
-&nbsp;  
+&nbsp;
 #### Auth
 - `POST /api/auth/register` : register a new user
 - `POST /api/auth/login` : log in and receive a session token
@@ -158,7 +255,7 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `POST /api/auth/reset-password` : complete password reset with token
 - `GET /api/auth/me` : get current authenticated user + session info
 
-&nbsp;  
+&nbsp;
 #### Users
 - `GET /api/users/me` : get authenticated user's profile and settings
 - `PATCH /api/users/me` : update authenticated user's profile
@@ -166,7 +263,7 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `GET /api/users/{userId}/collections` : list public collections for a user
 - `GET /api/users/{userId}/owned-collections` : list owned collections for a user
 
-&nbsp;  
+&nbsp;
 #### Media
 - `POST /api/media` : create a new media item
 - `GET /api/media` : list media items (pagination, filtering, sorting)
@@ -175,7 +272,7 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `DELETE /api/media/{mediaId}` : delete media item (admin/owner)
 - `GET /api/media/{mediaId}/collections` : list collections the media is contained in
 
-&nbsp;  
+&nbsp;
 #### Collections
 - `POST /api/collections` : create a new collection
 - `GET /api/collections` : list collections (public or owned/member)
@@ -189,7 +286,6 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `GET /api/collections/{collectionId}/media` : list media in collection
 - `PATCH /api/collections/{collectionId}/media/{collectionMediaId}` : update collection media (position, etc.)
 - `DELETE /api/collections/{collectionId}/media/{collectionMediaId}` : remove media from collection
-
 
 ##### Collection Members & Invitations
 - `POST /api/collections/{collectionId}/members` : invite a user to the collection (owner only)
@@ -207,7 +303,7 @@ The `CollectionUser` model in Prisma includes:
 - `accepted`: Boolean flag (defaults to `false`)
 - `role`: The role assigned to the member (OWNER, COLLABORATOR, READER)
 
-&nbsp;  
+&nbsp;
 #### Future / Planned (P2)
 **Scores and Notes** (not implemented)
 - `POST /media/{mediaId}/scores`
@@ -218,10 +314,7 @@ The `CollectionUser` model in Prisma includes:
 **Tags** (optional helper)
 - `GET /tags` : list most used tags across media/collections
 
-
-
 ---
-
 ## MCP
 The backend exposes a Model Context Protocol server that reuses the same service-layer business logic as the REST routes.
 
@@ -252,9 +345,7 @@ Tools are domain-prefixed for predictable prompting, for example:
 3. Include a bearer token for protected tools.
 4. Use `bun run mcp:stdio` for local assistant integrations that prefer stdio.
 
-
 ---
-
 ## Postman
 The `postman/` folder contains everything needed to test the API manually.
 
@@ -280,11 +371,10 @@ The environment already includes these variables:
 
 Import `postman/environments/Media Collection API.yaml`. It pre-fills `baseUrl`, test user credentials, and empty slots for `ownerToken`, `inviteeToken`, `collectionId`, etc. that get populated by request scripts as you run through the collection.
 
-
 ### Scenario testing
 The easiest and most maintainable way to run end-to-end scenarios is to reuse the existing Postman requests in sequence.
 
-&nbsp;  
+&nbsp;
 #### Before running a scenario
 1. Start the backend (`bun run dev:stack`).
 2. Select the `Media Collection API` environment in Postman.
@@ -298,9 +388,7 @@ The easiest and most maintainable way to run end-to-end scenarios is to reuse th
 
 If a registration request fails because a user already exists, either change the emails in the environment, or delete/reset the test users in your local database.
 
-
-
-#### Scenario 01 — Public collection lifecycle
+#### Scenario 01 - Public collection lifecycle
 1. `Auth/01 Register Owner`
 2. `Auth/03 Login Owner`
 3. `Collections/01 Create Collection`
@@ -310,7 +398,7 @@ If a registration request fails because a user already exists, either change the
 7. `Collections/03 Get Collection By Id`
 8. `Collections/16 Delete Collection`
 
-#### Scenario 02 — Private invitation acceptance
+#### Scenario 02 - Private invitation acceptance
 1. `Auth/01 Register Owner`
 2. `Auth/02 Register Invitee`
 3. `Auth/03 Login Owner`
@@ -323,7 +411,7 @@ If a registration request fails because a user already exists, either change the
 10. `Collections/10 List Collection Members`
 11. `Collections/16 Delete Collection`
 
-#### Scenario 03 — Role downgrade and removal
+#### Scenario 03 - Role downgrade and removal
 1. `Auth/01 Register Owner`
 2. `Auth/02 Register Invitee`
 3. `Auth/03 Login Owner`
@@ -338,15 +426,10 @@ If a registration request fails because a user already exists, either change the
 12. `Collections/18 Get Collection By Id As Removed Invitee`
 13. `Collections/16 Delete Collection`
 
-
-
 ### Flows (optional)
 We've started creating Postman Flows under `postman/flows/` as a visual and experimental way to represent the scenarios. However, only the first one is in a "ok" state, it doesn't work yet but looks like the correct request flow.
 
-
-
 ---
-
 ## Updating the Schema
 ```bash
 # After editing backend/prisma/schema.prisma:
@@ -356,7 +439,6 @@ bun run prisma:seed       # optional: re-seed
 ```
 
 ---
-
 ## DataModel (Décisions d'architecture)
 **Media** (films, séries, livres, articles, etc.) avec des champs tels que:  
 - Titre *string*
@@ -378,28 +460,25 @@ bun run prisma:seed       # optional: re-seed
 - Visibilité *enum* (publique/privée)
 - Owner *User* clé étrangère (relation vers l'utilisateur qui a créé la collection)
 
-
 **Users** avec des champs tels que :  
 - Nom d'utilisateur *string*
 - Email *string*
 ...
 
-
 **Associations:**  
 - Media 0-n Collections
 - Collection 0-n Media
 - User 0-n Collections
-- Collection 0-n Users (collaborateurs/lecteurs) - table intermédiaire
+- Collection 0-n Users (collaborateurs/lecteurs): table intermédiaire
 
 ---
-
 ## Progress
 ### P1
 - [x] Database schema and seeding
 - [x] Auth endpoints (register / login / logout / forgot / reset / me)
-- [x] Users — read, update, public lookup
-- [x] Media — CRUD with access control
-- [x] Collections — CRUD + media linking + member/invitation management
+- [x] Users: read, update, public lookup
+- [x] Media: CRUD with access control
+- [x] Collections: CRUD + media linking + member/invitation management
 - [x] MCP server for collections/media/users collaboration workflows
 - [x] Pagination, filtering, sorting on listing endpoints
 - [x] Zod validation on all request bodies and query params
@@ -418,15 +497,15 @@ bun run prisma:seed       # optional: re-seed
 ### P3 (bonus)
 - [ ] Sub-collections
 - [ ] Watch priority
-- [x] CI/CD
-- [ ] Front-end
+- [x] CI/CD (GitHub Actions: backend tests, frontend tests, Vercel deploy)
+- [x] Front-end (Vue 3 + Vite, deployed on Vercel)
 
 ### P4 (bonus bonus)
 - [ ] Tag/rating-based recommendations
 - [ ] External API integrations (IMDb, Goodreads, etc.)
 
-## 🚧 Difficultés rencontrées
-
+---
+## Difficultés rencontrées
 * **Intégration et configuration de Better Auth avec Hono :**
     * *Problème :* Bien que puissant, mettre en place Better Auth au sein de l'écosystème Hono et s'assurer de la bonne gestion des sessions (via les headers `set-auth-token` et l'authentification `Bearer`) a nécessité une lecture approfondie de la documentation et plusieurs itérations de débogage.
     * *Solution :* Nous avons structuré notre middleware d'authentification pour gérer de manière unifiée les requêtes de l'API REST et du serveur MCP.
@@ -438,3 +517,7 @@ bun run prisma:seed       # optional: re-seed
 * **Mise en place des tests d'intégration avec Postman :**
     * *Problème :* Organiser les scénarios complexes impliquant plusieurs utilisateurs (comme le cycle de vie des invitations privées) tout en gérant correctement les variables d'environnement (tokens, IDs) dynamiquement entre les requêtes.
     * *Solution :* Utilisation intensive des scripts de pré-requête et de post-réponse dans Postman pour automatiser la mise à jour des variables (`ownerToken`, `inviteeToken`, etc.) afin de pouvoir enchaîner les requêtes de manière fluide.
+
+* **Frontend Vue 3 avec Pinia et Vue Router :**
+    * *Problème :* Gérer la synchronisation entre l'état d'authentification (store Pinia), les guards de navigation du router et les appels API asynchrones, notamment lors des redirections post-login et de la persistance de session.
+    * *Solution :* Initialisation du store auth au démarrage de l'app avant le montage du router, et utilisation des guards `beforeEach` pour vérifier l'état d'auth de manière cohérente.
