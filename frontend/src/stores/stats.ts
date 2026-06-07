@@ -1,11 +1,18 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { useAuthStore } from './auth';
+import { apiFetch } from '@/lib/api';
 
 export interface MediaTypeCount { type: string; count: number }
 export interface TagCount { tag: string; count: number }
 export interface PlatformCount { platform: string; count: number }
-export interface RecentItem { mediaId: string; title: string; type: string; addedAt: string; collectionName: string }
+export interface RecentItem {
+  mediaId: string;
+  title: string;
+  type: string;
+  addedAt: string;
+  collectionName: string;
+  url?: string | null;
+}
 
 export interface UserStats {
   totalMedia: number;
@@ -22,7 +29,6 @@ export const useStatsStore = defineStore('stats', () => {
   const stats = ref<UserStats | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
-  const authStore = useAuthStore();
 
   // Getters/Computed properties derived from state
   const totalMedia = computed(() => stats.value?.totalMedia ?? 0);
@@ -33,28 +39,19 @@ export const useStatsStore = defineStore('stats', () => {
   const topTags = computed(() => stats.value?.topTags ?? []);
   const topPlatforms = computed(() => stats.value?.topPlatforms ?? []);
   const byType = computed(() => stats.value?.byType ?? []);
-  
+
   // Total collections is a derived metric (owned + shared)
   const totalCollections = computed(() => (stats.value?.collectionsOwned ?? 0) + (stats.value?.collectionsShared ?? 0));
 
   async function fetchStats(force = false) {
-    // If stats already exist, load in background without showing the loading spinner
+    // If stats already exist, refresh in background without showing the loading spinner
     if (!stats.value || force) {
       isLoading.value = true;
     }
     error.value = null;
 
     try {
-      const token = authStore.authToken;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stats`, { 
-        headers, 
-        credentials: 'include' 
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      stats.value = await res.json() as UserStats;
+      stats.value = await apiFetch('/api/stats').then(r => r.json<UserStats>());
     } catch (e) {
       if (stats.value) {
         console.error('Background stats refresh failed:', e);

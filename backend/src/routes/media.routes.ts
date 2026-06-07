@@ -92,6 +92,7 @@ mediaRoutes.get(
     const query = c.req.valid('query');
     const sessionUser = c.get('user');
     const result = await mediaService.listMedia(query, sessionUser?.id);
+    c.header('Cache-Control', 'private, max-age=30');
     return c.json(result, 200);
   }
 );

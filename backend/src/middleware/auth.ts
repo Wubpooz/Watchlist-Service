@@ -13,6 +13,9 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  onAPIError: {
+    throw: true,
+  },
   trustedOrigins: [env.FRONTEND_URL, env.BETTER_AUTH_URL, "http://localhost:3000"],
   rateLimit: {
     windowMs: 15 * 60 * 1000, // 15 minutes

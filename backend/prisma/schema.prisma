@@ -120,6 +120,9 @@ model Media {
 
   collections CollectionMedia[]
 
+  @@index([type])
+  @@index([createdAt])
+  @@index([title])
   @@map("media")
 }
 
@@ -155,6 +158,7 @@ model CollectionMedia {
 
   @@unique([collectionId, mediaId])
   @@index([collectionId, addedAt])
+  @@index([mediaId])
   @@map("collection_media")
 }
 

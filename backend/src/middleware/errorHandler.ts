@@ -23,11 +23,30 @@ export class AppError extends Error implements APIError {
 }
 
 export const errorHandler: ErrorHandler = async (err, c) => {
-  const statusCode = (err as APIError).statusCode || (err as { status?: number }).status || 500;
+  let statusCode = (err as APIError).statusCode || (err as { status?: number }).status || 500;
   const isOperational = (err as APIError).isOperational === true;
-  const message = statusCode >= 500 && !isOperational
+
+  // Detect database or Prisma-related errors to avoid exposing structural/connection details to the client
+  const isPrismaOrDbError = 
+    err.name?.startsWith('Prisma') || 
+    err.message?.toLowerCase().includes('prisma') ||
+    err.message?.toLowerCase().includes('database') ||
+    err.message?.toLowerCase().includes('db[') ||
+    err.message?.toLowerCase().includes('findfirst') ||
+    err.message?.toLowerCase().includes('findunique') ||
+    err.message?.toLowerCase().includes('queryraw') ||
+    err.message?.toLowerCase().includes('connection') ||
+    err.message?.toLowerCase().includes('postgres') ||
+    err.message?.toLowerCase().includes('pooler');
+
+  if (isPrismaOrDbError) {
+    statusCode = 500;
+  }
+
+  const message = (statusCode >= 500 && !isOperational) || isPrismaOrDbError
     ? 'Internal Server Error'
     : (err.message || 'Internal Server Error');
+
 
   const stack = err.stack || '';
   const origin = stack
