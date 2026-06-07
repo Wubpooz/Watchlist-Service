@@ -120,25 +120,34 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: typeof window !== 'undefined'
-    ? createWebHistory(import.meta.env.BASE_URL) // for prod
-    : createMemoryHistory(import.meta.env.BASE_URL), // for tests
+  history: globalThis.window === undefined
+    ? createMemoryHistory(import.meta.env.BASE_URL) // for prod
+    : createWebHistory(import.meta.env.BASE_URL), // for tests
   routes
 });
 
 // Navigation guard for authentication
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore();
   const requiresAuth = to.meta.requiresAuth;
 
+  // If token is present but user profile is not yet loaded, await the auth check
+  if (authStore.authToken && !authStore.user) {
+    try {
+      await authStore.checkAuth();
+    } catch (err) {
+      console.error('Failed to restore session during routing:', err);
+    }
+  }
+
   if (requiresAuth && !authStore.isAuthenticated) {
     // Redirect to landing if route requires auth and user is not authenticated
-    next({ name: 'Landing', query: { redirect: to.fullPath } });
-  } else if (['/landing', '/login', '/signup', '/forgot-password', '/reset-password'].includes(to.path) && authStore.isAuthenticated) {
+    return { name: 'Landing', query: { redirect: to.fullPath } };
+  }
+  
+  if (['/landing', '/login', '/signup', '/forgot-password', '/reset-password'].includes(to.path) && authStore.isAuthenticated) {
     // Redirect to home if user is already logged in and tries to visit auth pages
-    next({ name: 'Home' });
-  } else {
-    next();
+    return { name: 'Home' };
   }
 });
 
