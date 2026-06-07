@@ -188,7 +188,7 @@ onUnmounted(() => {
                   v-for="item in searchResultsCollections"
                   :key="item.id"
                   class="search-item"
-                  @click="router.push({ name: 'Collections' }); isSearchFocused = false; searchQuery = ''"
+                  @click="router.push(`/collections/${item.id}`); isSearchFocused = false; searchQuery = '';"
                 >
                   <span class="material-symbols-outlined item-icon">folder</span>
                   <div class="item-text">

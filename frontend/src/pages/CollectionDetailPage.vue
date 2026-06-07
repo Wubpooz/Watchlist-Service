@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppModal from '@/components/AppModal.vue';
 import { useAuthStore } from '@/stores/auth';
@@ -405,6 +405,10 @@ async function deleteCollection(): Promise<void> {
 onMounted(() => {
   void loadCollectionDetail();
 });
+
+watch(collectionId, () => {
+  void loadCollectionDetail();
+}, { immediate: true });
 </script>
 
 <template>
