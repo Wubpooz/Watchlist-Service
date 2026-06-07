@@ -55,6 +55,15 @@ const addToCollectionModalOpen = ref(false);
 const selectedCollectionIds = ref<string[]>([]);
 const loadingAddableCollections = ref(false);
 const addableCollections = ref<CollectionToAdd[]>([]);
+const collectionSearchQuery = ref('');
+const filteredAddableCollections = computed(() => {
+  const query = collectionSearchQuery.value.trim().toLowerCase();
+  if (!query) return addableCollections.value;
+  return addableCollections.value.filter((col) =>
+    col.name.toLowerCase().includes(query) ||
+    (col.description && col.description.toLowerCase().includes(query))
+  );
+});
 const addingCollection = ref(false);
 
 const selectedCollectionCount = computed(() => selectedCollectionIds.value.length);
@@ -128,6 +137,7 @@ function openAddToCollectionModal(): void {
   addToCollectionError.value = null;
   addToCollectionModalOpen.value = true;
   selectedCollectionIds.value = [];
+  collectionSearchQuery.value = '';
   void loadAddableCollections();
 }
 
@@ -139,6 +149,7 @@ function closeAddToCollectionModal(): void {
   addToCollectionError.value = null;
   addToCollectionModalOpen.value = false;
   selectedCollectionIds.value = [];
+  collectionSearchQuery.value = '';
 }
 
 // collections the user owns that do not have this media, to show in the "add to collection" modal
@@ -394,6 +405,16 @@ onMounted(() => {
           Choose one or more collections to add this media to.
         </p>
 
+        <!-- Search Bar -->
+        <div v-if="addableCollections.length > 0" class="mb-2">
+          <input
+            v-model="collectionSearchQuery"
+            type="text"
+            class="w-full bg-[#f4f4f4] border-b border-[#8d8d8d] focus:border-[#0f62fe] h-10 px-3 text-sm text-on-surface outline-none"
+            placeholder="Search collections by name..."
+          />
+        </div>
+
         <p v-if="addToCollectionError" class="modal-error">
           {{ addToCollectionError }}
         </p>
@@ -406,8 +427,12 @@ onMounted(() => {
           No collection is available to add this media to.
         </div>
 
+        <div v-else-if="filteredAddableCollections.length === 0" class="modal-state italic text-center">
+          No collections match your search.
+        </div>
+
         <menu v-else class="collection-picker-list" aria-label="Available collections">
-          <label v-for="collection in addableCollections" :key="collection.id" class="collection-picker-item">
+          <label v-for="collection in filteredAddableCollections" :key="collection.id" class="collection-picker-item">
             <input
               v-model="selectedCollectionIds"
               type="checkbox"
