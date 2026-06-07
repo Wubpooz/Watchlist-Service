@@ -1,7 +1,7 @@
 if (process.env.NODE_ENV !== 'production') {
   const localDbUrl = "postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public";
-  process.env.POSTGRES_URL = localDbUrl;
-  process.env.POSTGRES_URL_NON_POOLING = localDbUrl;
+  process.env.POSTGRES_URL = process.env.POSTGRES_URL || localDbUrl;
+  process.env.POSTGRES_URL_NON_POOLING = process.env.POSTGRES_URL_NON_POOLING || localDbUrl;
 }
 
 
