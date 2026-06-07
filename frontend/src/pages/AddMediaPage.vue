@@ -14,6 +14,7 @@ const title = ref('');
 const mediaType = ref<MediaType | ''>('');
 const directorAuthor = ref('');
 const releaseYear = ref('');
+const url = ref('');
 const description = ref('');
 const tagInput = ref('');
 const tags = ref<string[]>([]);
@@ -91,6 +92,7 @@ const handleSubmit = async () => {
     if (releaseYear.value)            body.releaseDate = `${releaseYear.value}-01-01T00:00:00.000Z`;
     if (tags.value.length)            body.tags = tags.value;
     if (platforms.value.length)       body.platforms = platforms.value;
+    if (url.value.trim())             body.url = url.value.trim();
 
     const res = await fetch(
       `${import.meta.env.VITE_API_URL ?? ''}/api/media`,
@@ -206,6 +208,19 @@ const handleSubmit = async () => {
             />
           </div>
 
+        </div>
+
+        <!-- == Cover Image URL ====================================== -->
+        <div class="field">
+          <label class="field-label" for="media-url">Cover Image URL</label>
+          <input
+            id="media-url"
+            v-model="url"
+            type="text"
+            class="field-input"
+            placeholder="e.g., https://example.com/poster.jpg"
+            maxlength="1000"
+          />
         </div>
 
         <!-- == Description ========================================== -->

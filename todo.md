@@ -1,10 +1,10 @@
 # Future Improvements
 
 ## P1
-- [ ] url/image in add media form
-- [ ] password change
-- [ ] make media url work 100%
-- [ ] update doc with missing endpoint
+- [x] url/image in add media form
+- [x] password change
+- [x] make media url work 100%
+- [x] update doc with missing endpoint
 
 ## P2
 - [ ] media rating

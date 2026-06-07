@@ -71,6 +71,7 @@ const selectedCollectionCount = computed(() => selectedCollectionIds.value.lengt
 const addImageURLError = ref<string | null>(null);
 const addImageURLModalOpen = ref(false);
 const addingImageURL = ref(false);
+const imageError = ref(false);
 
 // === Display helpers ==========================================================
 
@@ -104,6 +105,7 @@ function buildHeaders(): Record<string, string> {
 async function loadMedia(id: string) {
   loading.value = true;
   error.value = null;
+  imageError.value = false;
   try {
     const res = await fetch(`/api/media/${encodeURIComponent(id)}`, {
       headers: buildHeaders(),
@@ -314,7 +316,7 @@ onMounted(() => {
         <div class="poster-col">
 
           <button type="button" class="add-image-button" @click="openAddImageURLModal">
-            <img v-if="media?.url" :src="media.url" alt="Media Cover" class="poster" />
+            <img v-if="media?.url && !imageError" :src="media.url" alt="Media Cover" class="poster" @error="imageError = true" />
             <div v-else
               class="poster"
               :style="{ backgroundColor: (media?.type && TYPE_COLOR[media.type]) ?? '#393939' }"

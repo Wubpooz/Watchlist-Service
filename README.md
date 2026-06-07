@@ -253,12 +253,14 @@ On the live deployment:
 - `POST /api/auth/logout` : revoke current session
 - `POST /api/auth/forgot-password` : request a password reset email
 - `POST /api/auth/reset-password` : complete password reset with token
+- `POST /api/auth/change-password` : change the authenticated user's password
 - `GET /api/auth/me` : get current authenticated user + session info
 
 &nbsp;
 #### Users
 - `GET /api/users/me` : get authenticated user's profile and settings
 - `PATCH /api/users/me` : update authenticated user's profile
+- `GET /api/users/email/{email}` : get public profile by email address
 - `GET /api/users/{userId}` : get public profile by user ID
 - `GET /api/users/{userId}/collections` : list public collections for a user
 - `GET /api/users/{userId}/owned-collections` : list owned collections for a user
