@@ -64,6 +64,7 @@ describe('StatisticsPage.vue', () => {
     (globalThis.fetch as any).mockResolvedValueOnce({
       ok: false,
       status: 500,
+      json: async () => null,
     });
 
     const wrapper = mount(StatisticsPage);

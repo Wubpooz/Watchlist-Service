@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
 import { useDebounce } from '@/composables/useDebounce';
 import { useAbortController } from '@/composables/useAbortController';
+import { apiFetch } from '@/lib/api';
 
 const router = useRouter();
-const authStore = useAuthStore();
 
-const isSidebarCollapsed = ref(false);
+
 
 // === Types ====================================================================
 
@@ -115,19 +114,12 @@ const visiblePages = computed<(number | '...')[]>(() => {
 
 const fetchMedia = async () => {
   // Abort any previous in-flight request and obtain a signal for this one.
-  // If fetchMedia() is called again before this one finishes, getSignal()
-  // will set signal.aborted = true on THIS signal, letting the finally
-  // block know it should not touch the loading state.
   const signal = getSignal();
 
   isLoading.value = true;
   error.value = '';
 
   try {
-    const token = authStore.authToken;
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const params = new URLSearchParams({
       pageSize: String(PAGE_SIZE),
       page: String(currentPage.value),
@@ -137,13 +129,10 @@ const fetchMedia = async () => {
     if (debouncedSearch.value.trim()) params.set('q', debouncedSearch.value.trim());
     if (activeType.value) params.set('type', activeType.value);
 
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/media?${params}`,
-      { headers, credentials: 'include', signal }
-    );
+    const res = await apiFetch(`/api/media?${params}`, { signal });
 
     if (res.ok) {
-      const body: ApiPage = await res.json();
+      const body: ApiPage = await res.raw.json();
       mediaItems.value = body.data ?? [];
       totalItems.value = body.total ?? 0;
       totalPages.value = body.pages ?? 1;
@@ -152,14 +141,9 @@ const fetchMedia = async () => {
       error.value = 'Failed to load media catalog.';
     }
   } catch (err: any) {
-    // AbortError means this request was superseded — a newer one is already
-    // running and will manage isLoading itself. Do not touch any state here.
     if (err?.name === 'AbortError') return;
     error.value = 'Failed to load media catalog.';
   } finally {
-    // Guard: only clear the loading flag if THIS specific request was not
-    // superseded. Without this, aborting request N would set isLoading=false
-    // while request N+1 is still in flight, causing a spurious loading flash.
     if (!signal.aborted) {
       isLoading.value = false;
     }
@@ -170,15 +154,9 @@ const fetchCollections = async () => {
   if (collections.value.length > 0) return;
   isCollectionsLoading.value = true;
   try {
-    const token = authStore.authToken;
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/collections?pageSize=50`,
-      { headers, credentials: 'include' }
-    );
+    const res = await apiFetch('/api/collections?pageSize=50');
     if (res.ok) {
-      const body = await res.json();
+      const body = await res.raw.json();
       collections.value = body.data ?? [];
     }
   } catch {
@@ -191,15 +169,10 @@ const fetchCollections = async () => {
 const addToCollection = async (mediaId: string, collectionId: string) => {
   isAddingToCollection.value = mediaId;
   try {
-    const token = authStore.authToken;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/collections/${collectionId}/media`,
+    const res = await apiFetch(
+      `/api/collections/${collectionId}/media`,
       {
         method: 'POST',
-        headers,
-        credentials: 'include',
         body: JSON.stringify({ mediaId, position: 0 }),
       }
     );
