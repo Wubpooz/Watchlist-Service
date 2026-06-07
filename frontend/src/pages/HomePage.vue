@@ -8,7 +8,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const invitationsStore = useInvitationsStore();
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// === Types ====================================================================
 
 interface RecentItem {
   mediaId: string;
@@ -29,16 +29,16 @@ interface Stats {
   topPlatforms: { platform: string; count: number }[];
 }
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// === State ====================================================================
 
-const stats    = ref<Stats | null>(null);
+const stats = ref<Stats | null>(null);
 const isLoading = ref(true);
-const error    = ref('');
+const error = ref('');
 
 const respondingId = ref<string | null>(null);
 const isSidebarCollapsed = ref(false);
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
+// === Display helpers ==========================================================
 
 const TYPE_COLOR: Record<string, string> = {
   FILM: '#0043ce', SERIES: '#393939', BOOK: '#6e4c31', ARTICLE: '#005d5d', OTHER: '#393939',
@@ -62,7 +62,7 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// === API ======================================================================
 
 const authHeaders = (): Record<string, string> => {
   const h: Record<string, string> = {};
@@ -104,54 +104,7 @@ onMounted(() => {
 
 <template>
   <div class="dash-layout">
-
-    <!-- ── Left sidebar ──────────────────────────────────────────── -->
-    <aside class="dash-sidebar" :class="{ 'dash-sidebar--collapsed': isSidebarCollapsed }">
-      <div class="sidebar-header">
-        <div class="sidebar-header-text">
-          <span class="sidebar-title">Navigation</span>
-          <span class="sidebar-subtitle">Media Tracking</span>
-        </div>
-        <button
-          class="sidebar-toggle"
-          :aria-label="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          :title="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          @click="isSidebarCollapsed = !isSidebarCollapsed"
-        >
-          <span class="material-symbols-outlined">
-            {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
-          </span>
-        </button>
-      </div>
-
-      <nav class="sidebar-nav">
-        <RouterLink :to="{ name: 'Home' }"        class="sidebar-item" active-class="sidebar-item--active" title="Dashboard">
-          <span class="material-symbols-outlined">dashboard</span>
-          <span class="sidebar-label">Dashboard</span>
-        </RouterLink>
-        <RouterLink :to="{ name: 'Collections' }" class="sidebar-item" active-class="sidebar-item--active" title="My Collections">
-          <span class="material-symbols-outlined">subscriptions</span>
-          <span class="sidebar-label">My Collections</span>
-        </RouterLink>
-        <RouterLink :to="{ name: 'Catalog' }"     class="sidebar-item" active-class="sidebar-item--active" title="Media Catalog">
-          <span class="material-symbols-outlined">movie_filter</span>
-          <span class="sidebar-label">Media Catalog</span>
-        </RouterLink>
-        <RouterLink :to="{ name: 'Statistics' }"  class="sidebar-item" active-class="sidebar-item--active" title="Statistics">
-          <span class="material-symbols-outlined">insert_chart</span>
-          <span class="sidebar-label">Statistics</span>
-        </RouterLink>
-      </nav>
-
-      <div class="sidebar-footer">
-        <RouterLink :to="{ name: 'Settings' }" class="sidebar-item" active-class="sidebar-item--active" title="Settings">
-          <span class="material-symbols-outlined">settings</span>
-          <span class="sidebar-label">Settings</span>
-        </RouterLink>
-      </div>
-    </aside>
-
-    <!-- ── Main content ──────────────────────────────────────────── -->
+    <!-- == Main content ============================================ -->
     <main class="dash-main">
 
       <!-- Loading -->
@@ -173,7 +126,7 @@ onMounted(() => {
           <h1 class="dash-title">Dashboard Overview</h1>
         </header>
 
-        <!-- ── Stats cards ────────────────────────────────────────── -->
+        <!-- == Stats cards ========================================== -->
         <section class="stats-grid">
 
           <div class="stat-card">
@@ -199,7 +152,7 @@ onMounted(() => {
 
         </section>
 
-        <!-- ── Recent media carousel ──────────────────────────────── -->
+        <!-- == Recent media carousel ================================ -->
         <section class="recent-section">
           <div class="section-header">
             <h2 class="section-title">Continue Watching&thinsp;/&thinsp;Reading</h2>
@@ -261,7 +214,7 @@ onMounted(() => {
       </template>
     </main>
 
-    <!-- ── Right sidebar: invitations ────────────────────────────── -->
+    <!-- == Right sidebar: invitations ============================== -->
     <aside class="dash-right">
       <div class="right-header">
         <h2 class="right-title">
@@ -331,7 +284,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ── Three-column shell ──────────────────────────────────── */
+/* == Three-column shell ==================================== */
 .dash-layout {
   display: flex;
   min-height: calc(100vh - 48px);
@@ -339,7 +292,7 @@ onMounted(() => {
   font-family: 'IBM Plex Sans', sans-serif;
 }
 
-/* ── Left sidebar ────────────────────────────────────────── */
+/* == Left sidebar ========================================== */
 .dash-sidebar {
   width: 240px;
   min-width: 240px;
@@ -474,7 +427,7 @@ onMounted(() => {
   pointer-events: none;
 }
 
-/* ── Main content ────────────────────────────────────────── */
+/* == Main content ========================================== */
 .dash-main {
   flex: 1;
   min-width: 0;
@@ -483,7 +436,7 @@ onMounted(() => {
   border-right: 1px solid #e0e0e0;
 }
 
-/* ── Status areas ────────────────────────────────────────── */
+/* == Status areas ========================================== */
 .status-area {
   display: flex;
   flex-direction: column;
@@ -497,7 +450,7 @@ onMounted(() => {
 
 .status-spinner { animation: spin 1s linear infinite; }
 
-/* ── Page heading ────────────────────────────────────────── */
+/* == Page heading ========================================== */
 .dash-header { margin-bottom: 32px; }
 
 .dash-title {
@@ -509,7 +462,7 @@ onMounted(() => {
   margin: 0;
 }
 
-/* ── Stats grid ──────────────────────────────────────────── */
+/* == Stats grid ============================================ */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -586,7 +539,7 @@ onMounted(() => {
   75%, 100% { transform: scale(2); opacity: 0; }
 }
 
-/* ── Recent section ──────────────────────────────────────── */
+/* == Recent section ======================================== */
 .recent-section { }
 
 .section-header {
@@ -619,7 +572,7 @@ onMounted(() => {
 
 .view-all-link:hover { text-decoration: underline; color: #0043ce; }
 
-/* ── Carousel ────────────────────────────────────────────── */
+/* == Carousel ============================================== */
 .carousel {
   display: flex;
   gap: 20px;
@@ -633,7 +586,7 @@ onMounted(() => {
 
 .carousel::-webkit-scrollbar { display: none; }
 
-/* ── Media card ──────────────────────────────────────────── */
+/* == Media card ============================================ */
 .media-card {
   min-width: 220px;
   flex-shrink: 0;
@@ -708,7 +661,7 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-/* ── Right sidebar ───────────────────────────────────────── */
+/* == Right sidebar ========================================= */
 .dash-right {
   width: 320px;
   min-width: 320px;
@@ -763,7 +716,7 @@ onMounted(() => {
   gap: 16px;
 }
 
-/* ── Invite card ─────────────────────────────────────────── */
+/* == Invite card =========================================== */
 .invite-card {
   border: 1px solid #e0e0e0;
   padding: 16px;
@@ -854,7 +807,7 @@ onMounted(() => {
   padding: 8px 0 4px;
 }
 
-/* ── Shared helpers ──────────────────────────────────────── */
+/* == Shared helpers ======================================== */
 .btn-ghost {
   background: transparent;
   border: 1px solid #e0e0e0;
@@ -876,7 +829,7 @@ onMounted(() => {
 
 .inline-link:hover { text-decoration: underline; color: #0043ce; }
 
-/* ── Responsive: hide sidebars on narrow screens ─────────── */
+/* == Responsive: hide sidebars on narrow screens =========== */
 @media (max-width: 1024px) { .dash-right  { display: none; } }
 @media (max-width: 767px)  { .dash-sidebar { display: none; } }
 

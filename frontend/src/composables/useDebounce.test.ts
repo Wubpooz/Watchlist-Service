@@ -3,7 +3,7 @@ import { ref, defineComponent, type Ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useDebounce } from '@/composables/useDebounce';
 
-// ─── Test helper ──────────────────────────────────────────────────────────────
+// === Test helper ==============================================================
 //
 // useDebounce registers an onUnmounted hook, so it must run inside a Vue
 // component context. This helper mounts a minimal wrapper component, exposes
@@ -29,7 +29,7 @@ function setupDebounce(initial: string, delay = 300) {
   };
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ====================================================================
 
 describe('useDebounce', () => {
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe('useDebounce', () => {
     vi.useRealTimers();
   });
 
-  // ── Initial state ──────────────────────────────────────────────────────────
+  // == Initial state ==========================================================
 
   it('exposes the source value immediately as debouncedValue', () => {
     const { c } = setupDebounce('hello');
@@ -52,7 +52,7 @@ describe('useDebounce', () => {
     expect(c().isPending.value).toBe(false);
   });
 
-  // ── Delay behaviour ────────────────────────────────────────────────────────
+  // == Delay behaviour ========================================================
 
   it('does not update debouncedValue synchronously when the source changes', () => {
     const { source, c } = setupDebounce('');
@@ -75,7 +75,7 @@ describe('useDebounce', () => {
     expect(c().debouncedValue.value).toBe('');
   });
 
-  // ── Rapid-keystroke behaviour ──────────────────────────────────────────────
+  // == Rapid-keystroke behaviour ==============================================
 
   it('discards intermediate values — only the last one fires', () => {
     const { source, c } = setupDebounce('', 300);
@@ -103,7 +103,7 @@ describe('useDebounce', () => {
     expect(c().debouncedValue.value).toBe(''); // still the original
   });
 
-  // ── Empty / whitespace fast-path ───────────────────────────────────────────
+  // == Empty / whitespace fast-path ===========================================
 
   it('fires immediately (no delay) when the source is cleared to an empty string', () => {
     const { source, c } = setupDebounce('vue');
@@ -118,7 +118,7 @@ describe('useDebounce', () => {
     expect(c().debouncedValue.value).toBe('   ');
   });
 
-  // ── isPending ──────────────────────────────────────────────────────────────
+  // == isPending ==============================================================
 
   it('sets isPending = true immediately after a keystroke', () => {
     const { source, c } = setupDebounce('');
@@ -149,7 +149,7 @@ describe('useDebounce', () => {
     expect(c().isPending.value).toBe(false);
   });
 
-  // ── cancel() ──────────────────────────────────────────────────────────────
+  // == cancel() ==============================================================
 
   it('cancel() stops the pending timer without updating debouncedValue', () => {
     const { source, c } = setupDebounce('');
@@ -160,7 +160,7 @@ describe('useDebounce', () => {
     expect(c().isPending.value).toBe(false);
   });
 
-  // ── flush() ───────────────────────────────────────────────────────────────
+  // == flush() ===============================================================
 
   it('flush() applies the current source value immediately without waiting', () => {
     const { source, c } = setupDebounce('');
@@ -170,7 +170,7 @@ describe('useDebounce', () => {
     expect(c().isPending.value).toBe(false);
   });
 
-  // ── Unmount cleanup ───────────────────────────────────────────────────────
+  // == Unmount cleanup =======================================================
 
   it('does not update debouncedValue after the component is unmounted', () => {
     const { source, c, wrapper } = setupDebounce('');

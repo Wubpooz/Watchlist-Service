@@ -7,7 +7,7 @@ const route  = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// === Types ====================================================================
 
 type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
 
@@ -33,7 +33,7 @@ interface Collection {
   visibility: string;
 }
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// === State ====================================================================
 
 const mediaId   = computed(() => route.params.id as string);
 const media     = ref<MediaDetail | null>(null);
@@ -46,7 +46,7 @@ const isAdding           = ref(false);
 const addError           = ref('');
 const addSuccess         = ref(false);
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
+// === Display helpers ==========================================================
 
 const TYPE_COLOR: Record<string, string> = {
   FILM: '#0043ce', SERIES: '#393939', BOOK: '#6e4c31', ARTICLE: '#005d5d', OTHER: '#393939',
@@ -74,7 +74,7 @@ const existingCollections = computed(() => {
     .filter(c => c.id && c.name);
 });
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// === API ======================================================================
 
 const authHeaders = (): Record<string, string> => {
   const h: Record<string, string> = {};
@@ -149,13 +149,13 @@ onMounted(() => {
 <template>
   <div class="detail-page">
 
-    <!-- ── Loading ──────────────────────────────────────────────── -->
+    <!-- == Loading ================================================ -->
     <div v-if="isLoading" class="status-area">
       <span class="material-symbols-outlined status-spinner">autorenew</span>
       <span>Loading…</span>
     </div>
 
-    <!-- ── Error ────────────────────────────────────────────────── -->
+    <!-- == Error ================================================== -->
     <div v-else-if="error" class="status-area">
       <span class="material-symbols-outlined" style="font-size:40px;color:#8d8d8d">broken_image</span>
       <p class="status-msg">{{ error }}</p>
@@ -165,7 +165,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ── Content ──────────────────────────────────────────────── -->
+    <!-- == Content ================================================ -->
     <template v-else-if="media">
 
       <!-- Back link -->
@@ -176,7 +176,7 @@ onMounted(() => {
 
       <div class="detail-layout">
 
-        <!-- ── Left: Poster ────────────────────────────────────── -->
+        <!-- == Left: Poster ====================================== -->
         <div class="poster-col">
           <div
             class="poster"
@@ -199,7 +199,7 @@ onMounted(() => {
           </a>
         </div>
 
-        <!-- ── Right: Details ──────────────────────────────────── -->
+        <!-- == Right: Details ==================================== -->
         <div class="detail-col">
 
           <!-- Title + author + type badge -->
@@ -217,7 +217,7 @@ onMounted(() => {
           <p v-if="media.description" class="media-description">{{ media.description }}</p>
           <p v-else class="media-description media-description--empty">No description available.</p>
 
-          <!-- ── Metadata grid ──────────────────────────────────── -->
+          <!-- == Metadata grid ==================================== -->
           <div class="meta-grid">
             <div class="meta-item">
               <span class="meta-label">Release</span>
@@ -235,7 +235,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- ── Add to collection ──────────────────────────────── -->
+          <!-- == Add to collection ================================ -->
           <div class="collection-actions">
 
             <div v-if="addSuccess" class="notice notice--success">
@@ -284,7 +284,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- ── Existing collections ───────────────────────────── -->
+          <!-- == Existing collections ============================= -->
           <div v-if="existingCollections.length > 0" class="existing-collections">
             <h3 class="existing-title">Collections that contain this item</h3>
             <ul class="existing-list">
@@ -305,7 +305,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ── Page wrapper ────────────────────────────────────────── */
+/* == Page wrapper ========================================== */
 .detail-page {
   font-family: 'IBM Plex Sans', sans-serif;
   max-width: 1024px;
@@ -313,7 +313,7 @@ onMounted(() => {
   padding-bottom: 64px;
 }
 
-/* ── Loading / error states ──────────────────────────────── */
+/* == Loading / error states ================================ */
 .status-area {
   display: flex;
   flex-direction: column;
@@ -336,7 +336,7 @@ onMounted(() => {
 
 .status-actions { display: flex; gap: 8px; }
 
-/* ── Back link ───────────────────────────────────────────── */
+/* == Back link ============================================= */
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -355,7 +355,7 @@ onMounted(() => {
 .back-link:hover { color: #0043ce; }
 .back-link .material-symbols-outlined { font-size: 18px; }
 
-/* ── Two-column layout ───────────────────────────────────── */
+/* == Two-column layout ===================================== */
 .detail-layout {
   display: flex;
   gap: 64px;
@@ -366,7 +366,7 @@ onMounted(() => {
   .detail-layout { flex-direction: column; gap: 32px; }
 }
 
-/* ── Poster ──────────────────────────────────────────────── */
+/* == Poster ================================================ */
 .poster-col {
   flex: 0 0 38%;
   max-width: 38%;
@@ -406,7 +406,7 @@ onMounted(() => {
 
 .external-link:hover { color: #0043ce; text-decoration: underline; }
 
-/* ── Detail column ───────────────────────────────────────── */
+/* == Detail column ========================================= */
 .detail-col {
   flex: 1;
   min-width: 0;
@@ -415,7 +415,7 @@ onMounted(() => {
   color: #161616;
 }
 
-/* ── Title ───────────────────────────────────────────────── */
+/* == Title ================================================= */
 .title-block { margin-bottom: 32px; }
 
 .media-title {
@@ -451,7 +451,7 @@ onMounted(() => {
   padding: 2px 8px;
 }
 
-/* ── Description ─────────────────────────────────────────── */
+/* == Description =========================================== */
 .media-description {
   font-size: 14px;
   line-height: 1.6;
@@ -463,7 +463,7 @@ onMounted(() => {
 
 .media-description--empty { color: #8d8d8d; font-style: italic; }
 
-/* ── Metadata grid ───────────────────────────────────────── */
+/* == Metadata grid ========================================= */
 .meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -490,7 +490,7 @@ onMounted(() => {
 
 .meta-value { font-size: 14px; color: #161616; letter-spacing: 0.16px; }
 
-/* ── Add to collection ───────────────────────────────────── */
+/* == Add to collection ===================================== */
 .collection-actions {
   display: flex;
   flex-direction: column;
@@ -587,7 +587,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* ── Existing collections ────────────────────────────────── */
+/* == Existing collections ================================== */
 .existing-collections {
   border-top: 1px solid #e0e0e0;
   padding-top: 24px;
@@ -626,7 +626,7 @@ onMounted(() => {
   text-underline-offset: 2px;
 }
 
-/* ── Buttons ─────────────────────────────────────────────── */
+/* == Buttons =============================================== */
 .btn-ghost {
   background: transparent;
   border: 1px solid #e0e0e0;

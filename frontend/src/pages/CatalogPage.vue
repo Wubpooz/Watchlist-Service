@@ -10,7 +10,7 @@ const authStore = useAuthStore();
 
 const isSidebarCollapsed = ref(false);
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// === Types ====================================================================
 
 type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
 type SortField = 'createdAt' | 'title' | 'releaseDate';
@@ -49,7 +49,7 @@ interface Collection {
   visibility: string;
 }
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// === State ====================================================================
 
 const PAGE_SIZE = 20;
 
@@ -79,7 +79,7 @@ const { debouncedValue: debouncedSearch, isPending: isSearchPending } = useDebou
 // Also aborted automatically when the component unmounts.
 const { getSignal } = useAbortController();
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
+// === Computed =================================================================
 
 const rangeStart = computed(() => (currentPage.value - 1) * PAGE_SIZE + 1);
 const rangeEnd = computed(() => Math.min(currentPage.value * PAGE_SIZE, totalItems.value));
@@ -105,7 +105,7 @@ const visiblePages = computed<(number | '...')[]>(() => {
   return pages;
 });
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// === API ======================================================================
 
 const fetchMedia = async () => {
   // Abort any previous in-flight request and obtain a signal for this one.
@@ -209,7 +209,7 @@ const addToCollection = async (mediaId: string, collectionId: string) => {
   }
 };
 
-// ─── Event handlers ───────────────────────────────────────────────────────────
+// === Event handlers ===========================================================
 
 const openCollectionPicker = (mediaId: string, e: MouseEvent) => {
   e.stopPropagation();
@@ -238,7 +238,7 @@ const onSortChange = (e: Event) => {
   currentPage.value = 1;
 };
 
-// ─── Watchers ─────────────────────────────────────────────────────────────────
+// === Watchers =================================================================
 
 // Fires only after the debounce settles (or immediately on empty string).
 watch(debouncedSearch, () => {
@@ -253,19 +253,19 @@ watch([activeType, sortField, sortOrder], () => {
 
 watch(currentPage, fetchMedia);
 
-// ─── Lifecycle ────────────────────────────────────────────────────────────────
+// === Lifecycle ================================================================
 
 onMounted(() => {
   fetchMedia();
-  window.addEventListener('click', closeCollectionPicker);
+  globalThis.addEventListener('click', closeCollectionPicker);
 });
 
 onUnmounted(() => {
   // useAbortController and useDebounce both clean up via their own onUnmounted hooks.
-  window.removeEventListener('click', closeCollectionPicker);
+  globalThis.removeEventListener('click', closeCollectionPicker);
 });
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
+// === Display helpers ==========================================================
 
 const TYPE_NAV = [
   { type: 'FILM' as MediaType,    label: 'Movies',   icon: 'movie' },
@@ -315,55 +315,7 @@ const cardMeta = (item: MediaItem): string =>
 
 <template>
   <div class="catalog-layout">
-
-    <!-- ── Left Sidebar ───────────────────────────────────────── -->
-    <aside class="catalog-sidebar" :class="{ 'catalog-sidebar--collapsed': isSidebarCollapsed }">
-      <div class="sidebar-header">
-        <div class="sidebar-header-text">
-          <span class="sidebar-title">Collections</span>
-          <span class="sidebar-subtitle">Global Library</span>
-        </div>
-        <button class="sidebar-toggle" @click="isSidebarCollapsed = !isSidebarCollapsed">
-          <span class="material-symbols-outlined">
-            {{ isSidebarCollapsed ? 'chevron_right' : 'chevron_left' }}
-          </span>
-        </button>
-      </div>
-
-      <nav class="sidebar-nav">
-        <button
-          :class="['sidebar-item', { 'sidebar-item--active': activeType === null }]"
-          title="All Media"
-          @click="setType(null)"
-        >
-          <span class="material-symbols-outlined">grid_view</span>
-          <span class="sidebar-label">All Media</span>
-        </button>
-        <button
-          v-for="nav in TYPE_NAV"
-          :key="nav.type"
-          :class="['sidebar-item', { 'sidebar-item--active': activeType === nav.type }]"
-          :title="nav.label"
-          @click="setType(nav.type)"
-        >
-          <span class="material-symbols-outlined">{{ nav.icon }}</span>
-          <span class="sidebar-label">{{ nav.label }}</span>
-        </button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <a href="#" class="sidebar-item" title="Help">
-          <span class="material-symbols-outlined">help</span>
-          <span class="sidebar-label">Help</span>
-        </a>
-        <a href="#" class="sidebar-item" title="Feedback">
-          <span class="material-symbols-outlined">chat_bubble</span>
-          <span class="sidebar-label">Feedback</span>
-        </a>
-      </div>
-    </aside>
-
-    <!-- ── Main Content ───────────────────────────────────────── -->
+    <!-- == Main Content ========================================= -->
     <div class="catalog-content">
 
       <!-- Toolbar -->
@@ -544,7 +496,7 @@ const cardMeta = (item: MediaItem): string =>
           </article>
         </div>
 
-        <!-- ── Pagination ──────────────────────────────────────── -->
+        <!-- == Pagination ======================================== -->
         <nav
           v-if="totalPages > 1 && !isLoading && mediaItems.length > 0"
           class="pagination"
@@ -589,14 +541,14 @@ const cardMeta = (item: MediaItem): string =>
 </template>
 
 <style scoped>
-/* ── Layout ──────────────────────────────────────────────── */
+/* == Layout ================================================ */
 .catalog-layout {
   display: flex;
   min-height: calc(100vh - 48px);
   background-color: #ffffff;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────── */
+/* == Sidebar =============================================== */
 .catalog-sidebar {
   width: 256px;
   min-width: 256px;
@@ -748,7 +700,7 @@ const cardMeta = (item: MediaItem): string =>
   flex-direction: column;
 }
 
-/* ── Main Content ────────────────────────────────────────── */
+/* == Main Content ========================================== */
 .catalog-content {
   flex: 1;
   min-width: 0;
@@ -756,7 +708,7 @@ const cardMeta = (item: MediaItem): string =>
   flex-direction: column;
 }
 
-/* ── Toolbar ─────────────────────────────────────────────── */
+/* == Toolbar =============================================== */
 .catalog-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -909,7 +861,7 @@ const cardMeta = (item: MediaItem): string =>
   pointer-events: none;
 }
 
-/* ── Results bar ─────────────────────────────────────────── */
+/* == Results bar =========================================== */
 .results-bar {
   display: flex;
   align-items: center;
@@ -945,7 +897,7 @@ const cardMeta = (item: MediaItem): string =>
   line-height: 1;
 }
 
-/* ── Grid area ───────────────────────────────────────────── */
+/* == Grid area ============================================= */
 .catalog-grid-area {
   flex: 1;
   padding: 24px;
@@ -954,7 +906,7 @@ const cardMeta = (item: MediaItem): string =>
   gap: 24px;
 }
 
-/* ── Status / Empty / Error ──────────────────────────────── */
+/* == Status / Empty / Error ================================ */
 .catalog-status {
   display: flex;
   flex-direction: column;
@@ -974,7 +926,7 @@ const cardMeta = (item: MediaItem): string =>
 .catalog-status--error { color: #ba1a1a; }
 .catalog-status--error .material-symbols-outlined { color: #ba1a1a; }
 
-/* ── Error banner (non-blocking, shows above the grid) ────── */
+/* == Error banner (non-blocking, shows above the grid) ====== */
 .error-banner {
   display: flex;
   align-items: center;
@@ -1019,7 +971,7 @@ const cardMeta = (item: MediaItem): string =>
   to   { transform: rotate(360deg); }
 }
 
-/* ── Media Grid ──────────────────────────────────────────── */
+/* == Media Grid ============================================ */
 .media-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1037,7 +989,7 @@ const cardMeta = (item: MediaItem): string =>
   transition: opacity 0.2s;
 }
 
-/* ── Media Card ──────────────────────────────────────────── */
+/* == Media Card ============================================ */
 .media-card {
   border: 1px solid #e0e0e0;
   background-color: #ffffff;
@@ -1199,7 +1151,7 @@ const cardMeta = (item: MediaItem): string =>
 
 .platform-icon { font-size: 20px; }
 
-/* ── Pagination ──────────────────────────────────────────── */
+/* == Pagination ============================================ */
 .pagination {
   display: flex;
   align-items: center;
@@ -1256,13 +1208,13 @@ const cardMeta = (item: MediaItem): string =>
   user-select: none;
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* == Responsive ============================================ */
 @media (max-width: 767px) {
   .catalog-sidebar { display: none; }
   .sort-wrapper { margin-left: 0; }
 }
 
-/* ── Add media button ────────────────────────────────────── */
+/* == Add media button ====================================== */
 .add-media-btn {
   display: inline-flex;
   align-items: center;

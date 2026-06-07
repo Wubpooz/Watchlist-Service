@@ -5,7 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import CatalogPage from '@/pages/CatalogPage.vue';
 import { useAuthStore } from '@/stores/auth';
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
+// === Fixtures =================================================================
 
 const FILM_ITEM = {
   id: 'media-1',
@@ -54,7 +54,7 @@ function makePage(items: typeof FILM_ITEM[], total = items.length, page = 1) {
   };
 }
 
-// ─── Test setup ───────────────────────────────────────────────────────────────
+// === Test setup ===============================================================
 
 function mockFetch(page: ReturnType<typeof makePage>) {
   (globalThis.fetch as any).mockResolvedValue({
@@ -79,7 +79,7 @@ async function mountCatalog() {
   return wrapper;
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ====================================================================
 
 describe('CatalogPage — type filter behaviour', () => {
   beforeEach(() => {
@@ -98,7 +98,7 @@ describe('CatalogPage — type filter behaviour', () => {
     vi.restoreAllMocks();
   });
 
-  // ── Initial load ───────────────────────────────────────────────────────────
+  // == Initial load ===========================================================
 
   it('fetches /api/media on mount with no type filter', async () => {
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
@@ -125,7 +125,7 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(wrapper.text()).toContain('2024');
   });
 
-  // ── Sidebar type filter ────────────────────────────────────────────────────
+  // == Sidebar type filter ====================================================
 
   it('sends type=FILM when the Movies sidebar item is clicked', async () => {
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
@@ -200,7 +200,7 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(url).not.toContain('type=');
   });
 
-  // ── Filter chips (toolbar) ─────────────────────────────────────────────────
+  // == Filter chips (toolbar) =================================================
 
   it('sends type=FILM when the Movies filter chip in the toolbar is clicked', async () => {
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
@@ -238,7 +238,7 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(allChip!.classes()).toContain('filter-chip--active');
   });
 
-  // ── Page reset on filter change ────────────────────────────────────────────
+  // == Page reset on filter change ============================================
 
   it('resets to page=1 when the type filter changes', async () => {
     // Simulate being on page 2 by providing enough items.
@@ -269,7 +269,7 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(filterUrl).toContain('page=1');
   });
 
-  // ── Empty & error states ───────────────────────────────────────────────────
+  // == Empty & error states ===================================================
 
   it('shows the empty state message when the API returns no items', async () => {
     mockFetch(makePage([]));
@@ -286,7 +286,7 @@ describe('CatalogPage — type filter behaviour', () => {
   });
 });
 
-// ─── Tests: search debounce integration ───────────────────────────────────────
+// === Tests: search debounce integration =======================================
 
 describe('CatalogPage — search bar', () => {
   beforeEach(() => {

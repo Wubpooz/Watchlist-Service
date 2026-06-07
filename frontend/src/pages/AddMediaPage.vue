@@ -8,7 +8,7 @@ const authStore = useAuthStore();
 
 type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
 
-// ─── Form state ───────────────────────────────────────────────────────────────
+// === Form state ===============================================================
 
 const title = ref('');
 const mediaType = ref<MediaType | ''>('');
@@ -22,7 +22,7 @@ const platforms = ref<string[]>([]);
 const isSubmitting = ref(false);
 const submitError = ref('');
 
-// ─── Options ──────────────────────────────────────────────────────────────────
+// === Options ==================================================================
 
 const TYPE_OPTIONS: { value: MediaType; label: string; icon: string }[] = [
   { value: 'FILM',    label: 'Movie',     icon: 'movie' },
@@ -34,7 +34,7 @@ const TYPE_OPTIONS: { value: MediaType; label: string; icon: string }[] = [
 
 const PLATFORM_OPTIONS = ['Netflix', 'Amazon Prime', 'Apple TV+', 'Spotify'];
 
-// ─── Tag handling ─────────────────────────────────────────────────────────────
+// === Tag handling =============================================================
 
 const commitTag = () => {
   const trimmed = tagInput.value.trim().replace(/,+$/, '');
@@ -58,7 +58,7 @@ const removeTag = (tag: string) => {
   tags.value = tags.value.filter(t => t !== tag);
 };
 
-// ─── Platform handling ────────────────────────────────────────────────────────
+// === Platform handling ========================================================
 
 const togglePlatform = (platform: string) => {
   const idx = platforms.value.indexOf(platform);
@@ -66,11 +66,11 @@ const togglePlatform = (platform: string) => {
   else platforms.value.splice(idx, 1);
 };
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// === Validation ===============================================================
 
 const isValid = computed(() => title.value.trim().length > 0 && mediaType.value !== '');
 
-// ─── Submit ───────────────────────────────────────────────────────────────────
+// === Submit ===================================================================
 
 const handleSubmit = async () => {
   if (!isValid.value) return;
@@ -114,7 +114,7 @@ const handleSubmit = async () => {
 <template>
   <div class="add-media-page">
 
-    <!-- ── Page header ──────────────────────────────────────────── -->
+    <!-- == Page header ============================================ -->
     <div class="page-header">
       <button class="back-link" type="button" @click="router.push({ name: 'Catalog' })">
         <span class="material-symbols-outlined">arrow_back</span>
@@ -126,7 +126,7 @@ const handleSubmit = async () => {
       </p>
     </div>
 
-    <!-- ── Form card ────────────────────────────────────────────── -->
+    <!-- == Form card ============================================== -->
     <div class="form-card">
       <form novalidate @submit.prevent="handleSubmit">
 
@@ -139,7 +139,7 @@ const handleSubmit = async () => {
           </button>
         </div>
 
-        <!-- ── Two-column top fields ──────────────────────────────── -->
+        <!-- == Two-column top fields ================================ -->
         <div class="form-grid">
 
           <!-- Title -->
@@ -208,7 +208,7 @@ const handleSubmit = async () => {
 
         </div>
 
-        <!-- ── Description ────────────────────────────────────────── -->
+        <!-- == Description ========================================== -->
         <div class="field">
           <label class="field-label" for="media-description">Description</label>
           <textarea
@@ -222,7 +222,7 @@ const handleSubmit = async () => {
           <p class="field-hint">{{ description.length }}&thinsp;/&thinsp;1000</p>
         </div>
 
-        <!-- ── Tags ───────────────────────────────────────────────── -->
+        <!-- == Tags ================================================= -->
         <div class="field">
           <label class="field-label" for="tags-input">Genres / Tags</label>
           <div class="tag-field">
@@ -243,7 +243,7 @@ const handleSubmit = async () => {
           <p class="field-hint">Separate multiple tags with commas or the Enter key.</p>
         </div>
 
-        <!-- ── Platforms ──────────────────────────────────────────── -->
+        <!-- == Platforms ============================================ -->
         <div class="field">
           <fieldset class="platform-fieldset">
             <legend class="field-label">Availability / Platform</legend>
@@ -266,7 +266,7 @@ const handleSubmit = async () => {
           </fieldset>
         </div>
 
-        <!-- ── Divider + actions ──────────────────────────────────── -->
+        <!-- == Divider + actions ==================================== -->
         <hr class="form-divider" />
 
         <div class="form-actions">
@@ -294,7 +294,7 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped>
-/* ── Page wrapper ────────────────────────────────────────── */
+/* == Page wrapper ========================================== */
 .add-media-page {
   max-width: 860px;
   margin: 0 auto;
@@ -302,7 +302,7 @@ const handleSubmit = async () => {
   font-family: 'IBM Plex Sans', sans-serif;
 }
 
-/* ── Back link + header ──────────────────────────────────── */
+/* == Back link + header ==================================== */
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -340,14 +340,14 @@ const handleSubmit = async () => {
   margin: 0 0 32px;
 }
 
-/* ── Form card ───────────────────────────────────────────── */
+/* == Form card ============================================= */
 .form-card {
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   padding: 32px;
 }
 
-/* ── Two-column grid ─────────────────────────────────────── */
+/* == Two-column grid ======================================= */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -359,7 +359,7 @@ const handleSubmit = async () => {
   .form-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Field ───────────────────────────────────────────────── */
+/* == Field ================================================= */
 .field {
   display: flex;
   flex-direction: column;
@@ -388,7 +388,7 @@ const handleSubmit = async () => {
   margin-top: 4px;
 }
 
-/* ── Carbon-style input ──────────────────────────────────── */
+/* == Carbon-style input ==================================== */
 .field-input {
   background-color: #f4f4f4;
   border: none;
@@ -424,7 +424,7 @@ const handleSubmit = async () => {
   line-height: 1.5;
 }
 
-/* ── Select wrapper ──────────────────────────────────────── */
+/* == Select wrapper ======================================== */
 .select-wrapper {
   position: relative;
 }
@@ -445,7 +445,7 @@ const handleSubmit = async () => {
   pointer-events: none;
 }
 
-/* ── Tag field ───────────────────────────────────────────── */
+/* == Tag field ============================================= */
 .tag-field {
   background-color: #f4f4f4;
   border-bottom: 1px solid #737687;
@@ -502,7 +502,7 @@ const handleSubmit = async () => {
 
 .tag-input::placeholder { color: #a8a8a8; }
 
-/* ── Platform checkboxes ─────────────────────────────────── */
+/* == Platform checkboxes =================================== */
 .platform-fieldset {
   border: none;
   padding: 0;
@@ -565,7 +565,7 @@ const handleSubmit = async () => {
   outline-offset: 1px;
 }
 
-/* ── Error banner ────────────────────────────────────────── */
+/* == Error banner ========================================== */
 .error-banner {
   display: flex;
   align-items: center;
@@ -590,7 +590,7 @@ const handleSubmit = async () => {
   margin-left: auto;
 }
 
-/* ── Divider + actions ───────────────────────────────────── */
+/* == Divider + actions ===================================== */
 .form-divider {
   border: none;
   border-top: 1px solid #e0e0e0;
@@ -604,7 +604,7 @@ const handleSubmit = async () => {
   gap: 8px;
 }
 
-/* ── Buttons ─────────────────────────────────────────────── */
+/* == Buttons =============================================== */
 .btn-ghost {
   background-color: transparent;
   color: #0f62fe;
