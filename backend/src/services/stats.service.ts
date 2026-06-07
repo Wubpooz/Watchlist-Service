@@ -107,11 +107,11 @@ export const statsService = {
         },
       }),
 
-      // 5 most recent additions across owned collections
+      // Recent additions across owned collections (fetch up to 50 to deduplicate by mediaId in JS)
       prisma.collectionMedia.findMany({
         where: { collectionId: { in: ownedCollectionIds } },
         orderBy: { addedAt: 'desc' },
-        take: 5,
+        take: 50,
         select: {
           addedAt: true,
           collection: { select: { name: true } },
@@ -162,14 +162,24 @@ export const statsService = {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    const recentItems: RecentItem[] = recentEntries.map((entry) => ({
-      mediaId: entry.media.id,
-      title: entry.media.title,
-      type: entry.media.type,
-      addedAt: entry.addedAt,
-      collectionName: entry.collection.name,
-      url: entry.media.url,
-    }));
+    const seenMediaIds = new Set<string>();
+    const recentItems: RecentItem[] = [];
+    for (const entry of recentEntries) {
+      if (!seenMediaIds.has(entry.media.id)) {
+        seenMediaIds.add(entry.media.id);
+        recentItems.push({
+          mediaId: entry.media.id,
+          title: entry.media.title,
+          type: entry.media.type,
+          addedAt: entry.addedAt,
+          collectionName: entry.collection.name,
+          url: entry.media.url,
+        });
+        if (recentItems.length === 5) {
+          break;
+        }
+      }
+    }
 
     const finalStats: UserStats = {
       totalMedia,
