@@ -5,6 +5,23 @@ import { AppError } from "../middleware/errorHandler.js";
 import type { ListQuery, MediaWhereClause, PaginatedData } from "../types/types.js";
 import { queryUtils } from "../services/query.utils.js";
 
+// Fields needed by the catalog card — avoids shipping description + scores for every row
+const mediaListSelect = {
+  id: true,
+  title: true,
+  type: true,
+  directorAuthor: true,
+  releaseDate: true,
+  platforms: true,
+  tags: true,
+  url: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.MediaSelect;
+
+// Full media shape (used for detail/create/update responses)
+export type MediaListItem = Pick<Media, keyof typeof mediaListSelect>;
+
 export const mediaService = {
   /**
    * Create a new media entry in the database
@@ -41,9 +58,9 @@ export const mediaService = {
    * List media entries with pagination and filters
    * @param {ListQuery} query Query parameters for filtering and pagination
    * @param {string} [userId] Optional authenticated user ID for access control
-   * @returns {Promise<PaginatedData<Media>>} Paginated list of media entries matching the query and access control
+   * @returns {Promise<PaginatedData<MediaListItem>>} Paginated list of media entries matching the query and access control
    */
-  async listMedia(query: ListQuery, userId?: string): Promise<PaginatedData<Media>> {
+  async listMedia(query: ListQuery, userId?: string): Promise<PaginatedData<MediaListItem>> {
     const pageSize = query.pageSize || 20;
     const sort = query.sort || 'createdAt';
     const order = query.order || 'desc';
@@ -61,6 +78,7 @@ export const mediaService = {
         cursor: { id: query.cursor },
         skip: 1, // Skip the cursor itself
         orderBy: { [sort]: order },
+        select: mediaListSelect,
       });
 
       const hasMore = data.length > pageSize;
@@ -92,6 +110,7 @@ export const mediaService = {
         skip,
         take: pageSize,
         orderBy: { [sort]: order },
+        select: mediaListSelect,
       }),
       prisma.media.count({ where }),
     ]);
@@ -285,39 +304,44 @@ export const mediaService = {
    * @throws AppError with status 403 if the user does not have permission, or 404 if the media is not found
    */
   async requireMediaRole(mediaId: string, userId: string, allowedRoles: CollectionRole[]): Promise<void> {
-    const media = await prisma.media.findUnique({
+    // Verify the media exists first
+    const exists = await prisma.media.findUnique({
       where: { id: mediaId },
-      select: {
-        id: true,
-        collections: {
-          select: {
-            collection: {
-              select: {
-                ownerId: true,
-                members: {
-                  where: { userId },
-                  select: { role: true },
-                },
-              },
+      select: { id: true },
+    });
+
+    if (!exists) {
+      throw new AppError('Media not found', 404);
+    }
+
+    // Fast path: check ownership via a single flat count (uses mediaId index)
+    if (allowedRoles.includes(CollectionRole.OWNER)) {
+      const ownerCount = await prisma.collectionMedia.count({
+        where: {
+          mediaId,
+          collection: { ownerId: userId },
+        },
+      });
+      if (ownerCount > 0) return;
+    }
+
+    // Check accepted membership role
+    const roleCount = await prisma.collectionMedia.count({
+      where: {
+        mediaId,
+        collection: {
+          members: {
+            some: {
+              userId,
+              accepted: true,
+              role: { in: allowedRoles.filter(r => r !== CollectionRole.OWNER) },
             },
           },
         },
       },
     });
 
-    if (!media) {
-      throw new AppError('Media not found', 404);
-    }
-
-    const isOwner = media.collections.some((item) => item.collection.ownerId === userId);
-    if (isOwner && allowedRoles.includes(CollectionRole.OWNER)) {
-      return;
-    }
-
-    const roles = media.collections.flatMap((item) => item.collection.members.map((member) => member.role));
-    const hasRole = roles.some((role) => allowedRoles.includes(role));
-
-    if (!hasRole) {
+    if (roleCount === 0) {
       throw new AppError('Forbidden', 403);
     }
   },

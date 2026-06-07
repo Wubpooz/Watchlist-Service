@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useStatsStore } from '@/stores/stats';
-import { useAuthStore } from '@/stores/auth';
+import { apiFetch } from '@/lib/api';
 import AppModal from '@/components/AppModal.vue';
 
 // === State ===================================================================
 const statsStore = useStatsStore();
-const authStore = useAuthStore();
 
 const stats = computed(() => statsStore.stats);
 const loading = computed(() => statsStore.isLoading || (!statsStore.stats && !statsStore.error));
@@ -42,22 +41,18 @@ async function openMediaListModal(filterType: 'type' | 'tag' | 'platform', filte
   isListModalOpen.value = true;
 
   try {
-    const token = authStore.authToken;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    let url = `${import.meta.env.VITE_API_URL ?? ''}/api/media?pageSize=50`;
+    const params = new URLSearchParams({ pageSize: '50' });
     if (filterType === 'type') {
-      url += `&type=${filterValue}`;
+      params.set('type', filterValue);
     } else if (filterType === 'tag') {
-      url += `&tag=${encodeURIComponent(filterValue)}`;
+      params.set('tag', filterValue);
     } else if (filterType === 'platform') {
-      url += `&platform=${encodeURIComponent(filterValue)}`;
+      params.set('platform', filterValue);
     }
 
-    const res = await fetch(url, { headers, credentials: 'include' });
+    const res = await apiFetch(`/api/media?${params}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await res.raw.json();
     listModalItems.value = data.items ?? [];
   } catch (e) {
     listModalError.value = e instanceof Error ? e.message : 'Failed to fetch media';

@@ -95,6 +95,32 @@ describe('errorHandler middleware', () => {
     expect(appError.cause).toBe(cause);
   });
 
+  it('sanitizes database and Prisma errors to a generic Internal Server Error', async () => {
+    const app = new Hono();
+
+    app.get('/db-error-1', async () => {
+      const err = new Error('PrismaClientKnownRequestError: Can\'t reach database server');
+      err.name = 'PrismaClientInitializationError';
+      throw err;
+    });
+
+    app.get('/db-error-2', async () => {
+      throw new Error('db[model].findFirst() failed due to lost postgres connection');
+    });
+
+    app.onError(errorHandler);
+
+    const response1 = await app.request('/db-error-1');
+    const body1 = await response1.json() as any;
+    expect(response1.status).toBe(500);
+    expect(body1.error.message).toBe('Internal Server Error');
+
+    const response2 = await app.request('/db-error-2');
+    const body2 = await response2.json() as any;
+    expect(response2.status).toBe(500);
+    expect(body2.error.message).toBe('Internal Server Error');
+  });
+
   afterAll(() => {
     process.env.NODE_ENV = originalNodeEnv;
   });

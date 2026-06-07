@@ -21,6 +21,7 @@ export interface RecentItem {
   type: string;
   addedAt: Date;
   collectionName: string;
+  url?: string | null;
 }
 
 export interface UserStats {
@@ -114,7 +115,7 @@ export const statsService = {
         select: {
           addedAt: true,
           collection: { select: { name: true } },
-          media: { select: { id: true, title: true, type: true } },
+          media: { select: { id: true, title: true, type: true, url: true } },
         },
       }),
     ]);
@@ -167,6 +168,7 @@ export const statsService = {
       type: entry.media.type,
       addedAt: entry.addedAt,
       collectionName: entry.collection.name,
+      url: entry.media.url,
     }));
 
     const finalStats: UserStats = {
