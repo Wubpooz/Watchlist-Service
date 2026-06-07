@@ -74,7 +74,10 @@ async function loadMedia(id: string) {
   loading.value = true;
   error.value = null;
   try {
-    const res = await fetch(`/api/media/${encodeURIComponent(id)}`);
+    const res = await fetch(`/api/media/${encodeURIComponent(id)}`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
     if (!res.ok) throw new Error(`Failed to fetch media (${res.status})`);
     const data = await res.json();
     // API may return the media directly or wrapped, handle both
