@@ -862,6 +862,8 @@ const cardMeta = (item: MediaItem): string =>
   border-bottom: 1px solid #e0e0e0;
   background-color: #fafafa;
   flex-wrap: wrap;
+  min-height: 37px; /* Prevent height shift when category filter badge is toggled */
+  line-height: 20px;
 }
 
 .results-bar--loading {
@@ -877,9 +879,12 @@ const cardMeta = (item: MediaItem): string =>
   background-color: #e8eeff;
   border: 1px solid #0f62fe;
   color: #0043ce;
-  padding: 2px 8px;
+  padding: 0 8px;
   font-size: 12px;
   font-weight: 500;
+  height: 20px;
+  box-sizing: border-box;
+  line-height: 1;
 }
 
 .badge-clear {
