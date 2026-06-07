@@ -159,6 +159,8 @@ async function fetchCollections(): Promise<CollectionItem[]> {
     page += 1;
   }
 
+  return loadedCollections;
+
   const mediaResults = await Promise.allSettled(
     loadedCollections.map(async (collection) => {
       const mediaResponse = await fetch(`${apiBaseUrl}/api/collections/${collection.id}/media`, {
