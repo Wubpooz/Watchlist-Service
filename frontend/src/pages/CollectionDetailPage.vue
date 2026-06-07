@@ -484,12 +484,12 @@ watch(collectionId, () => {
           </div>
 
           <table class="table-wrap" aria-label="Collection media list">
-            <tr class="table-head">
+            <th class="table-head">
               <span>Title</span>
               <span>Type</span>
               <span>Date Added</span>
               <span class="actions-head">Actions</span>
-            </tr>
+            </th>
 
             <div v-if="mediaItems.length === 0" class="empty-row">
               No media in this collection yet.
@@ -823,6 +823,7 @@ watch(collectionId, () => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #161616;
+  text-align: left;
 }
 
 .table-row {
