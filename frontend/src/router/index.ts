@@ -7,6 +7,7 @@ const SignUpPage = () => import('@/pages/SignUpPage.vue');
 const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue');
 const ResetPasswordPage = () => import('@/pages/ResetPasswordPage.vue');
 const HomePage = () => import('@/pages/HomePage.vue');
+const CatalogPage = () => import('@/pages/CatalogPage.vue');
 const CollectionsPage = () => import('@/pages/CollectionsPage.vue');
 const StatisticsPage = () => import('@/pages/StatisticsPage.vue');
 const MediaDetailPage = () => import('@/pages/MediaDetailPage.vue');
@@ -57,6 +58,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Home',
         component: HomePage,
         meta: { requiresAuth: true }
+      },
+      {
+        path: 'catalog',
+        name: 'Catalog',
+        component: CatalogPage,
+        meta: { requiresAuth: true, fullWidth: true }
       },
       {
         path: 'collections',
