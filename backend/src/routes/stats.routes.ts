@@ -83,6 +83,7 @@ statsRoutes.get(
     }
 
     const stats = await statsService.getUserStats(sessionUser.id);
+    c.header('Cache-Control', 'private, max-age=300');
     return c.json(stats, 200);
   }
 );

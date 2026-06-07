@@ -127,6 +127,13 @@ onUnmounted(() => {
           Dashboard
         </RouterLink>
         <RouterLink
+          :to="{ name: 'Catalog' }"
+          class="nav-item"
+          :class="{ active: isActive('Catalog') }"
+        >
+          Catalog
+        </RouterLink>
+        <RouterLink
           :to="{ name: 'Collections' }"
           class="nav-item"
           :class="{ active: isActive('Collections') }"

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import AppModal from '@/components/AppModal.vue';
 
 const route = useRoute();
+const router = useRouter();
 const mediaId = computed(() => route.params.id as string);
 
 type Media = {
@@ -61,6 +62,23 @@ const selectedCollectionCount = computed(() => selectedCollectionIds.value.lengt
 const addImageURLError = ref<string | null>(null);
 const addImageURLModalOpen = ref(false);
 const addingImageURL = ref(false);
+
+// === Display helpers ==========================================================
+
+const TYPE_COLOR: Record<string, string> = {
+  FILM: '#0043ce', SERIES: '#393939', BOOK: '#6e4c31', ARTICLE: '#005d5d', OTHER: '#393939',
+};
+const TYPE_ICON: Record<string, string> = {
+  FILM: 'movie', SERIES: 'tv', BOOK: 'menu_book', ARTICLE: 'article', OTHER: 'category',
+};
+const TYPE_LABEL: Record<string, string> = {
+  FILM: 'Movie', SERIES: 'TV Series', BOOK: 'Book', ARTICLE: 'Article', OTHER: 'Other',
+};
+
+const releaseYear = (d?: string | null) => {
+  if (!d) return '—';
+  try { return new Date(d).getFullYear().toString(); } catch { return '—'; }
+};
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -253,70 +271,123 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-container">
-    <!-- left side : cover image if we ever have those -->
-    <div class="cover-image">
+  <div class="detail-page">
 
-      <button type="button" class="add-image-button" @click="openAddImageURLModal">
-        <img v-if="media?.url" :src="media.url" alt="Media Cover" class="cover-img" />
-        <span v-else>Add a cover image</span>
+    <!-- == Loading ================================================ -->
+    <div v-if="loading" class="status-area">
+      <span class="material-symbols-outlined status-spinner">autorenew</span>
+      <span>Loading…</span>
+    </div>
+
+    <!-- == Error ================================================== -->
+    <div v-else-if="error" class="status-area">
+      <span class="material-symbols-outlined" style="font-size:40px;color:#8d8d8d">broken_image</span>
+      <p class="status-msg">{{ error }}</p>
+      <div class="status-actions">
+        <button class="btn-ghost" @click="router.push({ name: 'Catalog' })">Back to catalog</button>
+      </div>
+    </div>
+
+    <!-- == Content ================================================ -->
+    <template v-else-if="media">
+
+      <!-- Back link -->
+      <button class="back-link" type="button" @click="router.push({ name: 'Catalog' })">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Media Catalog
       </button>
 
-    </div>
-    <!-- right side : name, author, type, description, release, tags, platforms, add to collection button, collections that have it -->
-    <div class="media-details">
+      <div class="detail-layout">
 
-      <h1 v-if="media?.description" class="media-title">{{ media.title }}</h1>
-      <div class="author-type-row">
-        <span v-if="media?.directorAuthor" class="author-text">{{ media.directorAuthor }}</span>
-        <span v-if="media?.type" class="visibility-chip">{{ media.type }}</span>
-      </div>
-      <p v-if="media?.description" class="media-description">{{ media.description }}</p>
+        <!-- == Left: Poster ====================================== -->
+        <div class="poster-col">
 
-      <ul class="data-list">
-        <li v-if="media?.releaseDate"><strong>Release Date:</strong> {{ media.releaseDate ? new Date(media.releaseDate).toLocaleDateString(undefined, { year: 'numeric' }) : '—' }}</li>
-        <li v-if="media?.tags && media.tags.length">
-          <strong>Tags: </strong>
-          <!-- tag1, tag2, tag3 -->
-          <span class="detail-list-item" v-for="(tag, index) in media.tags" :key="tag">
-            {{ tag }}<span v-if="index < media.tags.length - 1">, </span>
-          </span>
-        </li>
-        <li v-if="media?.platforms && media.platforms.length">
-          <strong>Platforms: </strong>
-          <!-- platform1, platform2, platform3 -->
-          <span class="detail-list-item" v-for="(platform, index) in media.platforms" :key="platform">
-            {{ platform }}<span v-if="index < media.platforms.length - 1">, </span>
-          </span>
-        </li>
-      </ul>
-
-      <div class="collection-section">
-        <!-- button opens a modal to add to a collection, kind of like how in collection detail page we open a modal to add a media -->
-        <div class="add-to-collection-row">
-          <button type="button" class="add-to-collection-button" @click="openAddToCollectionModal">
-            Add to a collection
+          <button type="button" class="add-image-button" @click="openAddImageURLModal">
+            <img v-if="media?.url" :src="media.url" alt="Media Cover" class="poster" />
+            <div v-else
+              class="poster"
+              :style="{ backgroundColor: (media?.type && TYPE_COLOR[media.type]) ?? '#393939' }"
+            >
+              <span class="material-symbols-outlined poster-icon">
+                {{ (media?.type && TYPE_ICON[media.type]) ?? 'category' }}
+              </span>
+            </div>
           </button>
-        </div>
-        <!-- list of collections that have this media, each item is a link to the collection detail page -->
-        <div class="collections-with-media">
-          <strong>Collections you have access to that contain this item</strong>
 
-          <div v-if="collectionsWithMedia.length === 0" class="placeholder" style="margin-top: 12px">
-            This media is not in any of your collections yet.
+          <a
+            v-if="media.url"
+            :href="media.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="external-link"
+          >
+            <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+            Visit source
+          </a>
+        </div>
+
+        <!-- == Right: Details ==================================== -->
+        <div class="detail-col">
+
+          <!-- Title + author + type badge -->
+          <div class="title-block">
+            <h1 class="media-title">{{ media.title }}</h1>
+            <div class="byline">
+              <span v-if="media.directorAuthor" class="byline-author">
+                {{ media.directorAuthor }}
+              </span>
+              <span class="type-badge">{{ (media?.type && TYPE_LABEL[media.type]) ?? media?.type }}</span>
+            </div>
           </div>
 
-          <ul class="collection-list" v-for="collection in collectionsWithMedia" :key="collection.id">
-            <li class="collection-link">
-              <RouterLink :to="`/collections/${collection.id}`">{{ collection.name }}</RouterLink>
-            </li>
-          </ul>
+          <!-- Description -->
+          <p v-if="media.description" class="media-description">{{ media.description }}</p>
+          <p v-else class="media-description media-description--empty">No description available.</p>
+
+          <!-- == Metadata grid ==================================== -->
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">Release</span>
+              <span class="meta-value">{{ releaseYear(media.releaseDate) }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Genre / Tags</span>
+              <span class="meta-value">{{ media.tags?.length ? media.tags.join(', ') : '—' }}</span>
+            </div>
+            <div class="meta-item meta-item--full">
+              <span class="meta-label">Availability</span>
+              <span class="meta-value">
+                {{ media.platforms?.length ? media.platforms.join(', ') : '—' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- == Add to collection ================================ -->
+          <div class="add-to-collection-row">
+            <button type="button" class="btn-add" @click="openAddToCollectionModal">
+              Add to a collection
+            </button>
+          </div>
+
+          <!-- == Existing collections ============================= -->
+          <div v-if="collectionsWithMedia.length > 0" class="existing-collections">
+            <h3 class="existing-title">Collections that contain this item</h3>
+            <ul class="existing-list">
+              <li v-for="col in collectionsWithMedia" :key="col.id">
+                <RouterLink :to="`/collections/${col.id}`" class="existing-link">
+                  <span class="material-symbols-outlined" style="font-size:16px">folder_open</span>
+                  {{ col.name }}
+                </RouterLink>
+              </li>
+            </ul>
+          </div>
 
         </div>
       </div>
-    </div>
+    </template>
 
 
+    <!-- add to collection modal -->
     <AppModal v-model="addToCollectionModalOpen" title="Add media to collection" @close="closeAddToCollectionModal">
       <div class="add-collection-modal-body">
         <p class="modal-copy">
@@ -335,7 +406,7 @@ onMounted(() => {
           No collection is available to add this media to.
         </div>
 
-        <div v-else class="collection-picker-list" role="list" aria-label="Available collections">
+        <menu v-else class="collection-picker-list" aria-label="Available collections">
           <label v-for="collection in addableCollections" :key="collection.id" class="collection-picker-item">
             <input
               v-model="selectedCollectionIds"
@@ -347,7 +418,7 @@ onMounted(() => {
               <span class="collection-picker-title">{{ collection.name }}</span>
             </span>
           </label>
-        </div>
+        </menu>
       </div>
 
       <template #footer>
@@ -360,6 +431,7 @@ onMounted(() => {
       </template>
     </AppModal>
 
+    <!-- add image modal -->
     <AppModal v-model="addImageURLModalOpen" title="Add cover image from URL" @close="closeAddImageURLModal">
       <div class="add-image-modal-body">
           <p class="modal-copy">
@@ -387,116 +459,331 @@ onMounted(() => {
         </button>
       </template>
     </AppModal>
+
   </div>
 </template>
 
 <style scoped>
-.page-container {
-  max-width: 1800px;
-  height: 100%;
+/* == Page wrapper ========================================== */
+.detail-page {
+  font-family: 'IBM Plex Sans', sans-serif;
+  max-width: 1024px;
   margin: 0 auto;
+  padding-bottom: 64px;
+}
+
+/* == Loading / error states ================================ */
+.status-area {
   display: flex;
-  flex-direction: row;
-  gap: 24px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 96px 24px;
+  color: #525252;
+  font-size: 14px;
+  letter-spacing: 0.16px;
 }
 
-/* .page-container h1 {
-  color: #42b883;
-  margin-bottom: 1rem;
+.status-spinner {
+  font-size: 40px;
+  color: #8d8d8d;
+  animation: spin 1s linear infinite;
 }
 
-.placeholder {
-  padding: 1.5rem;
-  background-color: #1a1a1a;
-  border: 1px dashed #333333;
-  border-radius: 8px;
-  text-align: center;
-  color: #888888;
-}
+.status-msg { margin: 0; font-size: 14px; color: #525252; }
 
-.meta-list {
-  list-style: none;
+.status-actions { display: flex; gap: 8px; }
+
+/* == Back link ============================================= */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #0f62fe;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.16px;
+  cursor: pointer;
   padding: 0;
-  margin: 0.5rem 0 1rem 0;
+  margin-bottom: 32px;
 }
 
-.meta-list li { margin: 6px 0 }
+.back-link:hover { color: #0043ce; }
+.back-link .material-symbols-outlined { font-size: 18px; }
 
-.scores ul { padding-left: 1rem } */
+/* == Two-column layout ===================================== */
+.detail-layout {
+  display: flex;
+  gap: 64px;
+  align-items: flex-start;
+}
 
+@media (max-width: 768px) {
+  .detail-layout { flex-direction: column; gap: 32px; }
+}
 
-.cover-image {
-  /* background-color: #e0e0e0; */
+/* == Poster ================================================ */
+.poster-col {
+  flex: 0 0 38%;
+  max-width: 38%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .poster-col { flex: none; max-width: 100%; width: 100%; }
+}
+
+.poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
-.cover-img {
-  width: 100%;
-  height: 100%;
-  max-width: 400px;
-  max-height: 400px;
-  object-fit: cover;
+.poster-icon {
+  font-size: 80px;
+  color: rgba(255, 255, 255, 0.25);
+  user-select: none;
 }
 
-.media-details {
-  width: 100%;
+.external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #0f62fe;
+  font-size: 13px;
+  letter-spacing: 0.16px;
+  text-decoration: none;
+}
+
+.external-link:hover { color: #0043ce; text-decoration: underline; }
+
+/* == Detail column ========================================= */
+.detail-col {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  color: #161616;
 }
+
+/* == Title ================================================= */
+.title-block { margin-bottom: 32px; }
 
 .media-title {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  line-height: 1;
+  font-family: 'IBM Plex Sans', sans-serif;
   font-weight: 300;
+  font-size: 2.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: #161616;
+  margin: 0 0 10px;
 }
 
-.author-type-row {
+.byline {
   display: flex;
+  align-items: center;
   gap: 12px;
-  padding: 0;
-  margin: 0.5rem 0 1rem 0;
+  flex-wrap: wrap;
 }
 
-.author-text {
+.byline-author {
+  font-size: 16px;
   color: #525252;
+  letter-spacing: 0.16px;
 }
 
-.visibility-chip {
-  font-size: 12px;
+.type-badge {
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  color: #525252;
+  font-size: 11px;
+  letter-spacing: 0.32px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+}
+
+/* == Description =========================================== */
+.media-description {
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.16px;
   color: #161616;
-  background: #f3f3f3;
-  padding: 4px 8px;
-  border: 1px solid #dedede;
+  max-width: 60ch;
+  margin: 0 0 32px;
 }
 
-.media-description,
-.data-list,
-.add-to-collection-row,
-.collections-with-media {
+.media-description--empty { color: #8d8d8d; font-style: italic; }
+
+/* == Metadata grid ========================================= */
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 48px;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 0;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 480px) {
+  .meta-grid { grid-template-columns: 1fr; }
+}
+
+.meta-item { display: flex; flex-direction: column; gap: 4px; }
+.meta-item--full { grid-column: 1 / -1; }
+
+.meta-label {
+  font-size: 11px;
+  color: #525252;
+  letter-spacing: 0.32px;
+  text-transform: uppercase;
+}
+
+.meta-value { font-size: 14px; color: #161616; letter-spacing: 0.16px; }
+
+/* == Add to collection ===================================== */
+
+.collection-row { display: flex; align-items: stretch; }
+
+.btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 20px;
+  background-color: #0f62fe;
+  color: #ffffff;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-add:hover:not(:disabled) { background-color: #0043ce; }
+
+.btn-add:disabled {
+  background-color: #c6c6c6;
+  color: #8d8d8d;
+  cursor: not-allowed;
+}
+.add-to-collection-row {
   padding-top: 24px;
   padding-bottom: 24px;
 }
 
-.media-description,
-.data-list {
-  border-bottom: 1px solid #e0e0e0;
+/* == Existing collections ================================== */
+.existing-collections {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 24px;
 }
 
-.detail-list-item {
-  text-transform: capitalize;
+.existing-title {
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.16px;
+  color: #161616;
+  margin: 0 0 16px;
 }
 
-.add-to-collection-button {
-  border: none;
-  border-radius: 999px;
-  font-weight: 700;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+.existing-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.existing-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f62fe;
+  font-size: 14px;
+  letter-spacing: 0.16px;
+  text-decoration: none;
+}
+
+.existing-link:hover {
+  color: #0043ce;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* == Buttons =============================================== */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  color: #0f62fe;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.16px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-ghost:hover { background-color: #f4f4f4; }
+
+.add-image-button {
+  filter: brightness(1);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.add-image-button:hover {
+  filter: brightness(0.75);
+  transition: transform 0.2s ease, filter 0.2s ease;
+  cursor: pointer;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: 1px solid transparent;
+  font-size: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #0f62fe;
+  color: #ffffff;
+}
+
+.primary-btn:hover {
+  background: #0353e9;
+}
+
+.secondary-btn {
+  background: #ffffff;
+  border-color: #8d8d8d;
+  color: #161616;
+}
+
+.secondary-btn:hover {
+  background: #f4f4f4;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .add-to-collection-button {
@@ -504,6 +791,8 @@ onMounted(() => {
   border: 1px solid #0f62fe;
   background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
   color: #ffffff;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .add-to-collection-button:hover {
@@ -521,31 +810,7 @@ onMounted(() => {
   outline-offset: 2px;
 }
 
-.add-image-button {
-  filter: brightness(1);
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.add-image-button:hover {
-  filter: brightness(0.75);
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-
-.collection-list {
-  list-style: none;
-  padding: 0;
-  margin: 12px 0 0 0;
-}
-
-.collection-link {
-  /* padding: 8px 12px; */
-  border-radius: 6px;
-  color: #0f62fe;
-}
-
-
-/* modal */
+/* Modals */
 
 .add-collection-modal-body,
 .add-image-modal-body {
@@ -612,39 +877,6 @@ onMounted(() => {
 .collection-picker-type {
   color: #525252;
   font-size: 13px;
-}
-
-.primary-btn,
-.secondary-btn {
-  border: 1px solid transparent;
-  font-size: 14px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.primary-btn {
-  background: #0f62fe;
-  color: #ffffff;
-}
-
-.primary-btn:hover {
-  background: #0353e9;
-}
-
-.secondary-btn {
-  background: #ffffff;
-  border-color: #8d8d8d;
-  color: #161616;
-}
-
-.secondary-btn:hover {
-  background: #f4f4f4;
-}
-
-.primary-btn:disabled,
-.secondary-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
 }
 
 </style>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Navigation from '@/components/Navigation.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const handleLogout = () => {
@@ -15,7 +16,7 @@ const handleLogout = () => {
 <template>
   <div class="layout">
     <Navigation @logout="handleLogout" />
-    <main class="main-content">
+    <main :class="['main-content', { 'main-content--full': route.meta.fullWidth }]">
       <RouterView />
     </main>
   </div>
@@ -33,6 +34,11 @@ const handleLogout = () => {
   flex: 1;
   padding: 32px 20px;
   overflow-y: auto;
+}
+
+.main-content--full {
+  padding: 0;
+  overflow: visible;
 }
 </style>
 

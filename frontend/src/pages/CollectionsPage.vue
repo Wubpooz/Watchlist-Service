@@ -61,6 +61,9 @@ const creatingCollection = computed(() => collectionsStore.isLoading && createMo
 const ownedCollections = computed(() => collectionsStore.ownedCollections);
 const sharedCollections = computed(() => collectionsStore.sharedCollections);
 const publicCollections = computed(() => collectionsStore.publicCollections);
+// const ownedCollections = computed(() => collections.value.filter((collection) => collection.ownerId === authStore.user?.id));
+// const sharedCollections = computed(() => collections.value.filter((collection) => collection.ownerId !== authStore.user?.id && collection.visibility !== 'PUBLIC'));
+// const publicCollections = computed(() => collections.value.filter((collection) => collection.visibility === 'PUBLIC'));
 
 const filteredCollections = computed(() => {
   if (activeTab.value === 'owned') {
@@ -105,6 +108,40 @@ function normalizeTags(tagsInput: string): string[] {
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
 }
+
+// async function fetchCollections(): Promise<CollectionItem[]> {
+//   const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+//   const pageSize = 100;
+//   const loadedCollections: CollectionItem[] = [];
+//   let page = 1;
+//   let totalPages = 1;
+
+//   if (!authStore.user?.id) {
+//     throw new Error('Unable to determine the current user');
+//   }
+
+//   while (page <= totalPages) {
+//     const response = await fetch(`${apiBaseUrl}/api/collections?page=${page}&pageSize=${pageSize}&sort=updatedAt&order=desc`, {
+//       headers: buildHeaders(),
+//       credentials: 'include',
+//     });
+
+//     if (!response.ok) {
+//       throw new Error(`Failed to load collections (${response.status})`);
+//     }
+
+//     const payload = await response.json() as CollectionListResponse;
+//     loadedCollections.push(...payload.data.map((collection) => ({
+//       ...collection,
+//       media: [],
+//     })));
+
+//     totalPages = payload.pages || 1;
+//     page += 1;
+//   }
+
+//   return loadedCollections;
+// }
 
 async function createCollection(): Promise<void> {
   const name = newCollectionName.value.trim();
@@ -696,6 +733,7 @@ function tabCount(tab: CollectionTab): number {
   .tab-shell {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: 22px;
   }
 
   .tab-meta {
@@ -707,10 +745,6 @@ function tabCount(tab: CollectionTab): number {
   .state-card {
     padding: 20px;
     border-radius: 16px;
-  }
-
-  .tab-shell {
-    margin-bottom: 22px;
   }
 
   .collection-header {
