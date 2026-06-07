@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import AppModal from '@/components/AppModal.vue';
 
 const route = useRoute();
 const mediaId = computed(() => route.params.id as string);
@@ -24,6 +25,22 @@ type CollectionSummary = {
   name: string;
 };
 
+type CollectionToAdd = {
+  id: string;
+  name: string;
+  description?: string | null;
+  tags?: string[];
+  visisibility: string;
+  createdAt: string;
+  updatedAt: string;
+  ownerId: string;
+  _count?: {
+    media?: number;
+    members?: number;
+  };
+  media: Media[];
+}
+
 const media = ref<Media | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -31,6 +48,15 @@ const error = ref<string | null>(null);
 const authStore = useAuthStore();
 const collectionsWithMedia = ref<CollectionSummary[]>([]); // For future use when we fetch collections containing this media
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+
+const addToCollectionError = ref<string | null>(null);
+const addToCollectionModalOpen = ref(false);
+const selectedCollectionIds = ref<string[]>([]);
+const loadingAddableCollections = ref(false);
+const addableCollections = ref<CollectionToAdd[]>([]);
+const addingCollection = ref(false);
+
+const selectedCollectionCount = computed(() => selectedCollectionIds.value.length);
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -73,52 +99,105 @@ async function loadMedia(id: string) {
   }
 }
 
+function openAddToCollectionModal(): void {
+  addToCollectionError.value = null;
+  addToCollectionModalOpen.value = true;
+  selectedCollectionIds.value = [];
+  void loadAddableCollections();
+}
+
+function closeAddToCollectionModal(): void {
+  if (addingCollection.value) {
+    return;
+  }
+
+  addToCollectionError.value = null;
+  addToCollectionModalOpen.value = false;
+  selectedCollectionIds.value = [];
+}
+
+// collections the user owns that do not have this media, to show in the "add to collection" modal
+async function loadAddableCollections(): Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  loadingAddableCollections.value = true;
+  addToCollectionError.value = null;
+
+  const userId = authStore.user?.id;
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/users/${encodeURIComponent(userId!)}/owned-collections`, {
+      headers: buildHeaders(),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load collections you own (${response.status})`);
+    }
+
+    const ownedCollectionsData = await response.json();
+    const ownedCollections: CollectionToAdd[] = ownedCollectionsData.collections ?? [];
+
+    // keep the collection that are in ownedCollections but not in collectionsWithMedia
+    const collectionsWithMediaIds = new Set(collectionsWithMedia.value.map(c => c.id));
+    addableCollections.value = ownedCollections.filter(c => !collectionsWithMediaIds.has(c.id));
+  } catch (err) {
+    addToCollectionError.value = err instanceof Error ? err.message : 'Failed to load collections';
+  } finally {
+    loadingAddableCollections.value = false;
+  }
+}
+
+async function addToSelectedCollections() : Promise<void> {
+  if (!media.value) {
+    return;
+  }
+
+  if (selectedCollectionIds.value.length === 0) {
+    addToCollectionError.value = 'Please select at least one collection to add to.';
+    return;
+  }
+
+  addingCollection.value = true;
+  addToCollectionError.value = null;
+
+  try {
+    const responses = await Promise.all(
+      selectedCollectionIds.value.map(collectionId => {
+        return fetch(`${apiBaseUrl}/api/collections/${encodeURIComponent(collectionId)}/media`, {
+          method: 'POST',
+          headers: buildHeaders(),
+          credentials: 'include',
+          body: JSON.stringify({
+            mediaId: media.value!.id,
+            position: 0 // thought this would cause me emotional turmoil but turns out it just kinda worked
+          })
+        });
+      })
+    );
+
+    for (const response of responses) {
+      if (!response.ok) {
+        throw new Error('Failed to add selected media');
+      }
+    }
+
+    addToCollectionModalOpen.value = false;
+    selectedCollectionIds.value = [];
+    await loadMedia(media.value.id);
+  } catch (err) {
+    addToCollectionError.value = err instanceof Error ? err.message : 'Failed to add to collections';
+  } finally {
+    addingCollection.value = false;
+  }
+}
+
 onMounted(() => {
   if (mediaId.value) loadMedia(mediaId.value);
 });
 </script>
-
-<!-- <template>
-  <div class="page-container">
-    <h1>Media Details</h1>
-
-    <div v-if="loading" class="placeholder">Loading...</div>
-    <div v-else-if="error" class="placeholder">Error: {{ error }}</div>
-    <div v-else-if="media">
-      <h2>{{ media.title }}</h2>
-      <p v-if="media.description">{{ media.description }}</p>
-
-      <ul class="meta-list">
-        <li><strong>Type:</strong> {{ media.type ?? '—' }}</li>
-        <li><strong>Release Date:</strong> {{ media.releaseDate ? new Date(media.releaseDate).toLocaleDateString() : '—' }}</li>
-        <li><strong>Director / Author:</strong> {{ media.directorAuthor ?? '—' }}</li>
-        <li v-if="media.url"><strong>URL:</strong> <a :href="media.url" target="_blank" rel="noreferrer">Open</a></li>
-      </ul>
-
-      <div class="chips">
-        <div v-if="media.tags && media.tags.length">
-          <strong>Tags:</strong>
-          <span class="chip" v-for="tag in media.tags" :key="tag">{{ tag }}</span>
-        </div>
-
-        <div v-if="media.platforms && media.platforms.length" style="margin-top:8px">
-          <strong>Platforms:</strong>
-          <span class="chip" v-for="p in media.platforms" :key="p">{{ p }}</span>
-        </div>
-      </div>
-
-      <div v-if="media.scores && Object.keys(media.scores).length" class="scores">
-        <h3>Review Scores</h3>
-        <ul>
-          <li v-for="(score, source) in media.scores as Record<string, number>" :key="source">
-            <strong>{{ source }}:</strong> {{ score }}
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div v-else class="placeholder">No media found.</div>
-  </div>
-</template> -->
 
 <template>
   <div class="page-container">
@@ -157,7 +236,7 @@ onMounted(() => {
       <div class="collection-section">
         <!-- button opens a modal to add to a collection, kind of like how in collection detail page we open a modal to add a media -->
         <div class="add-to-collection-row">
-          <button type="button" class="add-to-collection-button">
+          <button type="button" class="add-to-collection-button" @click="openAddToCollectionModal">
             Add to a collection
           </button>
         </div>
@@ -178,6 +257,50 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+
+    <AppModal v-model="addToCollectionModalOpen" title="Add media to collection" @close="closeAddToCollectionModal">
+      <div class="add-collection-modal-body">
+        <p class="modal-copy">
+          Choose one or more collections to add this media to.
+        </p>
+
+        <p v-if="addToCollectionError" class="modal-error">
+          {{ addToCollectionError }}
+        </p>
+
+        <div v-else-if="loadingAddableCollections" class="modal-state">
+          Loading collections...
+        </div>
+
+        <div v-else-if="addableCollections.length === 0" class="modal-state">
+          No collection is available to add this media to.
+        </div>
+
+        <div v-else class="collection-picker-list" role="list" aria-label="Available collections">
+          <label v-for="collection in addableCollections" :key="collection.id" class="collection-picker-item">
+            <input
+              v-model="selectedCollectionIds"
+              type="checkbox"
+              :value="collection.id"
+              class="carbon-checkbox"
+            >
+            <span class="collection-picker-copy">
+              <span class="collection-picker-title">{{ collection.name }}</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="secondary-btn" :disabled="addingCollection" @click="closeAddToCollectionModal">
+          Cancel
+        </button>
+        <button type="button" class="primary-btn" :disabled="addingCollection || selectedCollectionCount === 0 || loadingAddableCollections || addableCollections.length === 0" @click="addToSelectedCollections">
+          {{ addingCollection ? 'Adding...' : `Add selected (${selectedCollectionCount})` }}
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>
 
@@ -314,6 +437,108 @@ onMounted(() => {
   /* padding: 8px 12px; */
   border-radius: 6px;
   color: #0f62fe;
+}
+
+
+/* modal */
+
+.add-collection-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.modal-copy {
+  margin: 0;
+  color: #525252;
+  line-height: 1.5;
+}
+
+.modal-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid #da1e28;
+  background: #ffd7d9;
+  color: #8b0000;
+}
+
+.modal-state {
+  padding: 14px 12px;
+  border: 1px solid #e0e0e0;
+  background: #f4f4f4;
+  color: #525252;
+}
+
+.collection-picker-list {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.collection-picker-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.collection-picker-item:hover {
+  background: #f4f4f4;
+  border-color: #c6c6c6;
+}
+
+.collection-picker-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.collection-picker-title {
+  color: #161616;
+  font-weight: 600;
+}
+
+.collection-picker-type {
+  color: #525252;
+  font-size: 13px;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: 1px solid transparent;
+  font-size: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #0f62fe;
+  color: #ffffff;
+}
+
+.primary-btn:hover {
+  background: #0353e9;
+}
+
+.secondary-btn {
+  background: #ffffff;
+  border-color: #8d8d8d;
+  color: #161616;
+}
+
+.secondary-btn:hover {
+  background: #f4f4f4;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 </style>

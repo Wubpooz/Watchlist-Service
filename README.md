@@ -164,6 +164,7 @@ MCP uses its own protocol surface rather than OpenAPI.
 - `PATCH /api/users/me` : update authenticated user's profile
 - `GET /api/users/{userId}` : get public profile by user ID
 - `GET /api/users/{userId}/collections` : list public collections for a user
+- `GET /api/users/{userId}/owned-collections` : list owned collections for a user
 
 &nbsp;  
 #### Media
