@@ -284,7 +284,6 @@ onMounted(() => {
       <span class="material-symbols-outlined" style="font-size:40px;color:#8d8d8d">broken_image</span>
       <p class="status-msg">{{ error }}</p>
       <div class="status-actions">
-        <!-- <button class="btn-ghost" @click="fetchMedia">Retry</button> -->
         <button class="btn-ghost" @click="router.push({ name: 'Catalog' })">Back to catalog</button>
       </div>
     </div>
@@ -407,7 +406,7 @@ onMounted(() => {
           No collection is available to add this media to.
         </div>
 
-        <div v-else class="collection-picker-list" role="list" aria-label="Available collections">
+        <menu v-else class="collection-picker-list" aria-label="Available collections">
           <label v-for="collection in addableCollections" :key="collection.id" class="collection-picker-item">
             <input
               v-model="selectedCollectionIds"
@@ -419,7 +418,7 @@ onMounted(() => {
               <span class="collection-picker-title">{{ collection.name }}</span>
             </span>
           </label>
-        </div>
+        </menu>
       </div>
 
       <template #footer>
@@ -788,17 +787,12 @@ onMounted(() => {
 }
 
 .add-to-collection-button {
-  border: none;
-  border-radius: 999px;
-  font-weight: 700;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-}
-
-.add-to-collection-button {
   padding: 12px 18px;
   border: 1px solid #0f62fe;
   background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
   color: #ffffff;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .add-to-collection-button:hover {

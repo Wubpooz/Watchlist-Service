@@ -338,7 +338,7 @@ async function removeMedia(collectionMediaId: string, mediaTitle: string): Promi
     return;
   }
 
-  const confirmed = window.confirm(`Remove ${mediaTitle} from this collection?`);
+  const confirmed = globalThis.confirm(`Remove ${mediaTitle} from this collection?`);
   if (!confirmed) {
     return;
   }
@@ -373,7 +373,7 @@ async function deleteCollection(): Promise<void> {
     return;
   }
 
-  const confirmed = window.confirm(`Delete the collection \"${collection.value.name}\"? This action cannot be undone.`);
+  const confirmed = globalThis.confirm(`Delete the collection "${collection.value.name}"? This action cannot be undone.`);
   if (!confirmed) {
     return;
   }
@@ -483,19 +483,19 @@ watch(collectionId, () => {
             </button>
           </div>
 
-          <div class="table-wrap" role="table" aria-label="Collection media list">
-            <div class="table-head" role="row">
+          <table class="table-wrap" aria-label="Collection media list">
+            <tr class="table-head">
               <span>Title</span>
               <span>Type</span>
               <span>Date Added</span>
               <span class="actions-head">Actions</span>
-            </div>
+            </tr>
 
             <div v-if="mediaItems.length === 0" class="empty-row">
               No media in this collection yet.
             </div>
 
-            <div v-for="item in mediaItems" :key="item.id" class="table-row" role="row">
+            <tr v-for="item in mediaItems" :key="item.id" class="table-row">
               <RouterLink :to="`/media/${item.media.id}`" class="media-title">
                 {{ item.media.title }}
               </RouterLink>
@@ -516,8 +516,8 @@ watch(collectionId, () => {
                   {{ isRemovingMedia(item.id) ? 'Removing...' : 'Remove' }}
                 </button>
               </div>
-            </div>
-          </div>
+            </tr>
+          </table>
         </section>
 
         <aside class="inspector">
@@ -564,7 +564,7 @@ watch(collectionId, () => {
           No additional media is available to add.
         </div>
 
-        <div v-else class="media-picker-list" role="list" aria-label="Available media">
+        <menu v-else class="media-picker-list" aria-label="Available media">
           <label v-for="media in addableMedia" :key="media.id" class="media-picker-item">
             <input
               v-model="selectedMediaIds"
@@ -577,7 +577,7 @@ watch(collectionId, () => {
               <span class="media-picker-type">{{ formatMediaType(media.type) }}</span>
             </span>
           </label>
-        </div>
+        </menu>
       </div>
 
       <template #footer>
@@ -803,6 +803,7 @@ watch(collectionId, () => {
 .table-wrap {
   border: 1px solid #e0e0e0;
   border-bottom: none;
+  width: 100%;
 }
 
 .table-head,
@@ -902,17 +903,12 @@ watch(collectionId, () => {
 }
 
 .add-media-button {
-  border: none;
-  border-radius: 999px;
-  font-weight: 700;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-}
-
-.add-media-button {
   padding: 12px 18px;
   border: 1px solid #0f62fe;
   background: linear-gradient(135deg, #0f62fe 0%, #2563eb 100%);
   color: #ffffff;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .add-media-button:hover {

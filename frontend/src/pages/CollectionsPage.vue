@@ -65,9 +65,6 @@ const collectionTabs: Array<{ key: CollectionTab; label: string }> = [
   { key: 'public', label: 'Public' },
 ];
 
-const currentUserLabel = computed(() => authStore.user?.name || authStore.user?.email || 'your account');
-const collectionCount = computed(() => collections.value.length);
-const mediaCount = computed(() => collections.value.reduce((total, collection) => total + collection.media.length, 0));
 const ownedCollections = computed(() => collections.value.filter((collection) => collection.ownerId === authStore.user?.id));
 const sharedCollections = computed(() => collections.value.filter((collection) => collection.ownerId !== authStore.user?.id && collection.visibility !== 'PUBLIC'));
 const publicCollections = computed(() => collections.value.filter((collection) => collection.visibility === 'PUBLIC'));
@@ -160,36 +157,6 @@ async function fetchCollections(): Promise<CollectionItem[]> {
   }
 
   return loadedCollections;
-
-  const mediaResults = await Promise.allSettled(
-    loadedCollections.map(async (collection) => {
-      const mediaResponse = await fetch(`${apiBaseUrl}/api/collections/${collection.id}/media`, {
-        headers: buildHeaders(),
-        credentials: 'include',
-      });
-
-      if (!mediaResponse.ok) {
-        throw new Error(`Failed to load media for ${collection.name}`);
-      }
-
-      const mediaItems = await mediaResponse.json() as CollectionMediaItem[];
-      return {
-        ...collection,
-        media: mediaItems,
-      };
-    })
-  );
-
-  return mediaResults.map((result, index) => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    }
-
-    return {
-      ...loadedCollections[index],
-      media: [],
-    };
-  });
 }
 
 async function createCollection(): Promise<void> {
@@ -807,6 +774,7 @@ function tabCount(tab: CollectionTab): number {
   .tab-shell {
     flex-direction: column;
     align-items: stretch;
+    margin-bottom: 22px;
   }
 
   .tab-meta {
@@ -818,10 +786,6 @@ function tabCount(tab: CollectionTab): number {
   .state-card {
     padding: 20px;
     border-radius: 16px;
-  }
-
-  .tab-shell {
-    margin-bottom: 22px;
   }
 
   .collection-header {
