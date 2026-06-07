@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'Home',
         component: HomePage,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, fullWidth: true }
       },
       {
         path: 'catalog',
