@@ -17,12 +17,12 @@
 ## What's been built
 ### Frontend (Vue 3 + Vite)
 - **Landing page**: marketing/entry page before authentication.
-- **Authentication**: sign up, log in, forgot password, reset password flows.
+- **Authentication**: sign up, log in, forgot password, reset password flows. Prevents flash-redirects to the landing page on page refreshes by awaiting session restoration.
 - **Home / Dashboard**: overview of the user's activity.
-- **Catalog**: browse and search all media items with filtering and sorting. Supports creating new media entries.
-- **Media Detail**: full detail view for a single media item (type, genres, tags, platforms, year, etc.).
+- **Catalog**: browse and search all media items with filtering and sorting. Supports pagination for large libraries and creating new media entries.
+- **Media Detail**: full detail view for a single media item. Includes a searchable modal to add the media to any owned collections.
 - **Collections**: list, create, and manage collections. Public/private visibility.
-- **Collection Detail**: view all media in a collection, manage members, accept/decline invitations inline.
+- **Collection Detail**: view all media in a collection, manage members, a description, list items with line numbers, drag-and-drop reordering, visibility selection, owner profile initials badge, invitation modal, and toast notifications. Features a searchable selection modal to add new catalog media to the collection.
 - **Invitations**: dedicated page listing all pending collaboration invitations.
 - **Statistics**: personal analytics dashboard (media counts by type, genre breakdowns, library growth over time, etc.).
 - **Settings**: user profile update and account management.
@@ -519,5 +519,5 @@ bun run prisma:seed       # optional: re-seed
     * *Solution :* Utilisation intensive des scripts de pré-requête et de post-réponse dans Postman pour automatiser la mise à jour des variables (`ownerToken`, `inviteeToken`, etc.) afin de pouvoir enchaîner les requêtes de manière fluide.
 
 * **Frontend Vue 3 avec Pinia et Vue Router :**
-    * *Problème :* Gérer la synchronisation entre l'état d'authentification (store Pinia), les guards de navigation du router et les appels API asynchrones, notamment lors des redirections post-login et de la persistance de session.
-    * *Solution :* Initialisation du store auth au démarrage de l'app avant le montage du router, et utilisation des guards `beforeEach` pour vérifier l'état d'auth de manière cohérente.
+    * *Problème :* Gérer la synchronisation entre l'état d'authentification (store Pinia), les guards de navigation du router et les appels API asynchrones, notamment lors des redirections post-login et lors du rechargement de page (qui provoquait des redirections flash intempestives vers la landing page avant la restauration de session).
+    * *Solution :* Rendre le guard de navigation `beforeEach` asynchrone pour attendre la résolution de `authStore.checkAuth()` si un token de session est détecté localement mais que le profil de l'utilisateur n'est pas encore chargé, garantissant une transition fluide et une authentification stable sur rechargement.
