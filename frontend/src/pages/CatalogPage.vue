@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useDebounce } from '@/composables/useDebounce';
+import { useAbortController } from '@/composables/useAbortController';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -72,7 +73,9 @@ const isCollectionsLoading = ref(false);
 // Empty string fires immediately so clearing the field resets results without delay.
 const { debouncedValue: debouncedSearch, isPending: isSearchPending } = useDebounce(searchQuery, 300);
 
-let abortController: AbortController | null = null;
+// Cancels any in-flight `/api/media` request whenever a newer one starts.
+// Also aborted automatically when the component unmounts.
+const { getSignal } = useAbortController();
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 
@@ -103,8 +106,12 @@ const visiblePages = computed<(number | '...')[]>(() => {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 const fetchMedia = async () => {
-  if (abortController) abortController.abort();
-  abortController = new AbortController();
+  // Abort any previous in-flight request and obtain a signal for this one.
+  // If fetchMedia() is called again before this one finishes, getSignal()
+  // will set signal.aborted = true on THIS signal, letting the finally
+  // block know it should not touch the loading state.
+  const signal = getSignal();
+
   isLoading.value = true;
   error.value = '';
 
@@ -124,7 +131,7 @@ const fetchMedia = async () => {
 
     const res = await fetch(
       `${import.meta.env.VITE_API_URL ?? ''}/api/media?${params}`,
-      { headers, credentials: 'include', signal: abortController.signal }
+      { headers, credentials: 'include', signal }
     );
 
     if (res.ok) {
@@ -137,11 +144,17 @@ const fetchMedia = async () => {
       error.value = 'Failed to load media catalog.';
     }
   } catch (err: any) {
-    if (err?.name !== 'AbortError') {
-      error.value = 'Failed to load media catalog.';
-    }
+    // AbortError means this request was superseded — a newer one is already
+    // running and will manage isLoading itself. Do not touch any state here.
+    if (err?.name === 'AbortError') return;
+    error.value = 'Failed to load media catalog.';
   } finally {
-    isLoading.value = false;
+    // Guard: only clear the loading flag if THIS specific request was not
+    // superseded. Without this, aborting request N would set isLoading=false
+    // while request N+1 is still in flight, causing a spurious loading flash.
+    if (!signal.aborted) {
+      isLoading.value = false;
+    }
   }
 };
 
@@ -246,8 +259,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (abortController) abortController.abort();
-  // useDebounce handles its own timer cleanup via onUnmounted internally.
+  // useAbortController and useDebounce both clean up via their own onUnmounted hooks.
   window.removeEventListener('click', closeCollectionPicker);
 });
 

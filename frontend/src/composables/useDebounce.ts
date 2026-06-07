@@ -45,7 +45,7 @@ export function useDebounce<T>(source: Ref<T>, delay = 300) {
       isPending.value = false;
       timer = null;
     }, delay);
-  });
+  }, { flush: 'sync' });
 
   onUnmounted(cancel);
 
