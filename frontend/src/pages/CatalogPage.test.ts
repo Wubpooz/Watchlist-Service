@@ -125,9 +125,9 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(wrapper.text()).toContain('2024');
   });
 
-  // == Sidebar type filter ====================================================
+  // == Filter chip type filter =================================================
 
-  it('sends type=FILM when the Movies sidebar item is clicked', async () => {
+  it('sends type=FILM when the Movies filter chip is clicked', async () => {
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
     const wrapper = await mountCatalog();
 
@@ -135,7 +135,7 @@ describe('CatalogPage — type filter behaviour', () => {
     vi.clearAllMocks();
     mockFetch(makePage([FILM_ITEM]));
 
-    const moviesBtn = wrapper.findAll('.sidebar-item')
+    const moviesBtn = wrapper.findAll('.filter-chip')
       .find(b => b.text().includes('Movies'));
     await moviesBtn!.trigger('click');
     await vi.runAllTimersAsync();
@@ -144,14 +144,14 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(url).toContain('type=FILM');
   });
 
-  it('sends type=SERIES when the Shows sidebar item is clicked', async () => {
+  it('sends type=SERIES when the Shows filter chip is clicked', async () => {
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
     const wrapper = await mountCatalog();
 
     vi.clearAllMocks();
     mockFetch(makePage([SERIES_ITEM]));
 
-    const showsBtn = wrapper.findAll('.sidebar-item')
+    const showsBtn = wrapper.findAll('.filter-chip')
       .find(b => b.text().includes('Shows'));
     await showsBtn!.trigger('click');
     await vi.runAllTimersAsync();
@@ -160,14 +160,14 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(url).toContain('type=SERIES');
   });
 
-  it('sends type=BOOK when the Books sidebar item is clicked', async () => {
+  it('sends type=BOOK when the Books filter chip is clicked', async () => {
     mockFetch(makePage([FILM_ITEM]));
     const wrapper = await mountCatalog();
 
     vi.clearAllMocks();
     mockFetch(makePage([BOOK_ITEM]));
 
-    const booksBtn = wrapper.findAll('.sidebar-item')
+    const booksBtn = wrapper.findAll('.filter-chip')
       .find(b => b.text().includes('Books'));
     await booksBtn!.trigger('click');
     await vi.runAllTimersAsync();
@@ -176,14 +176,14 @@ describe('CatalogPage — type filter behaviour', () => {
     expect(url).toContain('type=BOOK');
   });
 
-  it('removes the type param when "All Media" is clicked after a filter was set', async () => {
+  it('removes the type param when "All" is clicked after a filter was set', async () => {
     mockFetch(makePage([FILM_ITEM]));
     const wrapper = await mountCatalog();
 
     // Set a filter first.
     vi.clearAllMocks();
     mockFetch(makePage([FILM_ITEM]));
-    const moviesBtn = wrapper.findAll('.sidebar-item')
+    const moviesBtn = wrapper.findAll('.filter-chip')
       .find(b => b.text().includes('Movies'));
     await moviesBtn!.trigger('click');
     await vi.runAllTimersAsync();
@@ -191,8 +191,8 @@ describe('CatalogPage — type filter behaviour', () => {
     // Now clear it.
     vi.clearAllMocks();
     mockFetch(makePage([FILM_ITEM, SERIES_ITEM]));
-    const allBtn = wrapper.findAll('.sidebar-item')
-      .find(b => b.text().includes('All Media'));
+    const allBtn = wrapper.findAll('.filter-chip')
+      .find(b => b.text().includes('All'));
     await allBtn!.trigger('click');
     await vi.runAllTimersAsync();
 
@@ -260,7 +260,7 @@ describe('CatalogPage — type filter behaviour', () => {
     // Now change the filter — should request page=1.
     vi.clearAllMocks();
     mockFetch(makePage([SERIES_ITEM], 1));
-    const showsBtn = wrapper.findAll('.sidebar-item')
+    const showsBtn = wrapper.findAll('.filter-chip')
       .find(b => b.text().includes('Shows'));
     await showsBtn!.trigger('click');
     await vi.runAllTimersAsync();

@@ -1,4 +1,4 @@
-import "./env.ts";
+import "./env";
 import { defineConfig, env } from "prisma/config";
 
 
