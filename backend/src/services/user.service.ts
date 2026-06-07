@@ -25,6 +25,19 @@ export const userService = {
     return user ? toPublicUser(user) : null;
   },
 
+  /**
+   * Fetch a public user profile by email address
+   * @param {string} email User email
+   * @returns {PublicUser | null} Public user object or null if not found
+   * @throws AppError if fetching user fails
+   */
+  async getByEmail(email: string): Promise<PublicUser | null> {
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+    return user ? toPublicUser(user) : null;
+  },
+
   //TODO shouldn't edit anything related to auth (email, password, username etc) since better-auth manages that
   /**
    * Update a user's profile information (name, image, username, displayUsername)

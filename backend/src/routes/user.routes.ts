@@ -101,6 +101,48 @@ userRoutes.patch(
 );
 
 
+// GET /email/:email - Get a public user profile by email
+userRoutes.get(
+  '/email/:email',
+  describeRoute({
+    tags: ['Users'],
+    description: 'Get a public user profile by email',
+    parameters: [
+      {
+        name: 'email',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: 'bob@example.com',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Public user profile',
+        content: {
+          'application/json': {
+            schema: resolver(userResponseSchema),
+          },
+        },
+      },
+      404: { description: 'User not found' },
+    },
+  }),
+  async (c) => {
+    const email = c.req.param('email');
+    const user = await userService.getByEmail(email).catch(() => {
+      throw new AppError('Failed to fetch user', 500);
+    });
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    return c.json({ user });
+  }
+);
+
+
 // GET /:userId - Get a public user profile by user ID
 userRoutes.get(
   '/:userId',
