@@ -16,6 +16,7 @@ interface RecentItem {
   type: string;
   addedAt: string;
   collectionName: string;
+  url?: string | null;
 }
 
 interface Stats {
@@ -37,6 +38,11 @@ const error = ref('');
 
 const respondingId = ref<string | null>(null);
 const isSidebarCollapsed = ref(false);
+
+const imageErrors = ref<Record<string, boolean>>({});
+const handleImageError = (id: string) => {
+  imageErrors.value[id] = true;
+};
 
 // === Display helpers ==========================================================
 
@@ -173,9 +179,16 @@ onMounted(() => {
             >
               <div
                 class="media-poster"
-                :style="{ backgroundColor: TYPE_COLOR[item.type] ?? '#393939' }"
+                :style="{ backgroundColor: (item.url && !imageErrors[item.mediaId]) ? 'transparent' : (TYPE_COLOR[item.type] ?? '#393939') }"
               >
-                <span class="material-symbols-outlined media-poster-icon">
+                <img
+                  v-if="item.url && !imageErrors[item.mediaId]"
+                  :src="item.url"
+                  :alt="item.title"
+                  class="media-poster-image"
+                  @error="handleImageError(item.mediaId)"
+                />
+                <span v-else class="material-symbols-outlined media-poster-icon">
                   {{ TYPE_ICON[item.type] ?? 'category' }}
                 </span>
               </div>
@@ -609,6 +622,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.media-poster-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
 }
 
 .media-poster--discover { background-color: #e0e0e0; }

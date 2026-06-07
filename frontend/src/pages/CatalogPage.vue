@@ -25,6 +25,7 @@ interface MediaItem {
   platforms: string[];
   tags: string[];
   description?: string | null;
+  url?: string | null;
 }
 
 interface PaginationLinks {
@@ -70,6 +71,11 @@ const collectionPickerMediaId = ref<string | null>(null);
 const isAddingToCollection = ref<string | null>(null);
 const addSuccessMediaId = ref<string | null>(null);
 const isCollectionsLoading = ref(false);
+
+const imageErrors = ref<Record<string, boolean>>({});
+const handleImageError = (id: string) => {
+  imageErrors.value[id] = true;
+};
 
 // Debounce: waits 300 ms after the last keystroke before sending the request.
 // Empty string fires immediately so clearing the field resets results without delay.
@@ -240,18 +246,21 @@ const onSortChange = (e: Event) => {
 
 // === Watchers =================================================================
 
-// Fires only after the debounce settles (or immediately on empty string).
-watch(debouncedSearch, () => {
-  currentPage.value = 1;
-  fetchMedia();
+// Watch search, category filter, and sort options.
+// If any of these change, reset the page to 1.
+// If the page is already 1, trigger fetchMedia() immediately.
+watch([debouncedSearch, activeType, sortField, sortOrder], () => {
+  if (currentPage.value === 1) {
+    fetchMedia();
+  } else {
+    currentPage.value = 1;
+  }
 });
 
-watch([activeType, sortField, sortOrder], () => {
-  currentPage.value = 1;
+// Watch current page. If it changes, fetch media.
+watch(currentPage, () => {
   fetchMedia();
 });
-
-watch(currentPage, fetchMedia);
 
 // === Lifecycle ================================================================
 
@@ -390,7 +399,7 @@ const cardMeta = (item: MediaItem): string =>
       </div>
 
       <!-- Results bar -->
-      <div v-if="!isLoading && totalItems > 0" class="results-bar">
+      <div v-if="totalItems > 0" class="results-bar" :class="{ 'results-bar--loading': isLoading }">
         <span>
           Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong>
           of <strong>{{ totalItems }}</strong> results
@@ -441,9 +450,16 @@ const cardMeta = (item: MediaItem): string =>
             <!-- Poster -->
             <div
               class="media-card-poster"
-              :style="{ backgroundColor: TYPE_COLOR[item.type] ?? '#393939' }"
+              :style="{ backgroundColor: (item.url && !imageErrors[item.id]) ? 'transparent' : (TYPE_COLOR[item.type] ?? '#393939') }"
             >
-              <span class="media-card-poster-icon material-symbols-outlined">
+              <img
+                v-if="item.url && !imageErrors[item.id]"
+                :src="item.url"
+                :alt="item.title"
+                class="media-card-poster-image"
+                @error="handleImageError(item.id)"
+              />
+              <span v-else class="media-card-poster-icon material-symbols-outlined">
                 {{ TYPE_ICON[item.type] ?? 'movie' }}
               </span>
 
@@ -875,6 +891,12 @@ const cardMeta = (item: MediaItem): string =>
   flex-wrap: wrap;
 }
 
+.results-bar--loading {
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 .results-filter-badge {
   display: inline-flex;
   align-items: center;
@@ -1011,6 +1033,14 @@ const cardMeta = (item: MediaItem): string =>
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.media-card-poster-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
 }
 
 .media-card-poster-icon {
