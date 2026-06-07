@@ -98,6 +98,7 @@ collectionRoutes.get(
     const query = c.req.valid('query');
     const sessionUser = c.get('user');
     const result = await collectionService.listCollections(query as any, sessionUser?.id);
+    c.header('Cache-Control', 'private, max-age=30');
     return c.json(result, 200);
   }
 );
@@ -166,6 +167,7 @@ collectionRoutes.get(
       return c.json({ error: 'Collection not found' }, 404);
     }
     
+    c.header('Cache-Control', 'private, max-age=30');
     return c.json(collection, 200);
   }
 );
@@ -366,6 +368,7 @@ collectionRoutes.get(
     const sessionUser = c.get('user');
     
     const media = await collectionService.listCollectionMedia(collectionId, sessionUser?.id);
+    c.header('Cache-Control', 'private, max-age=30');
     return c.json(media, 200);
   }
 );
@@ -571,6 +574,7 @@ collectionRoutes.get(
     const sessionUser = c.get('user');
     
     const members = await collectionService.listCollectionMembers(collectionId, sessionUser?.id);
+    c.header('Cache-Control', 'private, max-age=30');
     return c.json(members, 200);
   }
 );
