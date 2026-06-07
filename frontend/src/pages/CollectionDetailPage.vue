@@ -355,6 +355,7 @@ async function deleteCollection(): Promise<void> {
       throw new Error('Failed to delete collection');
     }
 
+    collectionsStore.removeCollection(collection.value.id);
     await router.push('/collections');
   } catch (err) {
     actionError.value = err instanceof Error ? err.message : 'Failed to delete collection';

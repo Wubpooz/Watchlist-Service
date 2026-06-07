@@ -80,6 +80,7 @@ export const useCollectionsStore = defineStore('collections', () => {
       while (page <= totalPages) {
         const response = await fetch(`${apiBaseUrl}/api/collections?page=${page}&pageSize=${pageSize}&sort=updatedAt&order=desc`, {
           headers: buildHeaders(),
+          cache: 'no-store',
           credentials: 'include',
         });
 
@@ -159,10 +160,12 @@ export const useCollectionsStore = defineStore('collections', () => {
       const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
       const [collectionRes, mediaRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/collections/${collectionId}`, {
+          cache: 'no-store',
           headers: buildHeaders(),
           credentials: 'include',
         }),
         fetch(`${apiBaseUrl}/api/collections/${collectionId}/media`, {
+          cache: 'no-store',
           headers: buildHeaders(),
           credentials: 'include',
         }),
@@ -197,6 +200,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     try {
       const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
       const response = await fetch(`${apiBaseUrl}/api/collections/${collectionId}/media`, {
+        cache: 'no-store',
         headers: buildHeaders(),
         credentials: 'include',
       });
@@ -226,6 +230,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     try {
       const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
       const response = await fetch(`${apiBaseUrl}/api/users/${encodeURIComponent(authStore.user.id)}/owned-collections`, {
+        cache: 'no-store',
         headers: buildHeaders(),
         credentials: 'include',
       });
@@ -241,6 +246,15 @@ export const useCollectionsStore = defineStore('collections', () => {
       throw err;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  function removeCollection(collectionId: string) {
+    collections.value = collections.value.filter((collection) => collection.id !== collectionId);
+
+    if (selectedCollection.value?.id === collectionId) {
+      selectedCollection.value = null;
+      selectedCollectionMedia.value = [];
     }
   }
 
@@ -269,6 +283,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     fetchCollectionDetail,
     fetchCollectionMedia,
     loadOwnedCollections,
+    removeCollection,
     clearCollections,
   };
 });
