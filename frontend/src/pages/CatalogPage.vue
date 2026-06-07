@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useDebounce } from '@/composables/useDebounce';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -67,7 +68,10 @@ const isAddingToCollection = ref<string | null>(null);
 const addSuccessMediaId = ref<string | null>(null);
 const isCollectionsLoading = ref(false);
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null;
+// Debounce: waits 300 ms after the last keystroke before sending the request.
+// Empty string fires immediately so clearing the field resets results without delay.
+const { debouncedValue: debouncedSearch, isPending: isSearchPending } = useDebounce(searchQuery, 300);
+
 let abortController: AbortController | null = null;
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
@@ -115,7 +119,7 @@ const fetchMedia = async () => {
       sort: sortField.value,
       order: sortOrder.value,
     });
-    if (searchQuery.value.trim()) params.set('q', searchQuery.value.trim());
+    if (debouncedSearch.value.trim()) params.set('q', debouncedSearch.value.trim());
     if (activeType.value) params.set('type', activeType.value);
 
     const res = await fetch(
@@ -221,12 +225,10 @@ const onSortChange = (e: Event) => {
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
 
-watch(searchQuery, () => {
-  if (searchTimer) clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    currentPage.value = 1;
-    fetchMedia();
-  }, 300);
+// Fires only after the debounce settles (or immediately on empty string).
+watch(debouncedSearch, () => {
+  currentPage.value = 1;
+  fetchMedia();
 });
 
 watch([activeType, sortField, sortOrder], () => {
@@ -245,7 +247,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (abortController) abortController.abort();
-  if (searchTimer) clearTimeout(searchTimer);
+  // useDebounce handles its own timer cleanup via onUnmounted internally.
   window.removeEventListener('click', closeCollectionPicker);
 });
 
@@ -345,13 +347,31 @@ const cardMeta = (item: MediaItem): string =>
       <div class="catalog-toolbar">
         <!-- Search -->
         <div class="catalog-search-wrapper">
-          <span class="material-symbols-outlined catalog-search-icon">search</span>
+          <!-- Icon: spinning while debounce is pending OR request is loading -->
+          <span
+            :class="['material-symbols-outlined', 'catalog-search-icon',
+                     { 'catalog-spinner': isSearchPending || isLoading }]"
+          >{{ isSearchPending || isLoading ? 'autorenew' : 'search' }}</span>
+
           <input
             v-model="searchQuery"
             type="text"
             class="catalog-search-input"
+            :class="{ 'catalog-search-input--has-value': searchQuery }"
             placeholder="Search catalog..."
+            aria-label="Search media catalog"
           />
+
+          <!-- Clear button: shown only when there is text in the input -->
+          <button
+            v-if="searchQuery"
+            class="search-clear-btn"
+            type="button"
+            aria-label="Clear search"
+            @click.stop="searchQuery = ''"
+          >
+            <span class="material-symbols-outlined" style="font-size:16px">close</span>
+          </button>
         </div>
 
         <!-- Filter chips -->
@@ -404,27 +424,33 @@ const cardMeta = (item: MediaItem): string =>
       <!-- Content area -->
       <div class="catalog-grid-area">
 
-        <!-- Loading -->
-        <div v-if="isLoading" class="catalog-status">
+        <!-- Error banner: non-blocking, shown above the grid on subsequent fetch errors -->
+        <div v-if="error" class="error-banner">
+          <span class="material-symbols-outlined" style="font-size:18px">error</span>
+          <span>{{ error }}</span>
+          <button class="retry-btn" @click="fetchMedia">Retry</button>
+          <button class="banner-close" aria-label="Dismiss" @click="error = ''">
+            <span class="material-symbols-outlined" style="font-size:16px">close</span>
+          </button>
+        </div>
+
+        <!-- Initial loading: no items in cache yet -->
+        <div v-if="isLoading && mediaItems.length === 0" class="catalog-status">
           <span class="material-symbols-outlined catalog-spinner">autorenew</span>
           <span>Loading catalog…</span>
         </div>
 
-        <!-- Error -->
-        <div v-else-if="error" class="catalog-status catalog-status--error">
-          <span class="material-symbols-outlined">error</span>
-          <span>{{ error }}</span>
-          <button class="retry-btn" @click="fetchMedia">Retry</button>
-        </div>
-
-        <!-- Empty -->
-        <div v-else-if="mediaItems.length === 0" class="catalog-status">
+        <!-- Empty state after a successful (but empty) fetch -->
+        <div v-else-if="!isLoading && mediaItems.length === 0 && !error" class="catalog-status">
           <span class="material-symbols-outlined">search_off</span>
           <p>No media found{{ searchQuery ? ` for "${searchQuery}"` : '' }}.</p>
         </div>
 
-        <!-- Grid -->
-        <div v-else class="media-grid">
+        <!-- Grid: stays visible and dims while fetching new results -->
+        <div
+          v-else-if="mediaItems.length > 0"
+          :class="['media-grid', { 'media-grid--loading': isLoading }]"
+        >
           <article
             v-for="item in mediaItems"
             :key="item.id"
@@ -682,6 +708,30 @@ const cardMeta = (item: MediaItem): string =>
 
 .catalog-search-input:focus { border-bottom-color: #0f62fe; }
 
+/* Pad right side when the clear button is present */
+.catalog-search-input--has-value { padding-right: 28px; }
+
+/* Clear (×) button inside the search field */
+.search-clear-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  color: #525252;
+  transition: color 0.1s;
+  padding: 0;
+}
+
+.search-clear-btn:hover { color: #161616; }
+
 /* Filter chips */
 .filter-chips {
   display: flex;
@@ -827,18 +877,43 @@ const cardMeta = (item: MediaItem): string =>
 .catalog-status--error { color: #ba1a1a; }
 .catalog-status--error .material-symbols-outlined { color: #ba1a1a; }
 
-.retry-btn {
-  background-color: #0f62fe;
-  color: #ffffff;
-  border: none;
-  padding: 8px 20px;
+/* ── Error banner (non-blocking, shows above the grid) ────── */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: #ffd7d9;
+  border-left: 3px solid #da1e28;
+  color: #750000;
   font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.15s;
+  font-size: 13px;
 }
 
-.retry-btn:hover { background-color: #0050e6; }
+.banner-close {
+  background: none;
+  border: none;
+  color: #750000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin-left: auto;
+}
+
+.retry-btn {
+  background-color: #da1e28;
+  color: #ffffff;
+  border: none;
+  padding: 5px 14px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.retry-btn:hover { background-color: #b81922; }
 
 .catalog-spinner { animation: spin 1s linear infinite; }
 
@@ -857,6 +932,13 @@ const cardMeta = (item: MediaItem): string =>
 @media (min-width: 480px) { .media-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 900px) { .media-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1280px) { .media-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Keep previous results visible but dimmed while a new request is loading */
+.media-grid--loading {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
 
 /* ── Media Card ──────────────────────────────────────────── */
 .media-card {
