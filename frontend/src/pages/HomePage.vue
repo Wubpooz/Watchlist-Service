@@ -1,48 +1,26 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
 import { useInvitationsStore } from '@/stores/invitations';
+import { useStatsStore } from '@/stores/stats';
 
 const router = useRouter();
-const authStore = useAuthStore();
 const invitationsStore = useInvitationsStore();
-
-// === Types ====================================================================
-
-interface RecentItem {
-  mediaId: string;
-  title: string;
-  type: string;
-  addedAt: string;
-  collectionName: string;
-  url?: string | null;
-}
-
-interface Stats {
-  totalMedia: number;
-  collectionsOwned: number;
-  collectionsShared: number;
-  avgMediaPerCollection: number;
-  recentItems: RecentItem[];
-  byType: { type: string; count: number }[];
-  topTags: { tag: string; count: number }[];
-  topPlatforms: { platform: string; count: number }[];
-}
+const statsStore = useStatsStore();
 
 // === State ====================================================================
 
-const stats = ref<Stats | null>(null);
-const isLoading = ref(true);
-const error = ref('');
-
 const respondingId = ref<string | null>(null);
-const isSidebarCollapsed = ref(false);
 
 const imageErrors = ref<Record<string, boolean>>({});
 const handleImageError = (id: string) => {
   imageErrors.value[id] = true;
 };
+
+// Delegate all stats state to the shared store
+const isLoading = computed(() => statsStore.isLoading);
+const error = computed(() => statsStore.error);
+const stats = computed(() => statsStore.stats);
 
 // === Display helpers ==========================================================
 
@@ -70,29 +48,6 @@ function formatDate(dateStr: string): string {
 
 // === API ======================================================================
 
-const authHeaders = (): Record<string, string> => {
-  const h: Record<string, string> = {};
-  if (authStore.authToken) h['Authorization'] = `Bearer ${authStore.authToken}`;
-  return h;
-};
-
-const fetchStats = async () => {
-  isLoading.value = true;
-  error.value = '';
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ''}/api/stats`,
-      { headers: authHeaders(), credentials: 'include' }
-    );
-    if (!res.ok) throw new Error('stats');
-    stats.value = await res.json();
-  } catch {
-    error.value = 'Could not load dashboard data.';
-  } finally {
-    isLoading.value = false;
-  }
-};
-
 const respond = async (collectionId: string, accept: boolean) => {
   respondingId.value = collectionId;
   try {
@@ -103,7 +58,7 @@ const respond = async (collectionId: string, accept: boolean) => {
 };
 
 onMounted(() => {
-  fetchStats();
+  statsStore.fetchStats();
   invitationsStore.fetchInvitations();
 });
 </script>
@@ -122,7 +77,7 @@ onMounted(() => {
       <!-- Error -->
       <div v-else-if="error" class="status-area">
         <p>{{ error }}</p>
-        <button class="btn-ghost" @click="fetchStats">Retry</button>
+        <button class="btn-ghost" @click="statsStore.fetchStats()">Retry</button>
       </div>
 
       <template v-else-if="stats">
@@ -553,8 +508,6 @@ onMounted(() => {
 }
 
 /* == Recent section ======================================== */
-.recent-section { }
-
 .section-header {
   display: flex;
   align-items: flex-end;
