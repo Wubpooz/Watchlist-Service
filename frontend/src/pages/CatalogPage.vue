@@ -401,6 +401,12 @@ const cardMeta = (item: MediaItem): string =>
           >{{ nav.label }}</button>
         </div>
 
+        <!-- Add Media -->
+        <button class="add-media-btn" @click="router.push({ name: 'AddMedia' })">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span>
+          Add media
+        </button>
+
         <!-- Sort -->
         <div class="sort-wrapper">
           <label class="sort-label" for="catalog-sort">Sort:</label>
@@ -789,7 +795,6 @@ const cardMeta = (item: MediaItem): string =>
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
 }
 
 .sort-select-wrapper {
@@ -1176,4 +1181,26 @@ const cardMeta = (item: MediaItem): string =>
   .catalog-sidebar { display: none; }
   .sort-wrapper { margin-left: 0; }
 }
+
+/* ── Add media button ────────────────────────────────────── */
+.add-media-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0f62fe;
+  color: #ffffff;
+  border: none;
+  padding: 0 16px;
+  height: 34px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+  margin-left: auto;
+}
+
+.add-media-btn:hover { background-color: #0043ce; }
 </style>
