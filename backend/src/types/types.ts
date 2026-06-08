@@ -11,7 +11,7 @@ export type ListQuery = {
   platform?: string;
   platforms?: string;
   q?: string;
-  sort?: 'createdAt' | 'title' | 'releaseDate';
+  sort?: 'createdAt' | 'title' | 'releaseDate' | 'rating' | 'name' | 'updatedAt';
   order?: 'asc' | 'desc';
   cursor?: string;
 };
