@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import AppModal from '@/components/AppModal.vue';
+import { compressImage } from '@/lib/imageCompressor';
 
 const route = useRoute();
 const router = useRouter();
@@ -232,17 +233,71 @@ async function addToSelectedCollections() : Promise<void> {
   }
 }
 
+const urlInput = ref('');
+const imagePreview = ref('');
+const isProcessingFile = ref(false);
+const activeTab = ref<'url' | 'file'>('url');
+
+const selectUrlTab = () => {
+  activeTab.value = 'url';
+  clearSelectedFile();
+};
+
+const selectFileTab = () => {
+  activeTab.value = 'file';
+  urlInput.value = '';
+  imagePreview.value = '';
+};
+
+const onFileChange = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  isProcessingFile.value = true;
+  addImageURLError.value = null;
+  imagePreview.value = '';
+
+  try {
+    const dataUrl = await compressImage(file);
+    urlInput.value = dataUrl;
+    imagePreview.value = dataUrl;
+  } catch (err: any) {
+    addImageURLError.value = err?.message || 'Failed to process image.';
+    urlInput.value = '';
+  } finally {
+    isProcessingFile.value = false;
+  }
+};
+
+const clearSelectedFile = () => {
+  urlInput.value = '';
+  imagePreview.value = '';
+  addImageURLError.value = null;
+  const fileInput = document.getElementById('media-image-file') as HTMLInputElement | null;
+  if (fileInput) fileInput.value = '';
+};
+
 function openAddImageURLModal(): void {
   addImageURLError.value = null;
   addImageURLModalOpen.value = true;
+  urlInput.value = media.value?.url || '';
+  imagePreview.value = media.value?.url?.startsWith('data:image/') ? media.value.url : '';
+  if (media.value?.url?.startsWith('data:image/')) {
+    activeTab.value = 'file';
+  } else {
+    activeTab.value = 'url';
+  }
 }
 
 function closeAddImageURLModal(): void {
-  if (addingImageURL.value) {
+  if (addingImageURL.value || isProcessingFile.value) {
     return;
   }
   addImageURLError.value = null;
   addImageURLModalOpen.value = false;
+  urlInput.value = '';
+  imagePreview.value = '';
 }
 
 async function addImageURL(): Promise<void> {
@@ -254,8 +309,7 @@ async function addImageURL(): Promise<void> {
   addImageURLError.value = null;
 
   try {
-    const imageURLInput = document.querySelector('input[name="image-url"]') as HTMLInputElement | null;
-    const imageURL = imageURLInput?.value.trim();
+    const imageURL = urlInput.value.trim();
     const response = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(media.value.id)}`, {
       method: 'PATCH',
       headers: buildHeaders(),
@@ -459,29 +513,79 @@ onMounted(() => {
     </AppModal>
 
     <!-- add image modal -->
-    <AppModal v-model="addImageURLModalOpen" title="Add cover image from URL" @close="closeAddImageURLModal">
+    <AppModal v-model="addImageURLModalOpen" title="Add cover image" @close="closeAddImageURLModal">
       <div class="add-image-modal-body">
           <p class="modal-copy">
-            Enter the URL of an image to set it as the cover for this media.
+            Provide an image URL or upload an image file to set as the cover for this media.
           </p>
   
           <p v-if="addImageURLError" class="modal-error">
             {{ addImageURLError }}
           </p>
 
-          <input
-            type="text"
-            placeholder="https://example.com/image.jpg"
-            class="carbon-text-input"
-            name="image-url"
-          >
+          <div class="image-upload-container">
+            <!-- Tabs/Toggles -->
+            <div class="upload-tabs">
+              <button 
+                type="button" 
+                :class="['upload-tab', { 'active': activeTab === 'url' }]"
+                @click="selectUrlTab"
+              >
+                Provide URL
+              </button>
+              <button 
+                type="button" 
+                :class="['upload-tab', { 'active': activeTab === 'file' }]"
+                @click="selectFileTab"
+              >
+                Upload File
+              </button>
+            </div>
+
+            <!-- Tab 1: Provide URL -->
+            <div v-if="activeTab === 'url'" class="tab-content">
+              <input
+                type="text"
+                v-model="urlInput"
+                placeholder="https://example.com/image.jpg"
+                class="carbon-input"
+                name="image-url"
+              />
+            </div>
+
+            <!-- Tab 2: Upload File -->
+            <div v-else class="tab-content">
+              <div class="file-upload-dropzone">
+                <input
+                  id="media-image-file"
+                  type="file"
+                  accept="image/*"
+                  class="file-input-hidden"
+                  @change="onFileChange"
+                />
+                <label for="media-image-file" class="dropzone-label">
+                  <span class="material-symbols-outlined upload-icon">upload_file</span>
+                  <span>{{ isProcessingFile ? 'Processing image...' : 'Choose an image file or drag it here' }}</span>
+                </label>
+
+                <!-- File Preview -->
+                <div v-if="imagePreview" class="preview-box">
+                  <img :src="imagePreview" alt="Upload Preview" class="upload-preview-img" />
+                  <button type="button" class="btn-clear-image" @click="clearSelectedFile">
+                    <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                    Remove image
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
       </div>
 
       <template #footer>
-        <button type="button" class="secondary-btn" :disabled="addingImageURL" @click="closeAddImageURLModal">
+        <button type="button" class="secondary-btn" :disabled="addingImageURL || isProcessingFile" @click="closeAddImageURLModal">
           Cancel
         </button>
-        <button type="button" class="primary-btn" :disabled="addingImageURL" @click="addImageURL">
+        <button type="button" class="primary-btn" :disabled="addingImageURL || isProcessingFile || !urlInput.trim()" @click="addImageURL">
           {{ addingImageURL ? 'Adding...' : 'Add Image' }}
         </button>
       </template>
@@ -906,4 +1010,129 @@ onMounted(() => {
   font-size: 13px;
 }
 
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #f4f4f4;
+  border-bottom: 1px solid #737687;
+  padding: 16px;
+}
+
+.upload-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.upload-tab {
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: #525252;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.upload-tab:hover {
+  color: #161616;
+}
+
+.upload-tab.active {
+  color: #0f62fe;
+  font-weight: 500;
+  border-bottom-color: #0f62fe;
+}
+
+.tab-content {
+  margin-top: 4px;
+}
+
+.file-upload-dropzone {
+  border: 1px dashed #c6c6c6;
+  background-color: #ffffff;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
+}
+
+.file-upload-dropzone:hover {
+  border-color: #0f62fe;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dropzone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #525252;
+  width: 100%;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #0f62fe;
+}
+
+.preview-box {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-preview-img {
+  max-width: 120px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.btn-clear-image {
+  background: none;
+  border: 1px solid #da1e28;
+  color: #da1e28;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-image:hover {
+  background-color: #ffd7d9;
+}
+
+.field-error-msg {
+  font-size: 12px;
+  color: #da1e28;
+  margin: 4px 0 0;
+}
 </style>

@@ -5,7 +5,7 @@ export const createMediaSchema = z.object({
   collectionId: z.uuid().optional().meta( {example: 'col_123'} ),
   title: z.string().min(1).max(300).meta( {example: 'Inception'} ),
   description: z.string().max(1000).optional().meta( {example: 'A thief who steals corporate secrets through dream-sharing technology'} ),
-  url: z.string().max(1000).optional().nullable().meta( {example: 'https://example.com/inception'} ),
+  url: z.string().max(200000).optional().nullable().meta( {example: 'https://example.com/inception'} ),
   tags: z.array(z.string().min(0).max(50)).optional().meta( {example: ['sci-fi', 'thriller']} ),
   platforms: z.array(z.string().min(0).max(50)).optional().meta( {example: ['Netflix', 'Amazon Prime']} ),
   type: z.enum(MediaType).meta( {example: MediaType.FILM} ),
@@ -32,7 +32,7 @@ export const createMediaResponseSchema = z.object({
 export const updateMediaSchema = z.object({
   title: z.string().min(1).max(300).optional().meta( {example: 'Inception'} ),
   description: z.string().max(1000).optional().meta( {example: 'Updated description'} ),
-  url: z.string().max(1000).optional().nullable().meta( {example: 'https://example.com/inception'} ),
+  url: z.string().max(200000).optional().nullable().meta( {example: 'https://example.com/inception'} ),
   tags: z.array(z.string().min(0).max(50)).optional().meta( {example: ['sci-fi', 'thriller']} ),
   platforms: z.array(z.string().min(0).max(50)).optional().meta( {example: ['Netflix', 'Amazon Prime']} ),
   type: z.enum(MediaType).optional().meta( {example: MediaType.FILM} ),

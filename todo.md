@@ -8,8 +8,8 @@
 
 ## P2
 - [ ] media rating
-- [ ] rate limiting (more agressive on auth endpoints) + front handling for real users
-- [ ] direct image upload (blob) support
+- [x] rate limiting (more agressive on auth endpoints) + front handling for real users
+- [x] direct image upload (blob) support
 
 ## P3
 - [ ] multi tags filtering

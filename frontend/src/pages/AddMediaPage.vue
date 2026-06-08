@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { compressImage } from '@/lib/imageCompressor';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -15,6 +16,51 @@ const mediaType = ref<MediaType | ''>('');
 const directorAuthor = ref('');
 const releaseYear = ref('');
 const url = ref('');
+const isUploadingImage = ref(false);
+const imageUploadError = ref('');
+const imagePreview = ref('');
+const activeTab = ref<'url' | 'file'>('url');
+
+const selectUrlTab = () => {
+  activeTab.value = 'url';
+  clearSelectedFile();
+};
+
+const selectFileTab = () => {
+  activeTab.value = 'file';
+  url.value = '';
+  imagePreview.value = '';
+};
+
+const onFileChange = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  isUploadingImage.value = true;
+  imageUploadError.value = '';
+  imagePreview.value = '';
+
+  try {
+    const dataUrl = await compressImage(file);
+    url.value = dataUrl;
+    imagePreview.value = dataUrl;
+  } catch (err: any) {
+    imageUploadError.value = err?.message || 'Failed to process image.';
+    url.value = '';
+  } finally {
+    isUploadingImage.value = false;
+  }
+};
+
+const clearSelectedFile = () => {
+  url.value = '';
+  imagePreview.value = '';
+  imageUploadError.value = '';
+  const fileInput = document.getElementById('media-image-file') as HTMLInputElement | null;
+  if (fileInput) fileInput.value = '';
+};
+
 const description = ref('');
 const tagInput = ref('');
 const tags = ref<string[]>([]);
@@ -210,17 +256,68 @@ const handleSubmit = async () => {
 
         </div>
 
-        <!-- == Cover Image URL ====================================== -->
+        <!-- == Cover Image / Upload ================================= -->
         <div class="field">
-          <label class="field-label" for="media-url">Cover Image URL</label>
-          <input
-            id="media-url"
-            v-model="url"
-            type="text"
-            class="field-input"
-            placeholder="e.g., https://example.com/poster.jpg"
-            maxlength="1000"
-          />
+          <label class="field-label">Cover Image</label>
+          
+          <div class="image-upload-container">
+            <!-- Tabs/Toggles -->
+            <div class="upload-tabs">
+              <button 
+                type="button" 
+                :class="['upload-tab', { 'active': activeTab === 'url' }]"
+                @click="selectUrlTab"
+              >
+                Provide URL
+              </button>
+              <button 
+                type="button" 
+                :class="['upload-tab', { 'active': activeTab === 'file' }]"
+                @click="selectFileTab"
+              >
+                Upload File
+              </button>
+            </div>
+
+            <!-- Tab 1: Provide URL -->
+            <div v-if="activeTab === 'url'" class="tab-content">
+              <input
+                id="media-url"
+                v-model="url"
+                type="text"
+                class="field-input"
+                placeholder="e.g., https://example.com/poster.jpg"
+                maxlength="1000"
+              />
+            </div>
+
+            <!-- Tab 2: Upload File -->
+            <div v-else class="tab-content">
+              <div class="file-upload-dropzone">
+                <input
+                  id="media-image-file"
+                  type="file"
+                  accept="image/*"
+                  class="file-input-hidden"
+                  @change="onFileChange"
+                />
+                <label for="media-image-file" class="dropzone-label">
+                  <span class="material-symbols-outlined upload-icon">upload_file</span>
+                  <span>{{ isUploadingImage ? 'Processing image...' : 'Choose an image file or drag it here' }}</span>
+                </label>
+
+                <!-- File Preview -->
+                <div v-if="imagePreview" class="preview-box">
+                  <img :src="imagePreview" alt="Upload Preview" class="upload-preview-img" />
+                  <button type="button" class="btn-clear-image" @click="clearSelectedFile">
+                    <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                    Remove image
+                  </button>
+                </div>
+              </div>
+              <p v-if="imageUploadError" class="field-error-msg">{{ imageUploadError }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- == Description ========================================== -->
@@ -676,5 +773,131 @@ const handleSubmit = async () => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #f4f4f4;
+  border-bottom: 1px solid #737687;
+  padding: 16px;
+}
+
+.upload-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.upload-tab {
+  background: none;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: #525252;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.upload-tab:hover {
+  color: #161616;
+}
+
+.upload-tab.active {
+  color: #0f62fe;
+  font-weight: 500;
+  border-bottom-color: #0f62fe;
+}
+
+.tab-content {
+  margin-top: 4px;
+}
+
+.file-upload-dropzone {
+  border: 1px dashed #c6c6c6;
+  background-color: #ffffff;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
+}
+
+.file-upload-dropzone:hover {
+  border-color: #0f62fe;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dropzone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #525252;
+  width: 100%;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #0f62fe;
+}
+
+.preview-box {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-preview-img {
+  max-width: 120px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.btn-clear-image {
+  background: none;
+  border: 1px solid #da1e28;
+  color: #da1e28;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-image:hover {
+  background-color: #ffd7d9;
+}
+
+.field-error-msg {
+  font-size: 12px;
+  color: #da1e28;
+  margin: 4px 0 0;
 }
 </style>
