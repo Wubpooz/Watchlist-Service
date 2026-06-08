@@ -20,6 +20,7 @@ type Media = {
   platforms?: string[];
   scores?: Record<string, number> | null;
   url?: string | null;
+  rating?: number | null;
 };
 
 type CollectionSummary = {
@@ -50,6 +51,36 @@ const error = ref<string | null>(null);
 const authStore = useAuthStore();
 const collectionsWithMedia = ref<CollectionSummary[]>([]); // For future use when we fetch collections containing this media
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? '';
+
+const detailHoverRating = ref(0);
+const isUpdatingRating = ref(false);
+
+async function updateRating(newRating: number | null): Promise<void> {
+  if (!media.value) return;
+
+  isUpdatingRating.value = true;
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/media/${encodeURIComponent(media.value.id)}`, {
+      method: 'PATCH',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        rating: newRating
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update rating (${response.status})`);
+    }
+
+    const updated = await response.json();
+    media.value.rating = updated.rating;
+  } catch (err) {
+    console.error('Failed to update rating:', err);
+  } finally {
+    isUpdatingRating.value = false;
+  }
+}
 
 const addToCollectionError = ref<string | null>(null);
 const addToCollectionModalOpen = ref(false);
@@ -404,6 +435,37 @@ onMounted(() => {
                 {{ media.directorAuthor }}
               </span>
               <span class="type-badge">{{ (media?.type && TYPE_LABEL[media.type]) ?? media?.type }}</span>
+
+              <!-- Interactive Star Rating -->
+              <div class="interactive-rating" :title="`Rating: ${media.rating || 'None'}/5`">
+                <button
+                  v-for="star in 5"
+                  :key="star"
+                  type="button"
+                  class="detail-star-btn"
+                  @click="updateRating(star)"
+                  @mouseenter="detailHoverRating = star"
+                  @mouseleave="detailHoverRating = 0"
+                  :aria-label="`Rate ${star} stars`"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    :class="(detailHoverRating ? star <= detailHoverRating : star <= (media.rating || 0)) ? 'star-filled' : 'star-empty'"
+                  >
+                    star
+                  </span>
+                </button>
+                <button
+                  v-if="media.rating"
+                  type="button"
+                  class="clear-detail-rating-btn"
+                  @click="updateRating(null)"
+                  title="Clear rating"
+                >
+                  Clear
+                </button>
+                <span v-if="isUpdatingRating" class="material-symbols-outlined rating-spinner">autorenew</span>
+              </div>
             </div>
           </div>
 
@@ -1134,5 +1196,51 @@ onMounted(() => {
   font-size: 12px;
   color: #da1e28;
   margin: 4px 0 0;
+}
+
+/* Interactive Rating Styles */
+.interactive-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 12px;
+  border-left: 1px solid #e0e0e0;
+  padding-left: 12px;
+  height: 20px;
+}
+
+.detail-star-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-star-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.clear-detail-rating-btn {
+  background: none;
+  border: none;
+  color: #da1e28;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 6px;
+  text-decoration: underline;
+}
+
+.clear-detail-rating-btn:hover {
+  color: #ba1922;
+}
+
+.rating-spinner {
+  font-size: 16px;
+  color: #8d8d8d;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
 }
 </style>

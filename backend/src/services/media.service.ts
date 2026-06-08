@@ -15,6 +15,7 @@ const mediaListSelect = {
   platforms: true,
   tags: true,
   url: true,
+  rating: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.MediaSelect;

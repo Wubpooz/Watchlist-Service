@@ -65,6 +65,8 @@ const description = ref('');
 const tagInput = ref('');
 const tags = ref<string[]>([]);
 const platforms = ref<string[]>([]);
+const rating = ref(0);
+const hoverRating = ref(0);
 
 const isSubmitting = ref(false);
 const submitError = ref('');
@@ -139,6 +141,7 @@ const handleSubmit = async () => {
     if (tags.value.length)            body.tags = tags.value;
     if (platforms.value.length)       body.platforms = platforms.value;
     if (url.value.trim())             body.url = url.value.trim();
+    if (rating.value > 0)             body.rating = rating.value;
 
     const res = await fetch(
       `${import.meta.env.VITE_API_URL ?? ''}/api/media`,
@@ -252,6 +255,38 @@ const handleSubmit = async () => {
               min="1800"
               max="2100"
             />
+          </div>
+
+          <!-- Rating -->
+          <div class="field">
+            <label class="field-label">Rating</label>
+            <div class="rating-input-container">
+              <button
+                v-for="star in 5"
+                :key="star"
+                type="button"
+                class="star-btn"
+                @click="rating = star"
+                @mouseenter="hoverRating = star"
+                @mouseleave="hoverRating = 0"
+                :aria-label="`Rate ${star} stars`"
+              >
+                <span
+                  class="material-symbols-outlined"
+                  :class="(hoverRating ? star <= hoverRating : star <= rating) ? 'star-filled' : 'star-empty'"
+                >
+                  star
+                </span>
+              </button>
+              <button
+                v-if="rating > 0"
+                type="button"
+                class="clear-rating-btn"
+                @click="rating = 0"
+              >
+                Clear
+              </button>
+            </div>
           </div>
 
         </div>
@@ -768,6 +803,42 @@ const handleSubmit = async () => {
 .btn-spinner {
   font-size: 18px;
   animation: spin 1s linear infinite;
+}
+
+/* Rating Input Styles */
+.rating-input-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-btn .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.clear-rating-btn {
+  background: none;
+  border: none;
+  color: #da1e28;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 8px;
+  text-decoration: underline;
+}
+
+.clear-rating-btn:hover {
+  color: #ba1922;
 }
 
 @keyframes spin {

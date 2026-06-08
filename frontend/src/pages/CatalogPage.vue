@@ -12,7 +12,7 @@ const router = useRouter();
 // === Types ====================================================================
 
 type MediaType = 'FILM' | 'SERIES' | 'BOOK' | 'ARTICLE' | 'OTHER';
-type SortField = 'createdAt' | 'title' | 'releaseDate';
+type SortField = 'createdAt' | 'title' | 'releaseDate' | 'rating';
 type SortOrder = 'asc' | 'desc';
 
 interface MediaItem {
@@ -25,6 +25,7 @@ interface MediaItem {
   tags: string[];
   description?: string | null;
   url?: string | null;
+  rating?: number | null;
 }
 
 interface PaginationLinks {
@@ -271,6 +272,8 @@ const SORT_OPTIONS = [
   { value: 'title-desc',     label: 'Title Z → A' },
   { value: 'releaseDate-desc', label: 'Release (newest)' },
   { value: 'releaseDate-asc',  label: 'Release (oldest)' },
+  { value: 'rating-desc',    label: 'Rating (highest)' },
+  { value: 'rating-asc',     label: 'Rating (lowest)' },
 ];
 
 const sortValue = computed(() => `${sortField.value}-${sortOrder.value}`);
@@ -473,6 +476,19 @@ const cardMeta = (item: MediaItem): string =>
             <div class="media-card-body">
               <h3 class="media-card-title">{{ item.title }}</h3>
               <p class="media-card-meta">{{ cardMeta(item) }}</p>
+              
+              <!-- Rating Stars -->
+              <div v-if="item.rating" class="media-card-rating" :title="`${item.rating}/5 stars`">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  class="material-symbols-outlined star-icon"
+                  :class="star <= item.rating ? 'star-filled' : 'star-empty'"
+                >
+                  star
+                </span>
+              </div>
+
               <div v-if="item.platforms?.length" class="media-card-platforms">
                 <span
                   v-for="(p, i) in item.platforms.slice(0, 4)"
@@ -1158,6 +1174,19 @@ const cardMeta = (item: MediaItem): string =>
 }
 
 .platform-icon { font-size: 20px; }
+
+/* Card Rating */
+.media-card-rating {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+  margin-bottom: 8px;
+}
+
+.media-card-rating .star-icon {
+  font-size: 16px;
+  line-height: 1;
+}
 
 /* == Pagination ============================================ */
 .pagination {

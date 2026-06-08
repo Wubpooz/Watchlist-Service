@@ -19,10 +19,10 @@
 - **Landing page**: marketing/entry page before authentication.
 - **Authentication**: sign up, log in, forgot password, reset password flows. Prevents flash-redirects to the landing page on page refreshes by awaiting session restoration.
 - **Home / Dashboard**: overview of the user's activity.
-- **Catalog**: browse and search all media items with filtering and sorting. Supports pagination for large libraries and creating new media entries.
-- **Media Detail**: full detail view for a single media item. Includes a searchable modal to add the media to any owned collections.
+- **Catalog**: browse and search all media items with filtering and sorting (including by rating). Supports pagination for large libraries and creating new media entries with ratings.
+- **Media Detail**: full detail view for a single media item. Includes an interactive star rating selector to view/update the rating, and a searchable modal to add the media to any owned collections.
 - **Collections**: list, create, and manage collections. Public/private visibility.
-- **Collection Detail**: view all media in a collection, manage members, a description, list items with line numbers, drag-and-drop reordering, visibility selection, owner profile initials badge, invitation modal, and toast notifications. Features a searchable selection modal to add new catalog media to the collection.
+- **Collection Detail**: view all media in a collection, manage members, a description, list items with line numbers, drag-and-drop reordering, visibility selection, owner profile initials badge, invitation modal, and toast notifications. Features a searchable selection modal to add new catalog media to the collection, and displays media ratings as a column in the collection table.
 - **Invitations**: dedicated page listing all pending collaboration invitations.
 - **Statistics**: personal analytics dashboard (media counts by type, genre breakdowns, library growth over time, etc.).
 - **Settings**: user profile update and account management.
@@ -32,7 +32,7 @@
 ### Backend (Bun + Hono)
 - **Authentication**: register, login, logout, forgot/reset password via [Better Auth](https://github.com/better-auth/better-auth). Session tokens are returned in the `set-auth-token` response header.
 - **Users**: profile read/update, public user lookup.
-- **Media**: full CRUD with access control. Only the creator can modify or delete their entries.
+- **Media**: full CRUD with access control, including media rating support (1-5 star scale). Only the creator can modify or delete their entries.
 - **Collections**: create/list/get/update/delete, with public or private visibility. Supports pagination, tag filtering, and title search.
 - **Roles & invitations**: collection owners can invite users as `COLLABORATOR` or `READER`. Invitees accept or decline via a dedicated endpoint. Owners can change roles or remove members at any time.
 - **MCP server**: stateless HTTP `/mcp` transport plus a stdio entrypoint that reuses the existing collection, media, and user services with per-call bearer-token auth.
@@ -494,7 +494,7 @@ bun run prisma:seed       # optional: re-seed
 - [ ] Fine-grained access control
 - [ ] Regex title filtering
 - [ ] Multi-tag filtering
-- [ ] Media ratings
+- [x] Media ratings
 
 ### P3 (bonus)
 - [ ] Sub-collections

@@ -222,3 +222,14 @@ h1, h2, h3 {
   border-radius: 0 !important;
 }
 
+/* Rating Stars Styling */
+.star-filled {
+  font-variation-settings: 'FILL' 1 !important;
+  color: #f1c40f !important;
+}
+.star-empty {
+  font-variation-settings: 'FILL' 0 !important;
+  color: #c8c8c8 !important;
+}
+
+

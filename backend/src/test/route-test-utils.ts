@@ -63,6 +63,7 @@ export const fixtures = {
     platforms: ['Netflix'],
     url: 'https://example.com/inception',
     scores: null,
+    rating: null,
     createdAt: '2026-03-10T10:00:00.000Z',
     updatedAt: '2026-03-10T10:00:00.000Z',
     collections: [],

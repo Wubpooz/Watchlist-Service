@@ -11,6 +11,7 @@ export const createMediaSchema = z.object({
   type: z.enum(MediaType).meta( {example: MediaType.FILM} ),
   releaseDate: z.string().datetime().optional().meta( {example: '2010-07-16T00:00:00.000Z'} ).transform(str => str ? new Date(str) : undefined),
   directorAuthor: z.string().max(200).optional().meta( {example: 'Christopher Nolan'} ),
+  rating: z.number().int().min(1).max(5).optional().nullable().meta( {example: 5} ),
 }) satisfies z.Schema<Prisma.MediaCreateInput & { collectionId?: string }>;
 
 export const createMediaResponseSchema = z.object({
@@ -24,6 +25,7 @@ export const createMediaResponseSchema = z.object({
   platforms: z.array(z.string()).meta( {example: ['Netflix', 'Amazon Prime']} ),
   url: z.string().nullable().meta( {example: 'https://example.com/inception'} ),
   scores: z.any().nullable(),
+  rating: z.number().int().min(1).max(5).nullable(),
   createdAt: z.string().datetime().meta( {example: '2026-01-01T00:00:00.000Z'} ).transform(str => new Date(str)), //TODO switch to v4's z.date() when the Date cannot be represented in JSON Schema issue is resolved
   updatedAt: z.string().datetime().meta( {example: '2026-01-01T00:00:00.000Z'} ).transform(str => new Date(str)),
   collections: z.array(z.any()),
@@ -38,6 +40,7 @@ export const updateMediaSchema = z.object({
   type: z.enum(MediaType).optional().meta( {example: MediaType.FILM} ),
   releaseDate: z.string().datetime().optional().meta( {example: '2010-07-16T00:00:00.000Z'} ).transform(str => str ? new Date(str) : undefined),
   directorAuthor: z.string().max(200).optional().meta( {example: 'Christopher Nolan'} ),
+  rating: z.number().int().min(1).max(5).optional().nullable().meta( {example: 4} ),
 }) satisfies z.Schema<Prisma.MediaUpdateInput>;
 
 export const mediaIdParamSchema = z.object({
@@ -53,7 +56,7 @@ export const getMediaQuerySchema = z.object({
   platform: z.string().optional().meta( {example: 'Netflix'} ),
   platforms: z.string().optional().meta( {example: 'Netflix,Amazon Prime'} ),
   q: z.string().optional().meta( {example: 'inception'} ),
-  sort: z.enum(['createdAt', 'title', 'releaseDate']).optional().default('createdAt').meta( {example: 'createdAt'} ),
+  sort: z.enum(['createdAt', 'title', 'releaseDate', 'rating']).optional().default('createdAt').meta( {example: 'createdAt'} ),
   order: z.enum(['asc', 'desc']).optional().default('desc').meta( {example: 'desc'} ),
   cursor: z.string().optional(),
 });

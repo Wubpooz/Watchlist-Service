@@ -43,6 +43,7 @@ async function main() {
       tags: ["sci-fi", "thriller", "mind-bending"],
       platforms: ["Netflix", "Amazon Prime"],
       scores: { imdb: 8.8, metacritic: 74 },
+      rating: 5,
     },
   });
 
@@ -56,6 +57,7 @@ async function main() {
       tags: ["crime", "drama", "psychological"],
       platforms: ["Netflix"],
       scores: { imdb: 9.5 },
+      rating: 5,
     },
   });
 
@@ -69,6 +71,7 @@ async function main() {
       tags: ["fantasy", "adventure", "classic"],
       platforms: [],
       scores: { goodreads: 4.3 },
+      rating: 4,
     },
   });
 

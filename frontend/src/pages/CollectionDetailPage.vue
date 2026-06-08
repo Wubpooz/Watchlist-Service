@@ -11,6 +11,7 @@ type MediaItem = {
   title: string;
   type: string;
   description?: string | null;
+  rating?: number | null;
 };
 
 type MediaListResponse = {
@@ -254,7 +255,7 @@ function formatDateTimeLong(isoDate: string): string {
 }
 
 function formatMediaType(type: string): string {
-  return type.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+  return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
 }
 
 function formatRole(role: string): string {
@@ -802,10 +803,11 @@ watch(collectionId, () => {
 
             <!-- Table Container -->
             <div class="flex-1 border border-outline-variant bg-surface-container-lowest overflow-hidden">
-              <div class="grid grid-cols-[40px_minmax(0,1fr)_120px_140px_80px] bg-surface-container-low border-b border-outline-variant text-xs font-semibold text-on-surface-variant uppercase tracking-wider h-10 items-center">
+              <div class="grid grid-cols-[40px_minmax(0,1fr)_120px_120px_140px_80px] bg-surface-container-low border-b border-outline-variant text-xs font-semibold text-on-surface-variant uppercase tracking-wider h-10 items-center">
                 <div class="p-3"></div>
                 <div class="p-3">Title</div>
                 <div class="p-3">Type</div>
+                <div class="p-3">Rating</div>
                 <div class="p-3">Date Added</div>
                 <div class="p-3 text-center">Actions</div>
               </div>
@@ -817,7 +819,7 @@ watch(collectionId, () => {
               <div
                 v-for="(item, index) in mediaItems"
                 :key="item.id"
-                class="grid grid-cols-[40px_minmax(0,1fr)_120px_140px_80px] border-b last:border-b-0 border-outline-variant hover:bg-surface-container-low transition-colors group items-center text-sm text-on-surface h-13"
+                class="grid grid-cols-[40px_minmax(0,1fr)_120px_120px_140px_80px] border-b last:border-b-0 border-outline-variant hover:bg-surface-container-low transition-colors group items-center text-sm text-on-surface h-13"
                 :draggable="isDraggable"
                 @dragstart="onDragStart($event, index)"
                 @dragover.prevent
@@ -838,6 +840,20 @@ watch(collectionId, () => {
                 </div>
                 <div class="p-3 text-on-surface-variant truncate">
                   {{ formatMediaType(item.media.type) }}
+                </div>
+                <div class="p-3 text-on-surface-variant flex items-center gap-0.5">
+                  <template v-if="item.media.rating">
+                    <span
+                      v-for="star in 5"
+                      :key="star"
+                      class="material-symbols-outlined text-sm"
+                      :class="star <= item.media.rating ? 'star-filled' : 'star-empty'"
+                      style="font-size: 16px;"
+                    >
+                      star
+                    </span>
+                  </template>
+                  <span v-else class="text-outline text-xs">—</span>
                 </div>
                 <div class="p-3 text-on-surface-variant">
                   {{ formatDateTable(item.addedAt) }}

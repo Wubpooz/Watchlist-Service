@@ -12,6 +12,7 @@ export interface CollectionMediaItem {
     id: string;
     title: string;
     type: string;
+    rating?: number | null;
   };
 }
 
