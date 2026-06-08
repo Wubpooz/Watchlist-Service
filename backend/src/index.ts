@@ -8,6 +8,7 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { requestLogger } from './middleware/requestLogger.js';
 import { auth, type AuthType } from "./middleware/auth.js";
 import { errorHandler } from './middleware/errorHandler.js';
+import { rateLimiter } from './middleware/rateLimiter.js';
 import prisma from './db/index.js';
 
 import { authRoutes } from './routes/auth.routes.js';
@@ -88,7 +89,7 @@ if (process.env.NODE_ENV === 'production') {
 
 
 // Rate limiting
-// app.use(standardRateLimiter);
+app.use('/api/*', rateLimiter);
 
 
 // Request ID and logging
