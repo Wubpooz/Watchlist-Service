@@ -469,6 +469,87 @@
         }
       }
     },
+    "/api/auth/change-password": {
+      "post": {
+        "operationId": "postApiAuthChangePassword",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Change the authenticated user's password",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "Current password",
+                    "example": "currentpassword123"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "New password (minimum 8 characters)",
+                    "example": "newpassword123"
+                  },
+                  "revokeOtherSessions": {
+                    "description": "Revoke other active sessions",
+                    "example": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "user": {},
+                    "session": {},
+                    "sessionToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "example": {
+                  "message": "Password changed successfully"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload or password requirements not met"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/users/me": {
       "get": {
         "operationId": "getApiUsersMe",
@@ -1231,9 +1312,16 @@
                     "maxLength": 1000
                   },
                   "url": {
-                    "example": "https://example.com/inception",
-                    "type": "string",
-                    "format": "uri"
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "example": "https://example.com/inception"
                   },
                   "tags": {
                     "example": [
@@ -1982,9 +2070,16 @@
                     "maxLength": 1000
                   },
                   "url": {
-                    "example": "https://example.com/inception",
-                    "type": "string",
-                    "format": "uri"
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "example": "https://example.com/inception"
                   },
                   "tags": {
                     "example": [
