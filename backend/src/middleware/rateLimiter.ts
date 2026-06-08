@@ -33,7 +33,7 @@ setInterval(() => {
 export async function rateLimiter(c: Context, next: Next) {
   // Get client IP
   const forwardedFor = c.req.header('x-forwarded-for');
-  const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown-ip';
+  const ip = forwardedFor?.split(',')[0] ? forwardedFor.split(',')[0]!.trim() : 'unknown-ip';
 
   const path = c.req.path;
   const isAuthRoute = path.startsWith('/api/auth/login') ||
@@ -53,7 +53,7 @@ export async function rateLimiter(c: Context, next: Next) {
     // Clean expired logs
     ipLogs.auth = ipLogs.auth.filter(t => now - t < AUTH_LIMIT.windowMs);
     if (ipLogs.auth.length >= AUTH_LIMIT.max) {
-      const oldestLog = ipLogs.auth[0];
+      const oldestLog = ipLogs.auth[0] || now; // Fallback to now to avoid negative time if logs are empty
       const timeRemainingSeconds = Math.max(1, Math.ceil((AUTH_LIMIT.windowMs - (now - oldestLog)) / 1000));
       c.header('Retry-After', String(timeRemainingSeconds));
       return c.json({
@@ -67,7 +67,7 @@ export async function rateLimiter(c: Context, next: Next) {
     // Clean expired logs
     ipLogs.general = ipLogs.general.filter(t => now - t < GENERAL_LIMIT.windowMs);
     if (ipLogs.general.length >= GENERAL_LIMIT.max) {
-      const oldestLog = ipLogs.general[0];
+      const oldestLog = ipLogs.general[0] || now; // Fallback to now to avoid negative time if logs are empty
       const timeRemainingSeconds = Math.max(1, Math.ceil((GENERAL_LIMIT.windowMs - (now - oldestLog)) / 1000));
       c.header('Retry-After', String(timeRemainingSeconds));
       return c.json({
