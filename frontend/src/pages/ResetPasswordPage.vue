@@ -67,7 +67,7 @@ const handleSubmit = async () => {
     // Check if error is a rate limit error
     const match = error.value.match(/\b(\d+)\s+seconds\b/);
     if (match && error.value.toLowerCase().includes('too many requests')) {
-      const seconds = parseInt(match[1], 10);
+      const seconds = Number.parseInt(match[1], 10);
       startRateLimitCountdown(seconds);
     }
   } finally {
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
       </RouterLink>
     </header>
 
-    <main class="flex-grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
+    <main class="grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
       <div class="mb-6 w-20 h-20 select-none flex items-center justify-center shrink-0">
         <img 
           alt="Watchlist Service Logo" 
@@ -113,8 +113,8 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <div v-else class="bg-[#ffd7d8] border-l-4 border-[#da1e28] p-4 mb-8 flex items-start">
-          <span class="material-symbols-outlined text-[#da1e28] mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+        <div v-else class="bg-[#ffd7d8] border-l-4 border-error p-4 mb-8 flex items-start">
+          <span class="material-symbols-outlined text-error mr-3 mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
           <div>
             <h3 class="text-[#8b0000] font-semibold text-sm font-body">Invalid or missing reset token</h3>
             <p class="text-[#8b0000] text-sm mt-1 font-body">A password reset token is required in the URL parameters. Please use the link sent to your email.</p>
@@ -178,7 +178,7 @@ const handleSubmit = async () => {
     </main>
 
     <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
-      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
+      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-360 mx-auto gap-2">
         <div class="select-none">
           <span class="font-body font-normal text-[12px] leading-normal text-surface-variant">
             © 2026 Watchlist Service. All rights reserved.

@@ -41,7 +41,7 @@ const handleSubmit = async () => {
     // Check if error is a rate limit error
     const match = error.value.match(/\b(\d+)\s+seconds\b/);
     if (match && error.value.toLowerCase().includes('too many requests')) {
-      const seconds = parseInt(match[1], 10);
+      const seconds = Number.parseInt(match[1], 10);
       startRateLimitCountdown(seconds);
     }
   } finally {
@@ -59,7 +59,7 @@ const handleSubmit = async () => {
       </RouterLink>
     </header>
 
-    <main class="flex-grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
+    <main class="grow flex flex-col items-center justify-center px-4 py-8 shrink-0">
       <div class="mb-6 w-20 h-20 select-none flex items-center justify-center shrink-0">
         <img 
           alt="Watchlist Service Logo" 
@@ -151,7 +151,7 @@ const handleSubmit = async () => {
     </main>
 
     <footer class="bg-inverse-surface w-full px-6 py-4 border-t border-[#393939] select-none shrink-0">
-      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto gap-2">
+      <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-360 mx-auto gap-2">
         <div class="select-none">
           <span class="font-body font-normal text-[12px] leading-normal text-surface-variant">
             © 2026 Watchlist Service. All rights reserved.
