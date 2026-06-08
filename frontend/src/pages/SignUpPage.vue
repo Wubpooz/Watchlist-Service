@@ -16,6 +16,20 @@ const showConfirmPassword = ref(false);
 const isLoading = ref(false);
 const error = ref('');
 
+const rateLimitCountdown = ref(0);
+let countdownInterval: any = null;
+
+const startRateLimitCountdown = (seconds: number) => {
+  rateLimitCountdown.value = seconds;
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    rateLimitCountdown.value--;
+    if (rateLimitCountdown.value <= 0) {
+      clearInterval(countdownInterval);
+    }
+  }, 1000);
+};
+
 const handleSubmit = async () => {
   error.value = '';
 
@@ -30,8 +44,14 @@ const handleSubmit = async () => {
     await authStore.register(email.value, password.value, username.value);
     const redirect = route.query.redirect as string || '/';
     router.push(redirect);
-  } catch (err) {
+  } catch (err: any) {
     error.value = err instanceof Error ? err.message : 'An error occurred';
+    // Check if error is a rate limit error
+    const match = error.value.match(/\b(\d+)\s+seconds\b/);
+    if (match && error.value.toLowerCase().includes('too many requests')) {
+      const seconds = parseInt(match[1], 10);
+      startRateLimitCountdown(seconds);
+    }
   } finally {
     isLoading.value = false;
   }
@@ -138,9 +158,9 @@ const handleSubmit = async () => {
             <button 
               class="carbon-btn group" 
               type="submit"
-              :disabled="isLoading"
+              :disabled="isLoading || rateLimitCountdown > 0"
             >
-              <span>{{ isLoading ? 'Creating account...' : 'Create account' }}</span>
+              <span>{{ rateLimitCountdown > 0 ? `Try again in ${rateLimitCountdown}s` : (isLoading ? 'Creating account...' : 'Create account') }}</span>
               <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
           </div>

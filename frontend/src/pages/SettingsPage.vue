@@ -60,6 +60,20 @@ const isChangingPassword = ref(false);
 const passwordSuccessMessage = ref('');
 const passwordErrorMessage = ref('');
 
+const passwordRateLimitCountdown = ref(0);
+let passwordCountdownInterval: any = null;
+
+const startPasswordRateLimitCountdown = (seconds: number) => {
+  passwordRateLimitCountdown.value = seconds;
+  if (passwordCountdownInterval) clearInterval(passwordCountdownInterval);
+  passwordCountdownInterval = setInterval(() => {
+    passwordRateLimitCountdown.value--;
+    if (passwordRateLimitCountdown.value <= 0) {
+      clearInterval(passwordCountdownInterval);
+    }
+  }, 1000);
+};
+
 async function handleChangePassword() {
   passwordSuccessMessage.value = '';
   passwordErrorMessage.value = '';
@@ -91,6 +105,12 @@ async function handleChangePassword() {
     }, 5000);
   } catch (err: any) {
     passwordErrorMessage.value = err?.message || 'Failed to update password.';
+    // Check if error is a rate limit error
+    const match = passwordErrorMessage.value.match(/\b(\d+)\s+seconds\b/);
+    if (match && passwordErrorMessage.value.toLowerCase().includes('too many requests')) {
+      const seconds = parseInt(match[1], 10);
+      startPasswordRateLimitCountdown(seconds);
+    }
   } finally {
     isChangingPassword.value = false;
   }
@@ -257,9 +277,9 @@ async function handleChangePassword() {
       <button 
         type="submit" 
         class="carbon-btn change-password-btn" 
-        :disabled="isChangingPassword"
+        :disabled="isChangingPassword || passwordRateLimitCountdown > 0"
       >
-        <span>{{ isChangingPassword ? 'Updating password...' : 'Update password' }}</span>
+        <span>{{ passwordRateLimitCountdown > 0 ? `Try again in ${passwordRateLimitCountdown}s` : (isChangingPassword ? 'Updating password...' : 'Update password') }}</span>
         <span class="material-symbols-outlined">lock_reset</span>
       </button>
     </form>
